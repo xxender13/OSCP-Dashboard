@@ -133,7 +133,43 @@ def build():
             ('Black %', 'Race/ethnicity · Black'), ('Hispanic %', 'Race/ethnicity · Hispanic'),
             ('Multiracial %', 'Race/ethnicity · Multiracial'), ('White %', 'Race/ethnicity · White')]]]
     metrics = [m for m in metrics if any(numeric(s.get(m['id'])) is not None for s in schools)]
+    public_buildings = [{k: v for k, v in row.items() if k != '_row'} | {'source_row': row['_row']} for row in master['Building Cohort']]
+    public_history = [{k: v for k, v in row.items() if k != '_row'} | {'source_row': row['_row']} for row in master['Historical Demographics']]
+    for row in public_buildings + public_history:
+        row['DESE LEA'] = code(row['DESE LEA'])
+        assert row['DESE LEA'] in CODES
+        for key, value in row.items():
+            if '%' in key and value is not None:
+                assert numeric(value) is not None and 0 <= value <= 100
+            if ('enrollment' in key or 'prelim' in key) and numeric(value) is not None:
+                assert value >= 0
+    assert len({(r['DESE LEA'], r['Year']) for r in public_history}) == len(public_history), 'Duplicate historical school-year'
+    building_keys = {(r['DESE LEA'], code(r['Building code'], 4)) for r in public_buildings}
+    assessment, assessment_keys = [], set()
+    for filename, level in [('2025 District_Content Area All and Disag.xlsx', 'Charter'), ('2025 School_content area all and disag.xlsx', 'Building')]:
+        for row in tables[filename]['Sheet1']:
+            lea, building = code(row['COUNTY_DISTRICT']), code(row['SCHOOL_CODE'], 4)
+            if lea not in CODES or (level == 'Building' and (lea, building) not in building_keys):
+                continue
+            key = (lea, level, building, row['YEAR'], row['CATEGORY'], row['TYPE'], row['CONTENT_AREA'], row['GRADE_LEVEL'])
+            assert key not in assessment_keys, 'Duplicate assessment slice'
+            assessment_keys.add(key)
+            record = {'lea': lea, 'level': level, 'building': building if level == 'Building' else None,
+                'name': row['SCHOOL_NAME'] if level == 'Building' else next(s['School'] for s in schools if s['DESE LEA'] == lea),
+                'year': row['YEAR'], 'category': row['CATEGORY'], 'group': row['TYPE'], 'subject': row['CONTENT_AREA'],
+                'source_file': filename, 'source_row': row['_row']}
+            for field in ('ACCOUNTABLE', 'REPORTABLE', 'LEVEL_NOT_DETERMINED', 'BELOW_BASIC', 'BASIC', 'PROFICIENT', 'ADVANCED',
+                          'LEVEL_NOT_DETERMINED_PCT', 'BELOW_BASIC_PCT', 'BASIC_PCT', 'PROFICIENT_PCT', 'ADVANCED_PCT'):
+                value = numeric(row[field])
+                assert value is None or (0 <= value <= 100 if field.endswith('_PCT') else value >= 0)
+                record[field] = value
+            p, a, n = (record[f] for f in ('PROFICIENT', 'ADVANCED', 'REPORTABLE'))
+            record['PA_PCT'] = round(100 * (p + a) / n, 2) if all(v is not None for v in (p, a, n)) and n > 0 else None
+            assert record['PA_PCT'] is None or 0 <= record['PA_PCT'] <= 100
+            assessment.append(record)
     payload = {'generated_at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'dashboard_year': '2026–2027',
+        'buildings': public_buildings, 'history': public_history, 'assessments': assessment,
+        'data_inventory': [{'file': s['file'], 'sheet': s['sheet'], 'rows': s['nonempty_rows']} for s in inventory],
         'schools': schools, 'metrics': metrics, 'sources': [{k:v for k,v in s.items() if k!='_row'} for s in master['Source Register']],
         'definitions': {'enrollment': 'Preliminary K–12 enrollment; preschool excluded. Not finalized 2026–27 enrollment.',
             'map': '2025 charter-level MAP Proficient + Advanced counts divided by reportable students × 100. Suppressed components are never reconstructed.',
@@ -149,12 +185,13 @@ def build():
         'No finalized 2026–27 enrollment; only 2025–26 preliminary enrollment is shown.',
         'No confirmed scholarship awards or unduplicated additional partnership counts.',
         'Race/ethnicity categories are incomplete; separate category comparisons only. No inferred remainder.',
-        'Historical demographics are inspected but omitted: incomplete cohort coverage and incompatible enrollment periods.',
+        'Historical records are displayed separately for 2007–2025. School coverage varies by year; preliminary 2025–26 enrollment is not appended to the historical series.',
         'Original enrollment and demographic extracts listed in Source Register were not supplied; values are traceable to the cohort master, not independently verified against those absent originals.',
         'No confirmed community events; blank approval fields do not establish approval. Requested amounts, private notes, and invite lists are excluded from public JSON.']
     report = ['# Data quality report', '', f"Generated: {payload['generated_at']}", '',
         f"PASS: {len(schools)} unique LEAs; {sum(s[ENROLL] for s in schools):,} preliminary K–12 enrollment; {map_checks} MAP records matched to raw DESE district/building sources.",
         f"Inspected {len(inventory)} worksheets across {len(tables)} workbooks. Every nonempty row read; column names in workbook-inventory.json.",
+        f"Expanded reporting: {len(public_buildings)} building records, {len(public_history)} historical school-years, {len(assessment)} matched MAP subject/student-group slices. No summation across overlapping groups, subjects or reporting levels.",
         f"Tracker: {len(events)} distinct normalized records; {len(duplicates)} duplicate rows logged. No confirmed events. No year assigned from tab names.",
         '', '## Enrollment reconciliation', *['- ' + c for c in checks], '', '## Unavailable metrics and exclusions',
         *['- ' + x for x in gaps + exclusions], '', '## Calculation and publication rules',

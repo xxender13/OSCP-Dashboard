@@ -1,6 +1,20 @@
 # OSCP Impact Dashboard | 2026–2027
 
-A static, responsive SLU-inspired dashboard. The edition is 2026–2027; source enrollment is **2025–26 preliminary K–12**, and demographics / MAP are **2025**. No runtime Python or backend is needed.
+A static, responsive SLU-inspired reporting workspace. The edition is 2026–2027; source enrollment is **2025–26 preliminary K–12**, demographics / MAP are **2025**, and historical data covers **2007–2025** with variable school-year coverage. No runtime Python or backend is needed.
+
+## Interactive reports
+
+Each report has independent filters and its own Reset chart, legend, source caption, accessible values table, and Download CSV control. CSV files include the current filter context and generation time. Reset all reports restores the entire workspace. The three overview cards always describe all six schools.
+
+- **Student demographics:** school, charter/building level, available student characteristic and sorting. Incomplete race/ethnicity categories remain separate comparisons.
+- **Partnership milestones:** school opening versus SLU sponsorship start, with school and milestone selectors. Legend shapes match the plotted markers.
+- **MAP outcomes:** all four available subjects, student groups, published achievement-level counts/percentages, reportable/accountable counts, and calculated P+A where both components are published. Filter by school, reporting level, group, measure and subject. Groups and subjects overlap and are never summed. The source's undefined “Student Group” label is disclosed explicitly.
+- **Historical trends:** all 96 supplied school-year records, school/measure/from/to filters, disconnected missing values, distinct school marker shapes. Metrics unavailable in the selected period are omitted from its selector. These records may predate SLU sponsorship and do not establish effects of sponsorship.
+- **Coverage matrix:** school/building source values, explicitly distinguished from unavailable/suppressed cells; no missing-to-zero conversion.
+- **Directory:** search school names/LEAs and choose focused column groups or all available fields.
+- **Enrollment:** school, charter/building level, period/measure and sorting. K–12 and reportable preschool are separate choices. Partial preschool totals are labeled as reportable records only, not complete enrollment.
+
+The public JSON includes 14 building records, 96 historical school-years, and 516 matched assessment slices. Other LEAs, private tracker notes and unconfirmed sponsorships remain excluded. Inventory metadata covers every worksheet, including the empty FY24 tracker tab.
 
 ## Build and preview
 
@@ -33,7 +47,7 @@ python test_dashboard.py
 python -m unittest test_data.py
 ```
 
-Browser tests exercise all school/available-metric combinations, Reset Filters, suppression coverage, repository-subpath loading, 320px / 768px / 1440px widths, JavaScript errors and blocked-CDN fallback tables. Screenshots and results go to `qa/`. Chrome runs headlessly and the test stops its browser and HTTP server.
+Browser tests exercise independent report filters, all six schools and both reporting levels, demographic/MAP measures, student groups, subjects, year ranges, search, filtered CSV content, reset controls, timeline labels, keyboard focus, repository-subpath loading, 320px / 768px / 1440px widths, JavaScript errors and blocked-CDN fallback tables. Screenshots and results go to `qa/`. Chrome runs headlessly and the test stops its own browser and temporary HTTP server, leaving a separately launched preview running.
 
 ## GitHub Pages
 
@@ -49,6 +63,6 @@ Commit source web assets, build script, generated `dashboard-data.json`, and **a
 - Three schools have paired reportable ELA / Math values. Coverage is shown with every comparison. Metrics unavailable for a selected school disappear from the selector.
 - Demographic percentages and preliminary enrollment are taken from the cohort master. Original demographic / enrollment extracts listed in its source register were not supplied, so those values are not independently verified against the originals.
 - Racial/ethnic fields are incomplete; individual categories can be compared, but no complete-composition chart or inferred remainder is shown.
-- No verified locations or grade spans are supplied; no location filter, grade field, physical-campus total, or reporting-year filter is displayed. Historical demographic records have incomplete cohort coverage and are not mixed into these comparisons.
+- No verified locations or grade spans are supplied; no location filter, grade field or physical-campus total is displayed. Historical records have their own year-range filters and are not mixed with preliminary enrollment or current 2025 outcomes.
 - No confirmed scholarship awards or approved events are supplied. These sections acknowledge pending verification without numerical KPIs or request tables. Duplicate tracker tabs never establish multiple events or fiscal-year attribution. A future confirmed event record intentionally stops the build until its public presentation is reviewed.
 - Chart.js is pinned to a CDN version. If unavailable, labeled tables retain every reportable value and filtering continues. Tables are always available for screen readers. Text branding uses no official logo asset.

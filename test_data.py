@@ -40,6 +40,30 @@ class DataTests(unittest.TestCase):
         inventory = json.loads((ROOT / 'qa/workbook-inventory.json').read_text(encoding='utf-8'))
         self.assertTrue(any(s['sheet'] == 'FY24' and s['nonempty_rows'] == 0 for s in inventory))
 
+    def test_expanded_sources_and_suppression(self):
+        data = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
+        self.assertEqual(len(data['history']), 96)
+        self.assertEqual(len(data['buildings']), 14)
+        self.assertEqual(len(data['assessments']), 516)
+        self.assertEqual({r['subject'] for r in data['assessments']}, {'Eng. Language Arts', 'Mathematics', 'Science', 'Social Studies'})
+        self.assertEqual({r['level'] for r in data['assessments']}, {'Charter', 'Building'})
+        self.assertEqual(max(r['Year'] for r in data['history']), 2025)
+        for record in data['assessments']:
+            p, a, n = (record[k] for k in ('PROFICIENT', 'ADVANCED', 'REPORTABLE'))
+            if p is None or a is None or n is None or n <= 0:
+                self.assertIsNone(record['PA_PCT'])
+            else:
+                self.assertEqual(record['PA_PCT'], round(100 * (p + a) / n, 2))
+            self.assertIn(record['year'], [2025])
+
+    def test_building_and_historical_keys(self):
+        data = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
+        self.assertEqual(len({(r['DESE LEA'], r['Year']) for r in data['history']}), len(data['history']))
+        for school in data['schools']:
+            buildings = [r for r in data['buildings'] if r['DESE LEA'] == school['DESE LEA']]
+            self.assertEqual(sum(r['K–12 prelim'] for r in buildings), school['2025–26 K–12'])
+            self.assertEqual(len(buildings), school['DESE buildings'])
+
 
 if __name__ == '__main__':
     unittest.main()
