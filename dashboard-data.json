@@ -1,0 +1,294 @@
+{
+  "generated_at": "2026-10-24T19:28:55+00:00",
+  "dashboard_year": "2026–2027",
+  "schools": [
+    {
+      "School": "Académie Lafayette",
+      "DESE LEA": "048914",
+      "Opened school year": "1999–2000",
+      "SLU sponsor since": 2022,
+      "DESE buildings": 4,
+      "2025–26 K–12": 1426,
+      "2025–26 PK": 18,
+      "2025–26 PK–12": null,
+      "2025 K–12": 1414,
+      "FRL %": 29.6,
+      "EL %": 3.68,
+      "IEP incidence %": 8.13,
+      "Black %": 20,
+      "Hispanic %": 10.3,
+      "Multiracial %": 12,
+      "White %": 56.2,
+      "MAP ELA P+A %": 58.86,
+      "MAP Math P+A %": 56.65,
+      "ELA reportable": 773,
+      "Math reportable": 775,
+      "Enrollment period": "2025–26 preliminary",
+      "Demographics year": "2025",
+      "MAP year": "2025",
+      "Data notes": "Suppressed = blank; PK not included in K–12",
+      "source_row": 2
+    },
+    {
+      "School": "The Biome School",
+      "DESE LEA": "115926",
+      "Opened school year": "2015–2016",
+      "SLU sponsor since": 2025,
+      "DESE buildings": 1,
+      "2025–26 K–12": 189,
+      "2025–26 PK": null,
+      "2025–26 PK–12": null,
+      "2025 K–12": 184,
+      "FRL %": 82.5,
+      "EL %": null,
+      "IEP incidence %": 11.41,
+      "Black %": 89.1,
+      "Hispanic %": null,
+      "Multiracial %": 4.9,
+      "White %": 2.7,
+      "MAP ELA P+A %": null,
+      "MAP Math P+A %": null,
+      "ELA reportable": 89,
+      "Math reportable": 89,
+      "Enrollment period": "2025–26 preliminary",
+      "Demographics year": "2025",
+      "MAP year": "2025",
+      "Data notes": "Suppressed = blank; PK not included in K–12",
+      "source_row": 3
+    },
+    {
+      "School": "City Garden Montessori",
+      "DESE LEA": "115911",
+      "Opened school year": "2008–2009",
+      "SLU sponsor since": 2008,
+      "DESE buildings": 2,
+      "2025–26 K–12": 517,
+      "2025–26 PK": 93,
+      "2025–26 PK–12": null,
+      "2025 K–12": 491,
+      "FRL %": 48.2,
+      "EL %": 2.24,
+      "IEP incidence %": 12.63,
+      "Black %": 43.8,
+      "Hispanic %": 7.5,
+      "Multiracial %": 11.4,
+      "White %": 35.6,
+      "MAP ELA P+A %": 39.6,
+      "MAP Math P+A %": 27.6,
+      "ELA reportable": 250,
+      "Math reportable": 250,
+      "Enrollment period": "2025–26 preliminary",
+      "Demographics year": "2025",
+      "MAP year": "2025",
+      "Data notes": "Suppressed = blank; PK not included in K–12",
+      "source_row": 4
+    },
+    {
+      "School": "Frontier Schools",
+      "DESE LEA": "048922",
+      "Opened school year": "2009–2010",
+      "SLU sponsor since": 2023,
+      "DESE buildings": 5,
+      "2025–26 K–12": 1548,
+      "2025–26 PK": 58,
+      "2025–26 PK–12": null,
+      "2025 K–12": 1544,
+      "FRL %": 85.1,
+      "EL %": 41.58,
+      "IEP incidence %": 8.55,
+      "Black %": 22.5,
+      "Hispanic %": 67.6,
+      "Multiracial %": 2.7,
+      "White %": 6.2,
+      "MAP ELA P+A %": 36.85,
+      "MAP Math P+A %": 49.86,
+      "ELA reportable": 730,
+      "Math reportable": 740,
+      "Enrollment period": "2025–26 preliminary",
+      "Demographics year": "2025",
+      "MAP year": "2025",
+      "Data notes": "Suppressed = blank; PK not included in K–12",
+      "source_row": 5
+    },
+    {
+      "School": "Genesis School",
+      "DESE LEA": "048905",
+      "Opened school year": "1999–2000",
+      "SLU sponsor since": 2025,
+      "DESE buildings": 1,
+      "2025–26 K–12": 176,
+      "2025–26 PK": 15,
+      "2025–26 PK–12": null,
+      "2025 K–12": 172,
+      "FRL %": 100,
+      "EL %": 4.07,
+      "IEP incidence %": 18.02,
+      "Black %": 84.3,
+      "Hispanic %": 6.4,
+      "Multiracial %": 4.1,
+      "White %": 4.7,
+      "MAP ELA P+A %": null,
+      "MAP Math P+A %": null,
+      "ELA reportable": 115,
+      "Math reportable": 115,
+      "Enrollment period": "2025–26 preliminary",
+      "Demographics year": "2025",
+      "MAP year": "2025",
+      "Data notes": "Suppressed = blank; PK not included in K–12",
+      "source_row": 6
+    },
+    {
+      "School": "Hope Leadership Academy",
+      "DESE LEA": "048925",
+      "Opened school year": "2011–2012",
+      "SLU sponsor since": 2022,
+      "DESE buildings": 1,
+      "2025–26 K–12": 97,
+      "2025–26 PK": 13,
+      "2025–26 PK–12": null,
+      "2025 K–12": 108,
+      "FRL %": 100,
+      "EL %": null,
+      "IEP incidence %": 5.56,
+      "Black %": 93.5,
+      "Hispanic %": 4.6,
+      "Multiracial %": null,
+      "White %": null,
+      "MAP ELA P+A %": null,
+      "MAP Math P+A %": null,
+      "ELA reportable": 45,
+      "Math reportable": 45,
+      "Enrollment period": "2025–26 preliminary",
+      "Demographics year": "2025",
+      "MAP year": "2025",
+      "Data notes": "Suppressed = blank; PK not included in K–12",
+      "source_row": 7
+    }
+  ],
+  "metrics": [
+    {
+      "id": "2025–26 K–12",
+      "label": "K–12 enrollment",
+      "unit": "students",
+      "period": "2025–26 preliminary"
+    },
+    {
+      "id": "FRL %",
+      "label": "Free / reduced-price lunch",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "EL %",
+      "label": "English learners",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "IEP incidence %",
+      "label": "Special education · IEP incidence",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "MAP ELA P+A %",
+      "label": "MAP ELA · Proficient + Advanced",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "MAP Math P+A %",
+      "label": "MAP Math · Proficient + Advanced",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "Black %",
+      "label": "Race/ethnicity · Black",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "Hispanic %",
+      "label": "Race/ethnicity · Hispanic",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "Multiracial %",
+      "label": "Race/ethnicity · Multiracial",
+      "unit": "%",
+      "period": "2025"
+    },
+    {
+      "id": "White %",
+      "label": "Race/ethnicity · White",
+      "unit": "%",
+      "period": "2025"
+    }
+  ],
+  "sources": [
+    {
+      "Dataset": "2025–26 K–12 enrollment",
+      "Uploaded source filename": "District-Charter Preliminary Enrollment.xlsx",
+      "DESE section": "Students > Enrollment & Demographics",
+      "Reporting period": "2025–26 preliminary",
+      "Official DESE URL": "https://apps.dese.mo.gov/MCDS/Home.aspx"
+    },
+    {
+      "Dataset": "Building preliminary enrollment",
+      "Uploaded source filename": "Building Preliminary Enrollment.xlsx",
+      "DESE section": "Students > Enrollment & Demographics",
+      "Reporting period": "2025–26 preliminary",
+      "Official DESE URL": "https://apps.dese.mo.gov/MCDS/Home.aspx"
+    },
+    {
+      "Dataset": "Demographics / FRL / EL / IEP",
+      "Uploaded source filename": "District Demographic Data (1).xlsx",
+      "DESE section": "Students > Enrollment & Demographics",
+      "Reporting period": "2025",
+      "Official DESE URL": "https://apps.dese.mo.gov/MCDS/Home.aspx"
+    },
+    {
+      "Dataset": "Building demographics",
+      "Uploaded source filename": "Building Demographic Data 2006 to Current.xlsx",
+      "DESE section": "Students > Enrollment & Demographics",
+      "Reporting period": "2025",
+      "Official DESE URL": "https://apps.dese.mo.gov/MCDS/Home.aspx"
+    },
+    {
+      "Dataset": "MAP charter totals",
+      "Uploaded source filename": "2025 District_Content Area All and Disag.xlsx",
+      "DESE section": "Students > MAP Data",
+      "Reporting period": "2025",
+      "Official DESE URL": "https://apps.dese.mo.gov/MCDS/Home.aspx"
+    },
+    {
+      "Dataset": "MAP building totals",
+      "Uploaded source filename": "2025 School_content area all and disag.xlsx",
+      "DESE section": "Students > MAP Data",
+      "Reporting period": "2025",
+      "Official DESE URL": "https://apps.dese.mo.gov/MCDS/Home.aspx"
+    },
+    {
+      "Dataset": "Opened year / sponsorship",
+      "Uploaded source filename": "OSCP_DESE_Extraction_Initial.xlsx",
+      "DESE section": "DESE charter directory + OSCP slides",
+      "Reporting period": "Mixed",
+      "Official DESE URL": "https://dese.mo.gov/quality-schools/charter-schools"
+    },
+    {
+      "Dataset": "Building directory",
+      "Uploaded source filename": "School Building List.xlsx",
+      "DESE section": "Directory Calendar Maps",
+      "Reporting period": "2026–27 directory",
+      "Official DESE URL": "https://dese.mo.gov/school-directory/data-downloads"
+    }
+  ],
+  "definitions": {
+    "enrollment": "Preliminary K–12 enrollment; preschool excluded. Not finalized 2026–27 enrollment.",
+    "map": "2025 charter-level MAP Proficient + Advanced counts divided by reportable students × 100. Suppressed components are never reconstructed.",
+    "demographics": "2025 DESE charter-level percentages from the supplied cohort master. IEP incidence is the source field, not independently recalculated."
+  },
+  "confirmed_events": []
+}

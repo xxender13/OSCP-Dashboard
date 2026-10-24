@@ -1,0 +1,5 @@
+data/
+qa/
+__pycache__/
+*.pyc
+node_modules/
