@@ -124,8 +124,12 @@ class ReportingTests(unittest.TestCase):
         for asset in parser.paths:
             if not asset.startswith('https://'):self.assertTrue((ROOT/'dist'/asset).is_file())
         script=(ROOT/'app.js').read_text(encoding='utf-8')
-        for anchor in ('enrollmentPanel','demographicsPanel','frlPanel','schoolListPanel','matchedMapPanel','growthPanel'):
+        html=(ROOT/'index.html').read_text(encoding='utf-8')
+        for anchor in ('students-schools','student-demographics','academic-performance','academic-growth'):
+            self.assertIn(f'id="{anchor}"',html)
             self.assertIn(anchor,script)
+        for report in ('enrollment','demographics','frl','schoolList','matchedMap','growth'):
+            self.assertIn(f"report('{report}'",script)
         self.assertIn('Unavailable*',script)
 
 

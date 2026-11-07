@@ -82,3 +82,9 @@ Directory reporting year and unique campus counts; current 2026–27 enrollment;
 ## Independent DESE audit
 
 See [independent data audit](docs/independent-data-audit.md) for current statewide context, the dated 14-building directory and exact-grade MAP comparisons. All six original numerical KPIs are retained. Offline builds use the tracked aggregate reference snapshot; public-source refresh and browser-test dependencies are in `requirements-audit.txt`. Run `python -m unittest test_data.py test_reporting.py test_independent.py` and `python test_dashboard.py` after building.
+
+## Public impact experience
+
+The dashboard now leads with a six-measure impact overview, a searchable school directory, plain-language demographics, grade-matched MAP comparisons and denominator-first growth visuals. All analytical tools remain under **Explore Data** with independent filters, expandable tables and CSV downloads. See [UI redesign documentation](docs/ui-redesign.md) for design decisions, accessibility, screenshots and limitations.
+
+Run `python -m unittest discover` after `python build.py`; `test_ui.py` also verifies that the entire validated baseline payload remains unchanged apart from its build timestamp. Browser checks cover 320, 375, 768, 1024 and 1440px.

@@ -24,6 +24,7 @@ class QuietHandler(SimpleHTTPRequestHandler):
 
 
 def run():
+    (ROOT/'qa'/'ui-redesign').mkdir(parents=True,exist_ok=True)
     chrome = Path(os.environ.get('PROGRAMFILES', 'C:/Program Files')) / 'Google/Chrome/Application/chrome.exe'
     if not chrome.exists():
         raise RuntimeError('Chrome is required for browser tests; update the executable path for your system.')
@@ -95,6 +96,17 @@ def run():
             assert js("document.getElementById('assessmentReference').textContent.includes('single-grade/course')")
             assert js("document.getElementById('frlReference').textContent.includes('49.3%')")
             assert js("document.getElementById('schoolListContext').textContent.includes('June 30, 2026')")
+            assert js("new Set([...document.querySelectorAll('[id]')].map(n=>n.id)).size===document.querySelectorAll('[id]').length")
+            assert js("document.querySelectorAll('.report-disclosure[open]').length") == 0
+            assert js("document.querySelectorAll('.data-disclosure[open]').length") == 0
+            assert js("document.querySelectorAll('#publicSchoolCards .school-card').length") == 14
+            assert js("document.getElementById('networkStory').textContent.includes('3,953')")
+            assert js("document.getElementById('frlStory').textContent.includes('61.06%')")
+            if js('Boolean(window.Chart)'):
+                assert js('Object.keys(charts)') == ['matchedMap'], 'Advanced charts should initialize only when opened'
+            js("document.querySelector('.explorer-link[href=\"#enrollmentPanel\"]').click()")
+            assert js("document.getElementById('enrollmentDisclosure').open") is True
+            assert js('document.activeElement.id') == 'enrollmentPanel'
             # Native keyboard activation follows each card's anchor and focuses its report.
             for card in js("Array.from(document.querySelectorAll('.kpi-link'),a=>({key:a.dataset.kpi,target:a.hash.slice(1)}))"):
                 js(f"document.querySelector('[data-kpi={card['key']}]').focus()")
@@ -102,6 +114,8 @@ def run():
                 cdp('Input.dispatchKeyEvent', {'type':'keyUp','key':'Enter','code':'Enter','windowsVirtualKeyCode':13})
                 assert js('document.activeElement.id') == card['target'], card
                 assert js('location.hash') == '#'+card['target']
+            js("document.querySelectorAll('.report-disclosure').forEach(d=>d.open=true)")
+            time.sleep(.2)
             chart_loaded = js('Boolean(window.Chart)')
             if chart_loaded:
                 assert js('charts.timeline.scales.y.ticks.filter(t=>t.label.length).length') == 6
@@ -112,6 +126,30 @@ def run():
 
             def values(id):
                 return js(f"Array.from(document.getElementById({json.dumps(id)}).options,o=>o.value)")
+
+            # Public views update independently and preserve clear missingness.
+            for metric in values('publicDemoMetric'):
+                choose('publicDemoMetric',metric)
+                assert js("document.querySelectorAll('#demographicsStory .html-bar-row').length") == 6
+                assert js("document.getElementById('demographicsStory').textContent.includes('2025')")
+            choose('publicDemoMetric','Black %')
+            js("document.getElementById('publicSchoolSearch').value='Linwood';document.getElementById('publicSchoolSearch').dispatchEvent(new Event('input'))")
+            assert js("document.querySelectorAll('#publicSchoolCards .school-card').length") == 1
+            assert js("document.getElementById('publicSchoolCards').textContent.includes('Network opened')")
+            js("document.getElementById('publicDirectoryReset').click()")
+            for school in values('publicSchoolNetwork'):
+                choose('publicSchoolNetwork',school)
+                assert js("document.querySelectorAll('#publicSchoolCards .school-card').length") >= 1
+            js("document.getElementById('publicDirectoryReset').click()")
+            assert js("document.querySelectorAll('#publicSchoolCards .school-card').length") == 14
+            js("document.getElementById('matchedMapTableDisclosure').open=true")
+            assert js("document.getElementById('matchedMapData').getBoundingClientRect().height>0")
+            js("document.getElementById('matchedMapTableDisclosure').open=false")
+            choose('matchedSubject','Mathematics')
+            assert js("document.getElementById('matchedMapTitle').textContent.includes('Grade 3 Mathematics')")
+            assert js("document.getElementById('matchedMapInsight').textContent.includes('2 of 4 eligible schools')")
+            js("document.getElementById('matchedMapFilters').reset()")
+            time.sleep(.1)
 
             choose('schoolListAddress','shared')
             assert js("document.querySelectorAll('#schoolListData tbody tr').length") == 4
@@ -189,13 +227,13 @@ def run():
             js("document.getElementById('directorySearch').value='not-a-school';document.getElementById('directorySearch').dispatchEvent(new Event('input'))")
             assert js("document.querySelectorAll('#directoryData tbody tr').length") == 0
             # Check CSV content without writing a browser download to the user's Downloads folder.
-            js("window.testExport=null;URL.createObjectURL=(blob)=>{window.testExport=blob;return 'blob:test'};HTMLAnchorElement.prototype.click=function(){};document.querySelector('[data-export=history]').click()")
+            js("window.testExport=null;URL.createObjectURL=(blob)=>{window.testExport=blob;return 'blob:test'};window.originalAnchorClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){};document.querySelector('[data-export=history]').click()")
             export = js('window.testExport.text()')
             assert 'Historical Demographics' in export and '2010' in export and 'Filter context' in export
             for report, expected in [('matchedMap','State source row'),('schoolList','Directory as of')]:
                 js(f"document.querySelector('[data-export={report}]').click()")
                 assert expected in js('window.testExport.text()')
-            js("document.getElementById('resetAll').click()")
+            js("HTMLAnchorElement.prototype.click=window.originalAnchorClick;document.getElementById('resetAll').click()")
             time.sleep(.1)
             assert js("document.getElementById('reachCount').textContent") == '3,953'
             assert js("document.getElementById('mapGroup').value") == '["MSIP Total","Total"]'
@@ -207,11 +245,13 @@ def run():
             assert js("document.getElementById('growthData').textContent.includes('Unavailable*')")
             js("document.getElementById('resetAll').click()")
             time.sleep(.1)
+            js("document.querySelectorAll('.advanced-filters').forEach(d=>d.open=true)")
             js("document.getElementById('demoSchool').focus()")
             cdp('Input.dispatchKeyEvent', {'type': 'keyDown', 'key': 'Tab', 'code': 'Tab', 'windowsVirtualKeyCode': 9})
             cdp('Input.dispatchKeyEvent', {'type': 'keyUp', 'key': 'Tab', 'code': 'Tab', 'windowsVirtualKeyCode': 9})
-            assert js('document.activeElement.id') == 'demoLevel'
-            for width in (320, 768, 1440):
+            assert js('document.activeElement.id') == 'demoMetric'
+            js("document.querySelectorAll('.report-disclosure,.advanced-filters,.data-disclosure').forEach(d=>d.open=false)")
+            for width in (320, 375, 768, 1024, 1440):
                 cdp('Emulation.setEmulatedMedia', {'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
                 cdp('Emulation.setDeviceMetricsOverride', {'width': width, 'height': 1000, 'deviceScaleFactor': 1, 'mobile': False})
                 time.sleep(.3)
@@ -220,8 +260,27 @@ def run():
                 js("document.getElementById('sourceList').closest('details').open=true")
                 assert js('document.documentElement.scrollWidth') <= width, f'Expanded sources overflow at {width}'
                 js("document.getElementById('sourceList').closest('details').open=false")
-                expected_columns = 1 if width==320 else 2 if width==768 else 3
+                expected_columns = 1 if width<=540 else 2 if width<=780 else 3
                 assert js("getComputedStyle(document.getElementById('kpis')).gridTemplateColumns.split(' ').length") == expected_columns
+                if width<=780:
+                    js("if(document.getElementById('menuToggle').getAttribute('aria-expanded')==='true')document.getElementById('menuToggle').click()")
+                    js("document.getElementById('menuToggle').focus()")
+                    cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'Enter','code':'Enter','windowsVirtualKeyCode':13,'text':'\r'})
+                    cdp('Input.dispatchKeyEvent',{'type':'keyUp','key':'Enter','code':'Enter','windowsVirtualKeyCode':13})
+                    assert js("document.getElementById('menuToggle').getAttribute('aria-expanded')") == 'true', (width,js('document.activeElement.outerHTML'))
+                    assert js("document.getElementById('navLinks').getBoundingClientRect().height>0")
+                    cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'Escape','code':'Escape','windowsVirtualKeyCode':27})
+                    cdp('Input.dispatchKeyEvent',{'type':'keyUp','key':'Escape','code':'Escape','windowsVirtualKeyCode':27})
+                    assert js("document.getElementById('menuToggle').getAttribute('aria-expanded')") == 'false'
+                    assert js('document.activeElement.id') == 'menuToggle'
+                for target in ('overview','students-schools','student-demographics','academic-performance','academic-growth','explore-data'):
+                    js(f"document.querySelector('#navLinks a[href=\"#{target}\"]').click()")
+                    time.sleep(.05)
+                    assert js('location.hash') == '#'+target
+                    assert js('document.activeElement.id') == target
+                js("document.getElementById('students-schools').scrollIntoView()")
+                time.sleep(.1)
+                assert js("document.querySelector('#navLinks a[aria-current]').hash") == '#students-schools'
                 js('window.scrollTo(0,0)')
                 screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
                 (ROOT / 'qa' / f'dashboard-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
@@ -229,7 +288,19 @@ def run():
                 time.sleep(.1)
                 screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
                 (ROOT / 'qa' / f'kpis-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
+                for story in ('networkStory','demographicsStory','growthStory'):
+                    js(f"document.getElementById('{story}').scrollIntoView()")
+                    time.sleep(.1)
+                    screenshot=cdp('Page.captureScreenshot',{'captureBeyondViewport':False})
+                    (ROOT/'qa'/'ui-redesign'/f'{story}-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
+                js("document.querySelector('.directory-disclosure').open=true;document.getElementById('publicSchoolCards').scrollIntoView()")
+                assert js('document.documentElement.scrollWidth')<=width
+                screenshot=cdp('Page.captureScreenshot',{'captureBeyondViewport':False})
+                (ROOT/'qa'/'ui-redesign'/f'directory-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
+                js("document.querySelector('.directory-disclosure').open=false")
                 for report in ('demographics', 'assessment', 'history', 'timeline','frl','growth','matchedMap'):
+                    js(f"document.getElementById('{report}Disclosure') && (document.getElementById('{report}Disclosure').open=true)")
+                    time.sleep(.1)
                     js(f"document.getElementById('{report}Title').scrollIntoView()")
                     time.sleep(.1)
                     screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
@@ -238,6 +309,7 @@ def run():
                     time.sleep(.1)
                     screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
                     (ROOT / 'qa' / f'{report}-plot-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
+                js("document.querySelectorAll('.report-disclosure').forEach(d=>d.open=false)")
                 js('window.scrollTo(0,0)')
             # Exercise the actual CDN failure path, without changing application code.
             cdp('Network.enable')
@@ -249,10 +321,13 @@ def run():
             assert js('Boolean(window.Chart)') is False
             assert js("document.getElementById('chartFallback').hidden") is False
             assert js("document.querySelectorAll('#demographicsData tbody tr').length") == 6
+            assert js("document.querySelectorAll('.data-disclosure:not([open])').length") == 0
+            assert js("document.getElementById('networkStory').textContent.includes('3,953')")
+            assert js("document.getElementById('growthStory').textContent.includes('7')")
             assert not errors, errors
-            result = {'passed': True, 'chart_cdn_loaded': chart_loaded, 'viewports': [320, 768, 1440],
+            result = {'passed': True, 'chart_cdn_loaded': chart_loaded, 'viewports': [320, 375, 768, 1024, 1440],
                 'checks': ['repository-subpath loading', 'independent filters', 'six school and two reporting level filters', 'all demographic and MAP measure filters', 'student group and subject filters', 'historical year range', 'filtered CSV content', 'search', 'reset',
-                    'missing metric exclusion', 'MAP suppression coverage', 'six keyboard card anchors', '1/2/3 column card layouts', 'growth and FRL filters', 'ineligible growth missing values', 'missingness footnotes', 'official state references', 'single-grade subject/group comparisons', 'dated directory and shared-address filters', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions']}
+                    'missing metric exclusion', 'MAP suppression coverage', 'six keyboard card anchors', '1/2/3 column card layouts', 'growth and FRL filters', 'ineligible growth missing values', 'missingness footnotes', 'official state references', 'single-grade subject/group comparisons', 'dated directory and shared-address filters', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions', 'public demographic filters', 'public school search and network filters', 'mobile menu keyboard and Escape', 'six navigation links and active section', 'progressive disclosure', 'dynamic MAP title and takeaway', 'screen-reader chart alternatives']}
             (ROOT / 'qa' / 'browser-results.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
             print(json.dumps(result, indent=2))
         finally:

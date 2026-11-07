@@ -3,7 +3,7 @@ const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const valid = v => typeof v === 'number' && Number.isFinite(v);
 const fmt = v => valid(v) ? v.toLocaleString('en-US',{maximumFractionDigits:2}) : 'Unavailable*';
-const colors = ['#003DA5','#85651d','#007875','#764e9b','#ad463e','#536579'];
+const colors = ['#003DA5','#687887','#007875','#764e9b','#ad463e','#85651d'];
 const shapes = ['circle','rect','triangle','rectRot','crossRot','star'];
 const charts = {}, exportsByReport = {};
 let data;
@@ -16,21 +16,32 @@ function options(id, entries, fallback) {
   node.replaceChildren(...entries.map(([value,label])=>new Option(label,String(value))));
   node.value=entries.some(([v])=>String(v)===previous)?previous:String(entries.some(([v])=>String(v)===String(fallback))?fallback:entries[0]?.[0]??'');
 }
-function schoolEntries() { return [['all','All Schools'],...data.schools.map(s=>[s['DESE LEA'],s.School])]; }
+function schoolEntries() { return [['all','All networks'],...data.schools.map(s=>[s['DESE LEA'],s.School])]; }
 function control(id,label,entries) { return `<div><label for="${id}">${esc(label)}</label><select id="${id}">${entries.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('')}</select></div>`; }
 function schoolControl(id) {return control(id,'School',schoolEntries());}
-function levelControl(id) {return control(id,'Reporting level',[['Charter','Charter schools'],['Building','DESE building records']]);}
+function levelControl(id) {return control(id,'Reporting level',[['Charter','Charter networks'],['Building','Individual school records']]);}
 function sortControl(id) {return control(id,'Sort by',[['desc','Value: high to low'],['asc','Value: low to high'],['name','Name: A–Z']]);}
 function report(id,mount,title,description,controls,source) {
-  $(mount).innerHTML=`<article id="${id}Panel" class="panel report" tabindex="-1"><div class="chart-heading"><div><p class="eyebrow">INTERACTIVE REPORT</p><h3 id="${id}Title">${esc(title)}</h3></div><button type="button" class="download" data-export="${id}">Download CSV</button></div><p class="report-description">${esc(description)}</p><form class="local-filters" id="${id}Filters">${controls}<button type="reset">Reset chart</button></form><p id="${id}Context" class="context" aria-live="polite"></p><div id="${id}Insight" class="insight"></div><div id="${id}Reference" class="reference" hidden></div><div id="${id}Legend" class="legend" aria-label="Chart legend"></div><div id="${id}Plot" class="plot"><canvas id="${id}Chart" role="img" aria-labelledby="${id}Title" aria-describedby="${id}Context ${id}Data"></canvas></div><div id="${id}Data" class="scroll" tabindex="0" role="region" aria-label="${esc(title)} values"></div><p class="source">${esc(source)}</p><p class="missing-footnote">${esc(data.missing_data_note)}</p></article>`;
+  const article=`<article id="${id}Panel" class="panel report" tabindex="-1"><div class="chart-heading"><div><p class="eyebrow">${id==='matchedMap'?'COMPARE THE SAME GRADE':'DETAILED DATA EXPLORER'}</p><h3 id="${id}Title">${esc(title)}</h3></div><button type="button" class="download" data-export="${id}">Download CSV</button></div><p class="report-description">${esc(description)}</p><form class="local-filters" id="${id}Filters">${controls}<button type="reset">Reset</button></form><p id="${id}Context" class="context" aria-live="polite"></p><div id="${id}Insight" class="insight"></div><div id="${id}Legend" class="legend" aria-label="Chart legend"></div><div id="${id}Plot" class="plot"><canvas id="${id}Chart" role="img" aria-labelledby="${id}Title" aria-describedby="${id}Context ${id}Insight"></canvas></div><details class="data-disclosure" id="${id}TableDisclosure"><summary>View data table<span class="sr-only">: ${esc(title)}</span></summary><div id="${id}Data" class="scroll" tabindex="0" role="region" aria-label="${esc(title)} values"></div></details><details class="source-details"><summary>Sources &amp; how to read this report</summary><div id="${id}Reference" class="reference" hidden></div><p class="source">${esc(source)}</p><p class="missing-footnote">${esc(data.missing_data_note)}</p></details></article>`;
+  $(mount).innerHTML=id==='matchedMap'?article:`<details class="report-disclosure" id="${id}Disclosure"><summary><span>${esc(title)}<small>${esc(description)}</small></span></summary>${article}</details>`;
+  const basic={matchedMap:['matchedSubject','matchedGrade','matchedSchool'],demographics:['demoSchool','demoMetric'],enrollment:['enrollSchool','enrollMetric'],assessment:['mapSchool','mapSubject'],growth:['growthSchool','growthSubject'],history:['historySchool','historyMetric'],timeline:['timelineSchool'],frl:['frlSchool'],schoolList:['schoolListSchool','schoolListSearch'],coverage:['coverageSchool'],directory:['directorySchool','directorySearch']}[id];
+  const form=$(id+'Filters'),advanced=[];
+  [...form.children].filter(n=>n.tagName==='DIV').forEach(node=>{node.classList.add('filter-field');if(!basic.includes(node.querySelector('select,input').id))advanced.push(node);});
+  if(advanced.length){const details=document.createElement('details');details.className='advanced-filters';details.innerHTML='<summary>Advanced filters</summary><div class="advanced-fields"></div>';advanced.forEach(n=>details.lastElementChild.append(n));form.insertBefore(details,form.lastElementChild);}
+  if(id==='matchedMap')basic.forEach(key=>{const node=$(key)?.closest('.filter-field');if(node)form.insertBefore(node,form.querySelector('.advanced-filters'));});
+  $(id+'Disclosure')?.addEventListener('toggle',()=>{if($(id+'Disclosure').open)renderers[id]();});
 }
 function table(id,caption,headers,rows) {
   $(id).innerHTML=`<table><caption>${esc(caption)}</caption><thead><tr>${headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>i?`<td>${esc(valid(v)?(/year|since/i.test(headers[i])?String(v):fmt(v)):v??'Unavailable*')}</td>`:`<th scope="row">${esc(v)}</th>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
-function storeTable(id,caption,headers,rows) { exportsByReport[id]={headers,rows};table(id+'Data',caption,headers,rows); }
+function storeTable(id,caption,headers,rows) {
+  exportsByReport[id]={headers,rows};table(id+'Data',caption,headers,rows);
+  const advanced=$(id+'Filters').querySelector('.advanced-filters');
+  if(advanced){const selections=[...advanced.querySelectorAll('select')].map(s=>s.selectedOptions[0]?.textContent).filter(Boolean);advanced.querySelector('summary').textContent='Advanced filters'+(selections.length?' · '+selections.join(' / '):'');}
+}
 function legend(id,series,type='bar') {
   const symbols={circle:'●',rect:'■',triangle:'▲',rectRot:'◆',crossRot:'×',star:'✦'};
-  $(id+'Legend').innerHTML=series.map((s,i)=>`<span>${type==='bar'?`<b style="background:${s.color??colors[i%colors.length]}"></b>`:`<b class="point-key" style="color:${s.color??colors[i%colors.length]}" aria-hidden="true">${symbols[s.options?.pointStyle??shapes[i%shapes.length]]}</b>`}${esc(s.label)}</span>`).join('');
+  $(id+'Legend').innerHTML=series.map((s,i)=>`<span>${type==='bar'?`<b style="background:${s.options?.backgroundColor??s.color??colors[i%colors.length]};${s.options?.borderWidth?'border:1.5px solid '+(s.color??colors[i%colors.length]):''}"></b>`:`<b class="point-key" style="color:${s.color??colors[i%colors.length]}" aria-hidden="true">${symbols[s.options?.pointStyle??shapes[i%shapes.length]]}</b>`}${esc(s.label)}</span>`).join('');
 }
 function destroy(id) {if(charts[id]){charts[id].destroy();delete charts[id];}}
 function wrapLabel(label,limit) {return String(label).split(' ').reduce((lines,w)=>{if((lines.at(-1)+' '+w).trim().length>limit&&lines.at(-1))lines.push(w);else lines[lines.length-1]+=(lines.at(-1)?' ':'')+w;return lines;},['']);}
@@ -39,10 +50,12 @@ function draw(id,type,labels,series,unit,extra={}) {
   const available=series.some(s=>s.values.some(v=>valid(v)||v&&valid(v.x)&&valid(v.y)));
   $(id+'Plot').hidden=!window.Chart||!available;
   legend(id,series,type);
+  if(!window.Chart)$(id+'TableDisclosure').open=true;
+  if($(id+'Disclosure')&&!$(id+'Disclosure').open)return;
   if(!window.Chart||!available)return;
   const horizontal=type==='bar';
   $(id+'Plot').style.height=horizontal?`${Math.max(320,labels.length*(series.length>1?75:58)+70)}px`:'360px';
-  const plugin={id:'barValues',afterDatasetsDraw(c){if(!horizontal)return;const ctx=c.ctx;ctx.save();ctx.fillStyle='#172b45';ctx.font='11px system-ui';c.data.datasets.forEach((set,i)=>{if(!c.isDatasetVisible(i))return;c.getDatasetMeta(i).data.forEach((bar,j)=>{if(valid(set.data[j]))ctx.fillText(`${fmt(set.data[j])}${unit==='%'?'%':''}`,bar.x+5,bar.y+4);});});ctx.restore();}};
+  const plugin={id:'barValues',afterDatasetsDraw(c){if(!horizontal)return;const ctx=c.ctx;ctx.save();ctx.fillStyle='#172b45';ctx.font='12px system-ui';c.data.datasets.forEach((set,i)=>{if(!c.isDatasetVisible(i))return;c.getDatasetMeta(i).data.forEach((bar,j)=>{if(valid(set.data[j]))ctx.fillText(`${fmt(set.data[j])}${unit==='%'?'%':''}`,bar.x+5,bar.y+4);});});ctx.restore();}};
   const percentAxis={beginAtZero:true,...(unit==='%'?{max:100}:{}),title:{display:true,text:unit==='%'?'Percent (%)':unit},grid:{color:'#e6edf5'},ticks:{precision:unit==='%'?1:0}};
   const scales=horizontal?{x:percentAxis,y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11},callback:function(v){return wrapLabel(this.getLabelForValue(v),this.chart.width<500?12:24);}}}}:type==='line'?{x:{title:{display:true,text:'Reporting year'},grid:{display:false},ticks:{maxTicksLimit:8}},y:percentAxis}:extra.scales;
   charts[id]=new Chart($(id+'Chart'),{type,data:{labels,datasets:series.map((s,i)=>({label:s.label,data:s.values,backgroundColor:s.color??colors[i%colors.length],borderColor:s.color??colors[i%colors.length],pointStyle:shapes[i%shapes.length],pointRadius:4,borderWidth:type==='line'?2:0,maxBarThickness:24,borderRadius:3,spanGaps:false,...s.options}))},plugins:[plugin],options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{right:horizontal?60:16,top:12}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(horizontal?ctx.parsed.x:ctx.parsed.y)}${unit==='%'?'%':''}`}}},scales,...extra.options}});
@@ -198,10 +211,12 @@ function renderMatchedMap() {
   const labels=g=>({'E1':'E1 · English I','E2':'E2 · English II','A1':'A1 · Algebra I','A2':'A2 · Algebra II','B1':'B1 · Biology','G1':'G1 · Government'}[g]??(/^\d+$/.test(g)?`Grade ${g}`:`Course ${g}`));
   options('matchedGrade',[...new Set(group.map(r=>r.grade))].sort().map(g=>[g,labels(g)]),'3');
   const rows=group.filter(r=>r.grade===$('matchedGrade').value),eligible=rows.filter(r=>r.above_state!==null),above=eligible.filter(r=>r.above_state);
-  $('matchedMapContext').textContent=`2025 · ${$('matchedLevel').selectedOptions[0].textContent} · ${$('matchedSubject').selectedOptions[0].textContent} · ${$('matchedGrade').selectedOptions[0]?.textContent??'No source grade'} · ${above.length}/${eligible.length} eligible records strictly above the same Missouri subject/group/grade rate. ${eligible.length}/${rows.length} selected source records have both published component counts and denominators.`;
-  $('matchedMapInsight').textContent='A single grade or course is selected so schools and student groups are not double counted. Suppressed counts are excluded. Exceeding this state rate is descriptive; it does not mean meeting an official school-specific goal. These grade-export populations differ from the MSIP all-required-content aggregates above.';
+  const subject=$('matchedSubject').selectedOptions[0].textContent,grade=$('matchedGrade').selectedOptions[0]?.textContent??'No reportable grade',unit=$('matchedLevel').value==='Building'?'schools':'networks';
+  $('matchedMapTitle').textContent=`${grade} ${subject}: ${$('matchedLevel').value==='Building'?'School':'Network'} vs Missouri`;
+  $('matchedMapContext').textContent=`2025 · ${$('matchedLevel').selectedOptions[0].textContent} · ${$('matchedSchool').selectedOptions[0].textContent} · ${$('matchedGroup').selectedOptions[0]?.textContent??'No group'} · ${above.length}/${eligible.length} eligible records above Missouri. ${eligible.length}/${rows.length} selected records have the required published counts.`;
+  $('matchedMapInsight').innerHTML=eligible.length?`<strong>${above.length} of ${eligible.length} eligible ${unit}</strong> scored above Missouri for ${esc(grade.toLowerCase())} ${esc(subject.toLowerCase())} in the selected student group. ${rows.length-eligible.length} of ${rows.length} selected records cannot be compared because required counts are unavailable. <span class="context">Above Missouri does not mean meeting a school's own official goal.</span>`:'<strong>Comparison unavailable for this selection.</strong> The school and state must both publish Proficient, Advanced and a positive reportable count for the same subject, grade and group. Missing values are not zero. Try another grade or subject.';
   reference('matchedMap',`<strong>Exact-match formula</strong><p>For both school and Missouri: 100 × (published Proficient + Advanced) / Reportable, using the same year, subject, source group and grade/course. No inferred component or unweighted school average. Full-school MSIP classifications remain Unavailable* where grade totals do not reconcile to that different reporting scope.</p>`);
-  draw('matchedMap','bar',eligible.map(r=>r.name),[{label:'School / network · P+A (%)',values:eligible.map(r=>r.school_pct)},{label:'Missouri · same subject/group/grade (%)',values:eligible.map(r=>r.state_pct)}],'%');
+  draw('matchedMap','bar',eligible.map(r=>r.name),[{label:'Sponsored school / network · Proficient or Advanced (%)',values:eligible.map(r=>r.school_pct)},{label:'Missouri · same subject, group and grade (%)',values:eligible.map(r=>r.state_pct),color:'#687887',options:{backgroundColor:'#ffffff',borderWidth:1.5,borderColor:'#687887'}}],'%');
   storeTable('matchedMap','Source-verified 2025 single-grade/course MAP comparison',['School / network','Subject','Group','Grade/course','School P+A count','School reportable','School P+A (%)','State P+A count','State reportable','State P+A (%)','Strictly above state','LEA','Building identifier','School source','School source row','State source','State source row','Unavailable reason'],rows.map(r=>[r.name,r.subject,r.group,r.grade,r.school_numerator,r.school_denominator,r.school_pct,r.state_numerator,r.state_denominator,r.state_pct,r.above_state===null?null:r.above_state?'Yes':'No',r.lea,r.building??'Charter',r.source_file,r.source_row,r.state_source_file,r.state_source_row,r.missingness.comparison?.detail??'All exact-match counts reported']));
 }
 function renderGrowth() {
@@ -219,21 +234,81 @@ function renderGrowth() {
   draw('growth','bar',networks.map(s=>s.School),[{label:`${subject} · eligible buildings designated Target (%)`,values}],'%');
   storeTable('growth','2025 APR building ALL growth measures',['Building','Network','Source grades','Designation','Points earned','Points possible','Points earned (%)','Eligible','LEA','Building identifier','Source row','Missingness note'],rows.map(r=>[r.name,data.schools.find(s=>s['DESE LEA']===r.lea).School,r.grade_span,r.designation,r.earned,r.possible,r.points_pct,r.eligible?'Yes':'No: measure unavailable',r.lea,r.building,r.source_row,reason(r,['possible','earned','designation'])]));
 }
+function publicBar(label,value,max=100,suffix='%') {
+  const available=valid(value),width=available?Math.max(0,Math.min(100,100*value/max)):0;
+  return `<div class="html-bar-row"><span class="html-bar-label">${esc(label)}</span><div class="bar-track" aria-hidden="true"><div class="bar-fill" style="width:${width}%"></div></div><span class="bar-value ${available?'':'unavailable-value'}">${available?fmt(value)+suffix:'Unavailable*'}</span></div>`;
+}
+function sourceNote(text,url,label='Official source') {
+  return `<p class="source">${esc(text)}${url?` · <a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a>`:''}</p>`;
+}
+function revealTarget(hash,focus=true) {
+  const target=document.querySelector(hash);if(!target)return;
+  const disclosure=target.closest('.report-disclosure');if(disclosure)disclosure.open=true;
+  if(focus&&target.hasAttribute('tabindex'))target.focus({preventScroll:true});
+  history.replaceState(null,'',hash);
+  requestAnimationFrame(()=>target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
+}
 function renderKpis() {
-  const k=data.kpi_metrics,ela=k.map['Eng. Language Arts'],math=k.map.Mathematics,g=k.growth['Eng. Language Arts'];
-  const cards=[['students','Students Served',fmt(k.students.value),'2025–26 preliminary K–12 enrollment; sponsored schools only','Six charter networks; preschool excluded.','enrollmentPanel'],
-    ['demographics','Student Demographics',`${fmt(k.demographics.value)}%`,'2025 · students identifying as Black',`${fmt(k.demographics.numerator)} / ${fmt(k.demographics.denominator)} K–12 enrollment; six networks.`,'demographicsPanel'],
-    ['frl','Free/Reduced Lunch Students Served',fmt(k.frl.numerator),`2025 · ${fmt(k.frl.value)}% of January membership`,`${fmt(k.frl.numerator)} / ${fmt(k.frl.denominator)}; not preliminary enrollment.`,'frlPanel'],
-    ['schools','Sponsored Schools',fmt(k.schools.value),'DESE-listed individual school/building records across six charter networks','Confirmed directory as of June 30, 2026. Building identifiers do not establish unique physical campuses.','schoolListPanel'],
-    ['map','MAP Scores',`${fmt(ela.value)}% ELA`,`2025 · Math: ${fmt(math.value)}% P+A`,`${ela.reportable_networks}/6 reportable networks; ELA ${fmt(ela.numerator)}/${fmt(ela.denominator)}, Math ${fmt(math.numerator)}/${fmt(math.denominator)} tested. Grade 3 above matched state rate: ELA ${data.matched_map.grade_summaries['Eng. Language Arts']['3'].Building.numerator}/${data.matched_map.grade_summaries['Eng. Language Arts']['3'].Building.denominator} schools; Math ${data.matched_map.grade_summaries.Mathematics['3'].Building.numerator}/${data.matched_map.grade_summaries.Mathematics['3'].Building.denominator}.`,'matchedMapPanel'],
-    ['growth','Growth',`${fmt(g.value)}%`,'2025 APR ELA · eligible buildings designated Target',`${g.numerator}/${g.denominator} eligible buildings. Math: ${fmt(k.growth.Mathematics.value)}% (${k.growth.Mathematics.numerator}/${k.growth.Mathematics.denominator}).`,'growthPanel']];
-  $('kpis').innerHTML=cards.map(([key,label,value,subtitle,note,target])=>`<a class="kpi kpi-link" data-kpi="${key}" href="#${target}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(subtitle)}</small><p>${esc(note)}</p><span class="card-action">Explore report →</span></a>`).join('');
+  const k=data.kpi_metrics,ela=k.map['Eng. Language Arts'],math=k.map.Mathematics,g=k.growth['Eng. Language Arts'],gm=k.growth.Mathematics;
+  const icons=['<path d="M4 20v-2a6 6 0 0 1 12 0v2M16 5a4 4 0 0 1 0 8m2 3a5 5 0 0 1 3 4"/><circle cx="10" cy="7" r="4"/>','<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6M9 10h.01M15 10h.01"/>','<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>','<path d="M5 3v7a3 3 0 0 0 6 0V3M8 3v18M19 21V3c-5 2-5 9 0 9"/>','<path d="M4 19h16M7 15V9M12 15V5M17 15v-4"/>','<path d="M4 20V4M4 20h16M8 15l4-5 4 2 5-7"/>'];
+  const cards=[
+    ['students','Students Served',fmt(k.students.value),'Preliminary K–12 enrollment · 2025–26','Excludes preschool and unverified additional partnerships.','students-schools'],
+    ['schools','Sponsored Schools',fmt(k.schools.value),'School records across six charter networks','DESE building identifiers · June 30, 2026. Not unique physical campuses.','students-schools'],
+    ['demographics','Student Demographics',`${fmt(k.demographics.value)}%`,'Black enrollment · 2025',`${fmt(k.demographics.numerator)} of ${fmt(k.demographics.denominator)} in the 2025 K–12 reporting population.`,'student-demographics'],
+    ['frl','Free/Reduced Lunch',fmt(k.frl.numerator),`${fmt(k.frl.value)}% of January membership · 2025`,`${fmt(k.frl.numerator)} of ${fmt(k.frl.denominator)} reported eligible for free or reduced-price lunch.`,'student-demographics'],
+    ['map','MAP Proficiency',`${fmt(ela.value)}% ELA`,`${fmt(math.value)}% Mathematics · 2025`,'Three of six reportable networks per subject. Proficient or Advanced tested students.','academic-performance'],
+    ['growth','Academic Growth',`${g.numerator} of ${g.denominator} ELA`,`${gm.numerator} of ${gm.denominator} Mathematics · 2025`,'Eligible buildings receiving the APR Target designation; not a student growth rate.','academic-growth']];
+  $('kpis').innerHTML=cards.map(([key,label,value,subtitle,note,target],i)=>`<a class="kpi kpi-link ${i===0?'primary':''}" data-kpi="${key}" href="#${target}"><span class="card-label"><span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icons[i]}</svg></span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(subtitle)}</small><p>${esc(note)}</p><span class="card-action">Explore this story <span aria-hidden="true">↗</span></span></a>`).join('');
   $('missingFootnote').textContent=data.missing_data_note;
-  document.querySelectorAll('.kpi-link').forEach(link=>link.addEventListener('click',event=>{
-    event.preventDefault();if(link.dataset.kpi==='demographics'){$('demoMetric').value='Black %';renderDemographics();}
-    const target=document.querySelector(link.getAttribute('href'));history.replaceState(null,'',link.getAttribute('href'));
-    target.focus({preventScroll:true});target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-  }));
+}
+function renderPublicDirectory() {
+  const query=$('publicSchoolSearch').value.trim().toLocaleLowerCase(),lea=$('publicSchoolNetwork').value;
+  const rows=data.directory.filter(r=>{const network=data.schools.find(s=>s['DESE LEA']===r.lea).School;return (lea==='all'||r.lea===lea)&&`${r.name} ${network} ${r.street} ${r.city} ${r.lea} ${r.building}`.toLocaleLowerCase().includes(query);});
+  $('publicDirectoryContext').textContent=`${rows.length} of ${data.directory.length} verified school records · June 30, 2026`;
+  const grades=s=>s.split('-').map(g=>g==='PK'?'Pre-K':g==='KK'?'K':g.replace(/^0([1-9])/,'$1')).join('–');
+  $('publicSchoolCards').innerHTML=rows.length?rows.map(r=>{
+    const school=data.schools.find(s=>s['DESE LEA']===r.lea);
+    return `<article class="school-card"><p class="network-name">${esc(school.School)}</p><h3>${esc(r.name)}</h3><p><b>Grades ${esc(grades(r.grades))}</b><br>${esc(r.street)}<br>${esc(r.city)} · ${esc(r.zip)}</p>${r.shared_address_with.length?'<span class="tag">Shares an address with another school record</span>':''}<p>Network opened ${esc(r.network_opening.opened_school_year)}.<br><small>This is not the building's opening date.</small></p>${r.verified_program_or_facility_history.map(h=>`<p>${esc(h.date)}: ${esc(h.scope)}. <a href="${esc(h.source_url)}" target="_blank" rel="noopener">School history</a></p>`).join('')}<details><summary>School identifiers &amp; sources</summary><p>DESE network ${esc(r.lea)} · building ${esc(r.building)}<br>Directory as of June 30, 2026 · page ${r.source_page}</p><a href="${esc(r.source_url)}" target="_blank" rel="noopener">Official DESE directory</a><p>${esc(r.verification_notes.join(' ')||'Matched to the dated DESE directory.')}</p></details></article>`;
+  }).join(''):'<p>No matching schools. Try another name or reset your search.</p>';
+}
+function renderPublicDemographics() {
+  const field=$('publicDemoMetric').value,info={
+    'Black %':['Black enrollment','black','Students reported as identifying as Black in the source racial/ethnic category. This is one category, not a complete picture of racial composition.'],
+    'FRL %':['Free or reduced-price lunch','frl','Eligibility for free or reduced-price lunch follows the reported January membership population. It is not a direct measure of household income.'],
+    'EL %':['English learners','el','Students identified as English learners in the source. Unavailable values do not mean there are no English learners.'],
+    'IEP incidence %':['Special education · IEP incidence','iep','IEP means Individualized Education Program. Incidence follows the DESE source definition and is not recalculated from rounded percentages.']
+  }[field];
+  const metric=field==='Black %'?data.kpi_metrics.demographics:field==='FRL %'?data.kpi_metrics.frl:null;
+  const rows=data.schools.map(s=>{const raw=data.demographic_counts.find(r=>r.level==='Charter'&&r.lea===s['DESE LEA']);return {name:s.School,value:metric?100*raw[metric.count_column]/raw[metric.denominator_column]:s[field]};});
+  const available=rows.filter(r=>valid(r.value));
+  $('demographicsStory').innerHTML=`<p class="story-takeaway">${metric?`<strong>${fmt(metric.value)}%</strong> across the six networks: ${fmt(metric.numerator)} of ${fmt(metric.denominator)} in the applicable 2025 population.`:`<strong>${available.length} of ${rows.length} networks</strong> have a reported ${esc(info[0].toLowerCase())} rate. No combined rate is inferred.`}</p><p class="context">${esc(info[2])}</p><p class="bar-axis">2025 · percent of each network's applicable reporting population · scale 0–100%</p><div class="html-bars">${rows.map(r=>publicBar(r.name,r.value)).join('')}</div><p class="context">Unavailable* means unreported or suppressed, not zero.</p><details><summary>Missouri context &amp; source</summary>${officialContext(info[1])}${sourceNote('Network data: 2025 DESE cohort and district demographic sources. Percentages use their own reporting populations. No percentage-point difference is calculated.')}</details>`;
+}
+function renderPublicStory() {
+  const k=data.kpi_metrics,schools=[...data.schools].sort((a,b)=>b['2025–26 K–12']-a['2025–26 K–12']),max=Math.max(...schools.map(s=>s['2025–26 K–12']));
+  $('studentTotal').textContent=fmt(k.students.value);
+  $('networkStory').innerHTML=`<div class="network-total"><strong>${fmt(k.students.value)}</strong><p><b>Students across six charter networks</b><br>Preliminary K–12 enrollment · 2025–26</p></div><h3>How many students does each network enroll?</h3><p class="story-takeaway">${esc(schools[0].School)} has the largest reported enrollment, with <strong>${fmt(schools[0]['2025–26 K–12'])}</strong> students. Each bar represents one network; building records are not added again.</p><p class="bar-axis">Students · bar length is relative to the largest network</p><div class="html-bars">${schools.map(s=>publicBar(s.School,s['2025–26 K–12'],max,'')).join('')}</div>${sourceNote('Source: reconciled OSCP DESE Cohort Master, preliminary 2025–26 K–12 enrollment. Preschool and other partnerships are excluded.')}<a class="explorer-link text-link" href="#enrollmentPanel">Explore enrollment periods and school-level detail →</a>`;
+  $('frlStory').innerHTML=`<div><div class="feature-number">${Math.round(k.frl.value)}<small>out of every 100 students</small></div><div class="bar-track" aria-hidden="true"><div class="bar-fill" style="width:${k.frl.value}%"></div></div></div><div><h3>Understanding lunch eligibility</h3><p>Approximately ${Math.round(k.frl.value)}% in the applicable January membership population were reported as eligible for free or reduced-price lunch. This is an interpretation of <b>${fmt(k.frl.value)}%</b>, not an exact count of 100 students.</p>${sourceNote(`${fmt(k.frl.numerator)} / ${fmt(k.frl.denominator)} January membership · 2025. Missouri published context (${esc(data.benchmarks.frl.year)}): ${fmt(data.benchmarks.frl.value)}%; underlying counts are not printed. Different populations are not directly subtracted.`,data.benchmarks.frl.source_url)}</div>`;
+  $('mapStory').innerHTML=[['Eng. Language Arts','English Language Arts'],['Mathematics','Mathematics']].map(([key,label])=>{const m=k.map[key];return `<article class="outcome-card"><p class="eyebrow">2025 / REPORTED ACHIEVEMENT</p><h3>${label}</h3><div class="outcome-value">${fmt(m.value)}%</div><p><b>${fmt(m.numerator)} of ${fmt(m.denominator)} reportable tested students</b> reached Proficient or Advanced.</p><div class="bar-track" aria-hidden="true"><div class="bar-fill" style="width:${m.value}%"></div></div><p class="source">${m.reportable_networks} of ${m.networks} networks have the required published counts. This is not an all-six-network rate.</p></article>`;}).join('');
+  $('growthStory').innerHTML=[['Eng. Language Arts','English Language Arts'],['Mathematics','Mathematics']].map(([key,label])=>{const m=k.growth[key],state=data.benchmarks.growth[key];return `<article class="outcome-card"><p class="eyebrow">2025 / APR GROWTH</p><h3>${label}</h3><div class="outcome-value">${m.numerator} <span>of ${m.denominator} eligible buildings</span></div><p>received the APR <b>Target</b> designation.</p><div class="growth-pair"><div class="pair-label"><span>Sponsored buildings · ${m.numerator}/${m.denominator}</span><strong>${fmt(m.value)}%</strong></div><div class="bar-track" aria-hidden="true"><div class="bar-fill" style="width:${m.value}%"></div></div><div class="pair-label"><span>Missouri eligible buildings · ${state.numerator}/${state.denominator}</span><strong>${fmt(state.value)}%</strong></div><div class="bar-track" aria-hidden="true"><div class="bar-fill state-fill" style="width:${state.value}%"></div></div></div>${sourceNote('Same 2025 building-level ALL growth indicator. Different grade mixes may affect these descriptive comparisons. DESE APR building supporting workbook.')}</article>`;}).join('');
+  options('publicSchoolNetwork',schoolEntries(),'all');renderPublicDirectory();renderPublicDemographics();
+}
+function setupStoryNavigation() {
+  const menu=$('menuToggle'),links=$('navLinks');
+  const close=()=>{menu.setAttribute('aria-expanded','false');links.classList.remove('is-open');};
+  menu.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));links.classList.toggle('is-open',open);});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.getAttribute('aria-expanded')==='true'){close();menu.focus();}});
+  document.addEventListener('click',event=>{const link=event.target.closest('a[href^="#"]');if(!link)return;const hash=link.getAttribute('href');if(!document.querySelector(hash))return;event.preventDefault();close();revealTarget(hash);});
+  const sections=[...links.querySelectorAll('a')].map(a=>document.querySelector(a.hash));
+  let pending=false;
+  const update=()=>{pending=false;const y=150;let active=sections[0];sections.forEach(s=>{if(s.getBoundingClientRect().top<=y)active=s;});links.querySelectorAll('a').forEach(a=>{if(a.hash==='#'+active.id)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});};
+  addEventListener('scroll',()=>{if(!pending){pending=true;requestAnimationFrame(update);}},{passive:true});update();
+  $('publicDemoMetric').addEventListener('change',renderPublicDemographics);
+  $('publicSchoolSearch').addEventListener('input',renderPublicDirectory);$('publicSchoolNetwork').addEventListener('change',renderPublicDirectory);
+  $('publicDirectoryReset').addEventListener('click',()=>{$('publicSchoolSearch').value='';$('publicSchoolNetwork').value='all';renderPublicDirectory();});
+  const printOpen=[];
+  addEventListener('beforeprint',()=>{document.querySelectorAll('details').forEach(d=>{if(!d.open){printOpen.push(d);d.open=true;}});});
+  addEventListener('afterprint',()=>{printOpen.splice(0).forEach(d=>d.open=false);});
+  if(location.hash&&document.querySelector(location.hash))revealTarget(location.hash,false);
 }
 const renderers={demographics:renderDemographics,enrollment:renderEnrollment,assessment:renderAssessment,history:renderHistory,timeline:renderTimeline,coverage:renderCoverage,directory:renderDirectory,frl:renderFrl,growth:renderGrowth,schoolList:renderSchoolList,matchedMap:renderMatchedMap};
 function initialize() {
@@ -247,7 +322,7 @@ function initialize() {
   report('enrollment','enrollmentMount','Enrollment in detail','Compare K–12 or reportable preschool enrollment at the charter or DESE building level. Select one period and measure at a time.',schoolControl('enrollSchool')+levelControl('enrollLevel')+control('enrollMetric','Enrollment & period',Object.entries(enrollmentMetrics))+sortControl('enrollSort'),'Source: OSCP DESE Cohort Master · Cohort Master / Building Cohort. Charter K–12 totals reconcile to building records.');
   report('frl','frlMount','Free/reduced-price lunch · compatible source counts','Reported FRL counts and January membership from the same 2025 source record.',schoolControl('frlSchool')+levelControl('frlLevel')+control('frlMeasure','Measure',[['rate','FRL / January membership (%)'],['count','Reported FRL count']]),'Source: 2025 district / building demographic extracts, Sheet1; LUNCH_COUNT_FREE_REDUCED, JANUARY_MEMBERSHIP and LUNCH_COUNT_FREE_REDUCED_PCT.');
   report('schoolList','schoolListMount','DESE-listed individual schools / buildings','Fourteen distinct identifiers, independently verified against the official directory dated June 30, 2026.',schoolControl('schoolListSchool')+control('schoolListAddress','Street-address sharing',[['all','All building records'],['shared','Records sharing a cohort street address']])+'<div><label for="schoolListSearch">Search school, code or street</label><input type="search" id="schoolListSearch" placeholder="Name, code or street"></div>','Source: official 2026 Missouri School Statistics and Directory · directory as of June 30, 2026. The original undated directory is preserved; source conflicts are explicit.');
-  report('matchedMap','matchedMapMount','Matched-grade MAP comparison · 2025','Compare published school/network results to Missouri for exactly the same subject, group and grade or course.',schoolControl('matchedSchool')+levelControl('matchedLevel')+control('matchedSubject','Subject',[['Eng. Language Arts','ELA'],['Mathematics','Math'],['Science','Science'],['Social Studies','Social Studies']])+control('matchedGroup','Source student group',[])+control('matchedGrade','Grade / course',[]),'Source: official 2025 State, District and School Content Area and Grade All and Disag exports, Sheet1. URLs and file hashes are retained in the independent audit; table rows retain exact file and row identifiers.');
+  report('matchedMap','matchedMapMount','Matched-grade MAP comparison · 2025','Compare published school/network results to Missouri for exactly the same subject, group and grade or course.',schoolControl('matchedSchool')+levelControl('matchedLevel')+control('matchedSubject','Subject',[['Eng. Language Arts','English Language Arts'],['Mathematics','Mathematics'],['Science','Science'],['Social Studies','Social Studies']])+control('matchedGroup','Source student group',[])+control('matchedGrade','Grade / course',[]),'Source: official 2025 State, District and School Content Area and Grade All and Disag exports, Sheet1. URLs and file hashes are retained in the independent audit; table rows retain exact file and row identifiers.');
   $('matchedLevel').value='Building';
   report('growth','growthMount','APR academic growth · 2025','Share of eligible buildings with the exact APR Target designation, reported separately for ELA and Math.',schoolControl('growthSchool')+control('growthSubject','Subject',[['Eng. Language Arts','ELA'],['Mathematics','Math']])+control('growthGrades','Source grade span',[]),'Source: dese_apr_2025_building_supporting.xlsx, Sheet1; subject ALL_GROWTH_POINTS_POSSIBLE, ALL_GROWTH_POINTS_EARNED and ALL_GROWTH_PERFORMANCE_DESIGNATION. Building totals cross-checked against the APR summary.');
   renderKpis();
@@ -270,5 +345,7 @@ function initialize() {
   $('generatedAt').textContent=`Data generated ${new Date(data.generated_at).toLocaleString('en-US',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})} UTC · Reporting periods appear within each report.`;
   $('dashboard').hidden=false;$('loadStatus').hidden=true;$('chartFallback').hidden=Boolean(window.Chart);
   Object.values(renderers).forEach(render=>render());
+  if(!window.Chart)document.querySelectorAll('.data-disclosure').forEach(d=>d.open=true);
+  renderPublicStory();setupStoryNavigation();
 }
 fetch('./dashboard-data.json').then(r=>{if(!r.ok)throw Error('Data file could not be retrieved');return r.json();}).then(payload=>{data=payload;initialize();}).catch(error=>{$('loadStatus').hidden=false;$('loadStatus').textContent=`Dashboard could not load: ${error.message}. Please reload or try again later.`;});
