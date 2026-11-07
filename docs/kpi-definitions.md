@@ -1,3 +1,7 @@
+# Current independently verified reporting
+
+See [independent data audit](independent-data-audit.md) for current official statewide context, June 30, 2026 directory verification, grade-specific MAP comparisons and limitations. The original numerical cohort KPI calculations below remain valid; older unavailable/state-subset statements are historical and superseded by that audit.
+
 # Candi feedback: definitions and validation
 
 Dashboard edition: 2026–2027. Enrollment remains 2025–26 preliminary; demographics, MAP and APR use 2025 source data. Directory reporting year is not stated.

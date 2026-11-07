@@ -78,3 +78,7 @@ After a push, confirm remote `main` equals local HEAD, check the Pages workflow'
 ## Remaining data limitations
 
 Directory reporting year and unique campus counts; current 2026–27 enrollment; complete unsuppressed statewide demographic counts; grade-matched state MAP results and official school-specific proficiency targets; confirmed scholarship/event records; other-partnership counts and deduplication rules; and a verified statewide IEP-incidence denominator remain unavailable.
+
+## Independent DESE audit
+
+See [independent data audit](docs/independent-data-audit.md) for current statewide context, the dated 14-building directory and exact-grade MAP comparisons. All six original numerical KPIs are retained. Offline builds use the tracked aggregate reference snapshot; public-source refresh and browser-test dependencies are in `requirements-audit.txt`. Run `python -m unittest test_data.py test_reporting.py test_independent.py` and `python test_dashboard.py` after building.

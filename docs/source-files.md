@@ -161,3 +161,7 @@ SHA-256: `797831dada1aff700f32a41e548a9be895bb06a01e3c6003351fd1ffee558ccd`
 | FY26 | 1 | 15 | 15 | 0 | No explicit reporting-year column |
 | FY25 | 1 | 15 | 15 | 0 | No explicit reporting-year column |
 | FY24 | None | 0 | 0 | 0 | No explicit reporting-year column |
+
+## Independent public-reference supplement
+
+The original 11-workbook catalog and hashes remain unchanged. Additional official grade-level MAP exports and dated publications are downloaded separately to ignored `data/research/`. Their hashes, URLs, complete row inventories and cohort aggregate extracts are tracked in `reference-data/dese-2025-independent.json`; see [independent audit](independent-data-audit.md) for refresh commands, decisions and reporting populations.

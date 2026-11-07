@@ -208,13 +208,16 @@ def build():
         'confirmed_events': confirmed}
     from reporting import build_reporting
     reporting_qa = build_reporting(payload, tables)
+    from independent_reporting import apply_independent_findings
+    independent_qa = apply_independent_findings(payload, tables)
     (ROOT / 'dashboard-data.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
     qa_dir = ROOT / 'qa'
     qa_dir.mkdir(exist_ok=True)
     (qa_dir / 'workbook-inventory.json').write_text(json.dumps(inventory, ensure_ascii=False, indent=2), encoding='utf-8')
     (qa_dir / 'event-audit.json').write_text(json.dumps({'records': events, 'duplicates': duplicates}, ensure_ascii=False, indent=2, default=str), encoding='utf-8')
     (qa_dir / 'kpi-calculations.json').write_text(json.dumps(reporting_qa, ensure_ascii=False, indent=2), encoding='utf-8')
-    gaps = ['Directory grade spans are retained as undated source values; no verified 2026 directory period is claimed.',
+    (qa_dir / 'independent-calculations.json').write_text(json.dumps(independent_qa, ensure_ascii=False, indent=2), encoding='utf-8')
+    gaps = ['Directory independently verified against the official June 30, 2026 publication; original undated values remain retained for provenance.',
         'No verified physical campus counts; directory building identifiers are distinct school records, not physical campuses.',
         'No finalized 2026–27 enrollment; only 2025–26 preliminary enrollment is shown.',
         'No confirmed scholarship awards or unduplicated additional partnership counts.',
@@ -234,7 +237,7 @@ def build():
         '- Public totals sum unique charter enrollment only. Building enrollment is a reconciliation check, never additional reach.',
         '- Each public school retains its source name, LEA, and Cohort Master source row. Charter and building reporting levels remain separate; statewide demographic and APR denominators use only one level each.',
         '- Public deployment folder contains only HTML, CSS, JavaScript and aggregate JSON. Keep qa/ and data/ private.']
-    report += ['', '## Candi feedback: KPI definitions, denominators and Missouri references', reporting_qa['markdown']]
+    report += ['', '## Candi feedback: KPI definitions, denominators and Missouri references', 'Historical calculation narrative retained below; current official references and scope decisions supersede it in docs/independent-data-audit.md.', reporting_qa['markdown']]
     (qa_dir / 'QA-report.md').write_text('\n'.join(report) + '\n', encoding='utf-8')
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)

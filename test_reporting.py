@@ -33,8 +33,8 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(k['students']['value'], 3953)
         self.assertEqual(k['students']['year'], '2025–26 preliminary')
         self.assertEqual(k['schools']['value'], 14)
-        self.assertIsNone(k['schools']['year'])
-        self.assertEqual(k['schools']['missingness']['year']['reason'], 'not_stated')
+        self.assertEqual(k['schools']['year'],2026)
+        self.assertEqual(k['schools']['as_of'],'2026-06-30')
         keys = {(r['lea'], r['building']) for r in self.data['directory']}
         self.assertEqual(len(keys), 14)
         self.assertEqual(len({r['lea'] for r in self.data['directory']}), 6)
@@ -97,14 +97,14 @@ class ReportingTests(unittest.TestCase):
         rows = [r for r in self.demographics if r['YEAR']==2025]
         for name,count,denominator,expected_rows in [('black','ENROLLMENT_BLACK','ENROLLMENT_GRADES_K_12',295),('frl','LUNCH_COUNT_FREE_REDUCED','JANUARY_MEMBERSHIP',536)]:
             paired = [r for r in rows if isinstance(r[count],(int,float)) and isinstance(r[denominator],(int,float)) and r[denominator]>0 and 0<=r[count]<=r[denominator]]
-            result = self.data['benchmarks'][name]
+            result = self.data['benchmark_subsets'][name]
             self.assertEqual(len(paired),expected_rows)
             self.assertEqual(result['reportable_records'],len(paired))
             self.assertEqual(result['source_records'],564)
             self.assertAlmostEqual(result['numerator'],sum(r[count] for r in paired))
             self.assertAlmostEqual(result['denominator'],sum(r[denominator] for r in paired))
             self.assertFalse(result['complete'])
-        self.assertEqual(len(self.data['benchmarks']['frl']['excluded_inconsistent_counts']),18)
+        self.assertEqual(len(self.data['benchmark_subsets']['frl']['excluded_inconsistent_counts']),18)
 
     def test_suppression_reason_and_nulls(self):
         raw_suppressed = next(r for r in self.data['assessments'] if r['PROFICIENT'] is None and r['missingness'].get('PROFICIENT',{}).get('reason')=='suppressed_in_source')
@@ -124,7 +124,7 @@ class ReportingTests(unittest.TestCase):
         for asset in parser.paths:
             if not asset.startswith('https://'):self.assertTrue((ROOT/'dist'/asset).is_file())
         script=(ROOT/'app.js').read_text(encoding='utf-8')
-        for anchor in ('enrollmentPanel','demographicsPanel','frlPanel','schoolListPanel','assessmentPanel','growthPanel'):
+        for anchor in ('enrollmentPanel','demographicsPanel','frlPanel','schoolListPanel','matchedMapPanel','growthPanel'):
             self.assertIn(anchor,script)
         self.assertIn('Unavailable*',script)
 

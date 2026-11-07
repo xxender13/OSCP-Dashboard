@@ -92,8 +92,9 @@ def run():
             assert js("document.querySelectorAll('#schoolListData tbody tr').length") == 14
             assert js("document.querySelectorAll('#growthData tbody tr').length") == 14
             assert js("document.getElementById('missingFootnote').textContent.includes('Unavailable*')")
-            assert js("document.getElementById('assessmentReference').textContent.includes('Grade-matched comparison: Unavailable*')")
-            assert js("document.getElementById('frlReference').textContent.includes('536/564')")
+            assert js("document.getElementById('assessmentReference').textContent.includes('single-grade/course')")
+            assert js("document.getElementById('frlReference').textContent.includes('49.3%')")
+            assert js("document.getElementById('schoolListContext').textContent.includes('June 30, 2026')")
             # Native keyboard activation follows each card's anchor and focuses its report.
             for card in js("Array.from(document.querySelectorAll('.kpi-link'),a=>({key:a.dataset.kpi,target:a.hash.slice(1)}))"):
                 js(f"document.querySelector('[data-kpi={card['key']}]').focus()")
@@ -111,6 +112,27 @@ def run():
 
             def values(id):
                 return js(f"Array.from(document.getElementById({json.dumps(id)}).options,o=>o.value)")
+
+            choose('schoolListAddress','shared')
+            assert js("document.querySelectorAll('#schoolListData tbody tr').length") == 4
+            choose('schoolListAddress','all')
+            js("document.getElementById('schoolListSearch').value='Linwood';document.getElementById('schoolListSearch').dispatchEvent(new Event('input'))")
+            assert js("document.querySelectorAll('#schoolListData tbody tr').length") == 1
+            js("document.getElementById('schoolListFilters').reset()")
+            time.sleep(.1)
+            assert js("document.querySelectorAll('#schoolListData tbody tr').length") == 14
+            for level in values('matchedLevel'):
+                choose('matchedLevel',level)
+                for subject in values('matchedSubject'):
+                    choose('matchedSubject',subject)
+                    for group in values('matchedGroup'):
+                        choose('matchedGroup',group)
+                        for grade in values('matchedGrade'):
+                            choose('matchedGrade',grade)
+                            assert js("document.querySelectorAll('#matchedMapData tbody tr').length") >= 1
+            js("document.getElementById('matchedMapFilters').reset()")
+            time.sleep(.1)
+            assert js("document.getElementById('matchedMapContext').textContent.includes('1/4 eligible')")
 
             for school in ['all',*[s['DESE LEA'] for s in json.loads((ROOT/'dashboard-data.json').read_text(encoding='utf-8'))['schools']]]:
                 choose('growthSchool',school)
@@ -170,6 +192,9 @@ def run():
             js("window.testExport=null;URL.createObjectURL=(blob)=>{window.testExport=blob;return 'blob:test'};HTMLAnchorElement.prototype.click=function(){};document.querySelector('[data-export=history]').click()")
             export = js('window.testExport.text()')
             assert 'Historical Demographics' in export and '2010' in export and 'Filter context' in export
+            for report, expected in [('matchedMap','State source row'),('schoolList','Directory as of')]:
+                js(f"document.querySelector('[data-export={report}]').click()")
+                assert expected in js('window.testExport.text()')
             js("document.getElementById('resetAll').click()")
             time.sleep(.1)
             assert js("document.getElementById('reachCount').textContent") == '3,953'
@@ -192,6 +217,9 @@ def run():
                 time.sleep(.3)
                 dimensions = js('({width:innerWidth,content:document.documentElement.scrollWidth})')
                 assert dimensions['content'] <= width, f'Page overflow at {width}: {dimensions}'
+                js("document.getElementById('sourceList').closest('details').open=true")
+                assert js('document.documentElement.scrollWidth') <= width, f'Expanded sources overflow at {width}'
+                js("document.getElementById('sourceList').closest('details').open=false")
                 expected_columns = 1 if width==320 else 2 if width==768 else 3
                 assert js("getComputedStyle(document.getElementById('kpis')).gridTemplateColumns.split(' ').length") == expected_columns
                 js('window.scrollTo(0,0)')
@@ -201,7 +229,7 @@ def run():
                 time.sleep(.1)
                 screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
                 (ROOT / 'qa' / f'kpis-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
-                for report in ('demographics', 'assessment', 'history', 'timeline','frl','growth'):
+                for report in ('demographics', 'assessment', 'history', 'timeline','frl','growth','matchedMap'):
                     js(f"document.getElementById('{report}Title').scrollIntoView()")
                     time.sleep(.1)
                     screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
@@ -224,7 +252,7 @@ def run():
             assert not errors, errors
             result = {'passed': True, 'chart_cdn_loaded': chart_loaded, 'viewports': [320, 768, 1440],
                 'checks': ['repository-subpath loading', 'independent filters', 'six school and two reporting level filters', 'all demographic and MAP measure filters', 'student group and subject filters', 'historical year range', 'filtered CSV content', 'search', 'reset',
-                    'missing metric exclusion', 'MAP suppression coverage', 'six keyboard card anchors', '1/2/3 column card layouts', 'growth and FRL filters', 'ineligible growth missing values', 'missingness footnotes', 'state reference limitations', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions']}
+                    'missing metric exclusion', 'MAP suppression coverage', 'six keyboard card anchors', '1/2/3 column card layouts', 'growth and FRL filters', 'ineligible growth missing values', 'missingness footnotes', 'official state references', 'single-grade subject/group comparisons', 'dated directory and shared-address filters', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions']}
             (ROOT / 'qa' / 'browser-results.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
             print(json.dumps(result, indent=2))
         finally:
