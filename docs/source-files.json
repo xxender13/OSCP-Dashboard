@@ -1,0 +1,253 @@
+{
+  "workbooks": [
+    {
+      "original_path": "data/OSCP_DESE_Cohort_Master_2025_2026.xlsx",
+      "path": "data/master/oscp_dese_cohort_master_2025_2026.xlsx",
+      "role": "Curated OSCP cohort master; 7 worksheets",
+      "reporting_period": "2025 outcomes; 2025–26 preliminary enrollment; history 2007–2025",
+      "dashboard_input": true,
+      "sha256": "6b54712ef9fe40c4cc7b5517ed52a483f5ca01afd0bee9e5fb93751fcfb3cf59",
+      "bytes": 19662,
+      "sheets": [
+        {
+          "name": "Cohort Master",
+          "header_row": 1,
+          "records": 7,
+          "columns": 24
+        },
+        {
+          "name": "Building Cohort",
+          "header_row": 1,
+          "records": 14,
+          "columns": 17
+        },
+        {
+          "name": "MAP 2025",
+          "header_row": 1,
+          "records": 40,
+          "columns": 11
+        },
+        {
+          "name": "Historical Demographics",
+          "header_row": 1,
+          "records": 96,
+          "columns": 11
+        },
+        {
+          "name": "QA Checks",
+          "header_row": 1,
+          "records": 6,
+          "columns": 7
+        },
+        {
+          "name": "Source Register",
+          "header_row": 1,
+          "records": 8,
+          "columns": 5
+        },
+        {
+          "name": "Review Gaps",
+          "header_row": 1,
+          "records": 8,
+          "columns": 3
+        }
+      ]
+    },
+    {
+      "original_path": "data2/District Demographic Data (2).xlsx",
+      "path": "data/enrollment_demographics/dese_district_demographics_1991_2025.xlsx",
+      "role": "District/charter annual demographics",
+      "reporting_period": "1991–2025",
+      "dashboard_input": false,
+      "sha256": "72f8dcff976dc9bf90241782dd2ff565cf140c34fd6c791b17231baac00896fd",
+      "bytes": 2683914,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 19137,
+          "columns": 29
+        }
+      ]
+    },
+    {
+      "original_path": "data2/Building Demographic Data 2006 to Current (1).xlsx",
+      "path": "data/enrollment_demographics/dese_building_demographics_2006_2025.xlsx",
+      "role": "Building annual demographics",
+      "reporting_period": "2006–2025",
+      "dashboard_input": false,
+      "sha256": "32444645613e9e9b46794856a76f503e629c4be233d997d26481c338b1b0b681",
+      "bytes": 8488823,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 54089,
+          "columns": 33
+        }
+      ]
+    },
+    {
+      "original_path": "data2/School Building List (1).xlsx",
+      "path": "data/enrollment_demographics/dese_school_building_directory_undated.xlsx",
+      "role": "14 building directory records; actual headers on row 4",
+      "reporting_period": "Not stated in worksheet; no year inferred from download or master register",
+      "dashboard_input": false,
+      "sha256": "81e75d9a9fc3cd82d63fc59929b939d493ca6fedb5b776d39eed15cb391310b5",
+      "bytes": 104851,
+      "sheets": [
+        {
+          "name": "School Building List",
+          "header_row": 4,
+          "records": 14,
+          "columns": 34
+        }
+      ]
+    },
+    {
+      "original_path": "data2/2025 State_content area all and disag.xlsx",
+      "path": "data/assessments/dese_map_2025_state_content_area.xlsx",
+      "role": "State-level MAP subject/student-group aggregates",
+      "reporting_period": "2025",
+      "dashboard_input": false,
+      "sha256": "77358f05c75aca1766c33bb1c800d19699fc31e5467fc3d8cde30db27cbd1a8a",
+      "bytes": 15025,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 48,
+          "columns": 22
+        }
+      ]
+    },
+    {
+      "original_path": "data/2025 District_Content Area All and Disag.xlsx",
+      "path": "data/assessments/dese_map_2025_district_content_area.xlsx",
+      "role": "District/charter-level MAP subject/student-group aggregates",
+      "reporting_period": "2025",
+      "dashboard_input": true,
+      "sha256": "131bb2663088efa9dd10fb1f80ca71b77bf82ce7688a4170b386c87a328c8461",
+      "bytes": 1602961,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 15855,
+          "columns": 22
+        }
+      ]
+    },
+    {
+      "original_path": "data/2025 School_content area all and disag.xlsx",
+      "path": "data/assessments/dese_map_2025_school_content_area.xlsx",
+      "role": "School/building-level MAP subject/student-group aggregates",
+      "reporting_period": "2025",
+      "dashboard_input": true,
+      "sha256": "4220ffe86c4fe14403a68bee62421e256eecf7d127b3f8a58fa5ed6e08d7c5da",
+      "bytes": 4950276,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 50303,
+          "columns": 22
+        }
+      ]
+    },
+    {
+      "original_path": "data2/Supporting District Report (1).xlsx",
+      "path": "data/accountability/dese_apr_2025_district_supporting.xlsx",
+      "role": "District APR supporting measures; 154 columns",
+      "reporting_period": "2025",
+      "dashboard_input": false,
+      "sha256": "ed44ba45aba915e6874f2b4fbebea138b5fb8c287e0c3145cf6403017e82347c",
+      "bytes": 405606,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 553,
+          "columns": 154
+        }
+      ]
+    },
+    {
+      "original_path": "data2/Summary Building Report (1).xlsx",
+      "path": "data/accountability/dese_apr_2025_building_summary.xlsx",
+      "role": "Building APR summary; 16 columns",
+      "reporting_period": "2025",
+      "dashboard_input": false,
+      "sha256": "017677966f82e7488763265036cfa14220cbb577f1fc3d21f3974c5dd36ff458",
+      "bytes": 206786,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 2139,
+          "columns": 16
+        }
+      ]
+    },
+    {
+      "original_path": "data2/Supporting Building Report (1).xlsx",
+      "path": "data/accountability/dese_apr_2025_building_supporting.xlsx",
+      "role": "Building APR supporting measures; 130 columns",
+      "reporting_period": "2025",
+      "dashboard_input": false,
+      "sha256": "1500ad880fc7733f622d2eafc624990976a94fb72fa2c31bb7a886d4e3ed0375",
+      "bytes": 1293344,
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "header_row": 1,
+          "records": 2139,
+          "columns": 130
+        }
+      ]
+    },
+    {
+      "original_path": "data/SLU_Gala_Sponsorship_Tracker_with_Dropdowns.xlsx",
+      "path": "data/sponsorships/oscp_gala_sponsorship_tracker.xlsx",
+      "role": "Main sponsorship tracker and FY24–FY27 worksheets",
+      "reporting_period": "Mixed tracker tabs; fiscal-year attribution unverified",
+      "dashboard_input": true,
+      "sha256": "797831dada1aff700f32a41e548a9be895bb06a01e3c6003351fd1ffee558ccd",
+      "bytes": 91947,
+      "sheets": [
+        {
+          "name": "Gala Sponsorship Tracker",
+          "header_row": 1,
+          "records": 16,
+          "columns": 15
+        },
+        {
+          "name": "FY27",
+          "header_row": 1,
+          "records": 20,
+          "columns": 15
+        },
+        {
+          "name": "FY26",
+          "header_row": 1,
+          "records": 15,
+          "columns": 15
+        },
+        {
+          "name": "FY25",
+          "header_row": 1,
+          "records": 15,
+          "columns": 15
+        },
+        {
+          "name": "FY24",
+          "header_row": null,
+          "records": 0,
+          "columns": 0
+        }
+      ]
+    }
+  ],
+  "removed_workbooks": [],
+  "archived_workbooks": []
+}

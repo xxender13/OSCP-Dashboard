@@ -2,7 +2,8 @@
 import json
 from pathlib import Path
 import unittest
-from build import clean, numeric
+import hashlib
+from build import clean, numeric, SOURCE_PATHS
 
 ROOT = Path(__file__).resolve().parent
 
@@ -63,6 +64,42 @@ class DataTests(unittest.TestCase):
             buildings = [r for r in data['buildings'] if r['DESE LEA'] == school['DESE LEA']]
             self.assertEqual(sum(r['K–12 prelim'] for r in buildings), school['2025–26 K–12'])
             self.assertEqual(len(buildings), school['DESE buildings'])
+
+    def test_source_catalog_and_build_paths(self):
+        catalog = json.loads((ROOT / 'docs/source-files.json').read_text(encoding='utf-8'))
+        entries = catalog['workbooks']
+        self.assertEqual(len(entries), 11)
+        self.assertEqual({(ROOT / e['path']).resolve() for e in entries},
+                         {path.resolve() for path in SOURCE_PATHS.values()})
+        self.assertFalse((ROOT / 'data2').exists())
+        for entry in entries:
+            path = ROOT / entry['path']
+            self.assertTrue(path.is_file(), entry['path'])
+            self.assertTrue(path.resolve().is_relative_to((ROOT / 'data').resolve()))
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), entry['sha256'])
+        self.assertEqual(catalog['removed_workbooks'], [])
+        self.assertEqual(catalog['archived_workbooks'], [])
+
+    def test_reorganization_preserves_dashboard_values(self):
+        baseline_path = ROOT / 'qa/source-reorganization/baseline-dashboard.json'
+        if not baseline_path.exists():
+            self.skipTest('Local pre-migration baseline is not distributed with public source')
+        baseline = json.loads(baseline_path.read_text(encoding='utf-8'))
+        current = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
+        catalog = json.loads((ROOT / 'docs/source-files.json').read_text(encoding='utf-8'))['workbooks']
+        renamed = {Path(e['original_path']).name: Path(e['path']).name for e in catalog}
+        for row in baseline['assessments']:
+            row['source_file'] = renamed[row['source_file']]
+        for row in baseline['data_inventory']:
+            row['file'] = renamed[row['file']]
+        # The completed reorganization is retained, while Candi's subsequent
+        # feedback intentionally adds new reporting sections and definitions.
+        # Every previously published record/value must still be preserved.
+        for section in ('schools','buildings','history','assessments'):
+            self.assertEqual(len(baseline[section]), len(current[section]))
+            for old, new in zip(baseline[section], current[section]):
+                for field,value in old.items():
+                    self.assertEqual(value, new[field], (section,field))
 
 
 if __name__ == '__main__':

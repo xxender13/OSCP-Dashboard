@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const valid = v => typeof v === 'number' && Number.isFinite(v);
-const fmt = v => valid(v) ? v.toLocaleString('en-US',{maximumFractionDigits:2}) : 'Unavailable';
+const fmt = v => valid(v) ? v.toLocaleString('en-US',{maximumFractionDigits:2}) : 'Unavailable*';
 const colors = ['#003DA5','#85651d','#007875','#764e9b','#ad463e','#536579'];
 const shapes = ['circle','rect','triangle','rectRot','crossRot','star'];
 const charts = {}, exportsByReport = {};
@@ -22,10 +22,10 @@ function schoolControl(id) {return control(id,'School',schoolEntries());}
 function levelControl(id) {return control(id,'Reporting level',[['Charter','Charter schools'],['Building','DESE building records']]);}
 function sortControl(id) {return control(id,'Sort by',[['desc','Value: high to low'],['asc','Value: low to high'],['name','Name: A–Z']]);}
 function report(id,mount,title,description,controls,source) {
-  $(mount).innerHTML=`<article id="${id}Panel" class="panel report"><div class="chart-heading"><div><p class="eyebrow">INTERACTIVE REPORT</p><h3 id="${id}Title">${esc(title)}</h3></div><button type="button" class="download" data-export="${id}">Download CSV</button></div><p class="report-description">${esc(description)}</p><form class="local-filters" id="${id}Filters">${controls}<button type="reset">Reset chart</button></form><p id="${id}Context" class="context" aria-live="polite"></p><div id="${id}Insight" class="insight"></div><div id="${id}Legend" class="legend" aria-label="Chart legend"></div><div id="${id}Plot" class="plot"><canvas id="${id}Chart" role="img" aria-labelledby="${id}Title" aria-describedby="${id}Context ${id}Data"></canvas></div><div id="${id}Data" class="scroll" tabindex="0" role="region" aria-label="${esc(title)} values"></div><p class="source">${esc(source)}</p></article>`;
+  $(mount).innerHTML=`<article id="${id}Panel" class="panel report" tabindex="-1"><div class="chart-heading"><div><p class="eyebrow">INTERACTIVE REPORT</p><h3 id="${id}Title">${esc(title)}</h3></div><button type="button" class="download" data-export="${id}">Download CSV</button></div><p class="report-description">${esc(description)}</p><form class="local-filters" id="${id}Filters">${controls}<button type="reset">Reset chart</button></form><p id="${id}Context" class="context" aria-live="polite"></p><div id="${id}Insight" class="insight"></div><div id="${id}Reference" class="reference" hidden></div><div id="${id}Legend" class="legend" aria-label="Chart legend"></div><div id="${id}Plot" class="plot"><canvas id="${id}Chart" role="img" aria-labelledby="${id}Title" aria-describedby="${id}Context ${id}Data"></canvas></div><div id="${id}Data" class="scroll" tabindex="0" role="region" aria-label="${esc(title)} values"></div><p class="source">${esc(source)}</p><p class="missing-footnote">${esc(data.missing_data_note)}</p></article>`;
 }
 function table(id,caption,headers,rows) {
-  $(id).innerHTML=`<table><caption>${esc(caption)}</caption><thead><tr>${headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>i?`<td>${esc(valid(v)?(/year|since/i.test(headers[i])?String(v):fmt(v)):v??'Unavailable')}</td>`:`<th scope="row">${esc(v)}</th>`).join('')}</tr>`).join('')}</tbody></table>`;
+  $(id).innerHTML=`<table><caption>${esc(caption)}</caption><thead><tr>${headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>i?`<td>${esc(valid(v)?(/year|since/i.test(headers[i])?String(v):fmt(v)):v??'Unavailable*')}</td>`:`<th scope="row">${esc(v)}</th>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 function storeTable(id,caption,headers,rows) { exportsByReport[id]={headers,rows};table(id+'Data',caption,headers,rows); }
 function legend(id,series,type='bar') {
@@ -55,6 +55,8 @@ function records(schoolId,levelId) {
 }
 function sortRows(rows,field,id) {return [...rows].sort((a,b)=>$(id).value==='name'?a.label.localeCompare(b.label):($(id).value==='asc'?1:-1)*(a[field]-b[field]));}
 function metricOptions(id,definitions,rows,fallback) {options(id,Object.entries(definitions).filter(([key])=>rows.some(r=>valid(r[key]))),fallback);}
+function reason(row,fields) {return fields.filter(f=>row[f]===null).map(f=>`${f}: ${row.missingness?.[f]?.detail??'Not reported or unavailable in source.'}`).join(' ')||'All selected values reported';}
+function reference(id,html) {$(id+'Reference').innerHTML=html;$(id+'Reference').hidden=!html;}
 
 function renderDemographics() {
   const id='demographics',rows=records('demoSchool','demoLevel');
@@ -62,8 +64,10 @@ function renderDemographics() {
   const reportable=sortRows(rows.filter(r=>valid(r[field])),field,'demoSort');
   $('demographicsContext').textContent=`2025 · ${$('demoLevel').selectedOptions[0].textContent} · ${reportable.length} of ${rows.length} records report ${names[field]}.`;
   $('demographicsInsight').textContent=field==='FRL %'?'FRL describes eligibility for free or reduced-price lunch; it is not a direct measure of household income.':field==='IEP incidence %'?'IEP incidence follows the DESE source definition; it is not recalculated from rounded percentages.':field==='EL %'?'English learners are students identified in the source EL field. Unavailable groups are not assumed to be absent.':'This is one reported racial/ethnic category. Categories are incomplete; do not interpret this chart as the full student composition.';
+  const benchmark=field==='Black %'?data.benchmarks.black:field==='FRL %'?data.benchmarks.frl:null;
+  reference(id,benchmark?`<strong>Missouri reportable-district subset · 2025: ${fmt(benchmark.value)}%</strong><p>${fmt(benchmark.numerator)} / ${fmt(benchmark.denominator)} · ${benchmark.reportable_records} of ${benchmark.source_records} source district records. Excluded missing counts and their denominators. Context only; not a complete statewide or grade-adjusted rate. ${esc(benchmark.denominator_column)}</p>`:'<strong>Missouri comparison: Unavailable*</strong><p>A comparable complete denominator is not verified for this measure. No unweighted average or suppressed remainder is estimated.</p>');
   draw(id,'bar',reportable.map(r=>r.label),[{label:`${names[field]} · 2025 (%)`,values:reportable.map(r=>r[field])}],'%');
-  storeTable(id,'Filtered demographic values · 2025',['School / building',`${names[field]} (%)`,'LEA','Source worksheet','Source row'],reportable.map(r=>[r.label,r[field],r['DESE LEA'],$('demoLevel').value==='Building'?'Building Cohort':'Cohort Master',r.source_row]));
+  storeTable(id,'All selected demographic records · 2025; graph includes reported values only',['School / building',`${names[field]} (%)`,'LEA','Source worksheet','Source row','Missingness note'],rows.map(r=>[r.label,r[field],r['DESE LEA'],$('demoLevel').value==='Building'?'Building Cohort':'Cohort Master',r.source_row,reason(r,[field])]));
 }
 function renderEnrollment() {
   const id='enrollment',rows=records('enrollSchool','enrollLevel');
@@ -94,9 +98,12 @@ function renderAssessment() {
   $('assessmentContext').textContent=`2025 · ${$('mapLevel').selectedOptions[0].textContent} · ${$('mapGroup').selectedOptions[0]?.textContent??''} · ${reportable.length} of ${scope.length} supplied subject records have reportable ${assessmentMetrics[field]}. Absent source slices are not counted as zero.`;
   const unknown=group.some(r=>r.group==='Student Group');
   $('assessmentInsight').textContent=unknown?'“Student Group” is the source’s label; its membership is not defined in the supplied workbook. Interpret this slice cautiously.':'Compare the same student group within each subject. Subjects can have different tested students; student groups overlap. Never add subject or group counts together. P+A requires both published counts and a reportable denominator.';
+  const state=data.state_map.filter(r=>JSON.stringify([r.category,r.group])===$('mapGroup').value&&($('mapSubject').value==='all'||r.subject===$('mapSubject').value));
+  reference(id,'<strong>Missouri 2025 all-tested-grades proficiency reference</strong><p>Grade-matched comparison: Unavailable*. State totals are contextual and are not plotted as school targets or used to classify schools as above Missouri. They always describe P+A, even when another outcome measure is selected.</p>'+state.map(r=>`<p>${esc(r.subject)}: ${fmt(r.value)}% P+A · ${fmt(r.numerator)} / ${fmt(r.denominator)} reportable students · ${esc(r.group)}.</p>`).join('')+(state.length?'':'<p>Unavailable*: no matching state subject/student-group row in the supplied source.</p>'));
   draw(id,'bar',entities.map(([,name])=>name),series,unit);
   const headers=['School / building','Subject',assessmentMetrics[field],'Reportable tested','Accountable','Below Basic count','Basic count','Proficient count','Advanced count','Level not determined count','Below Basic (%)','Basic (%)','Proficient (%)','Advanced (%)','Level not determined (%)','LEA','Building code','Source file','Source row'];
-  storeTable(id,'Source values · 2025 · unavailable fields are not reconstructed',headers,reportable.map(r=>[r.name,r.subject,r[field],r.REPORTABLE,r.ACCOUNTABLE,r.BELOW_BASIC,r.BASIC,r.PROFICIENT,r.ADVANCED,r.LEVEL_NOT_DETERMINED,r.BELOW_BASIC_PCT,r.BASIC_PCT,r.PROFICIENT_PCT,r.ADVANCED_PCT,r.LEVEL_NOT_DETERMINED_PCT,r.lea,r.building??'Charter',r.source_file,r.source_row]));
+  headers.push('Missingness note');
+  storeTable(id,'All selected source records · 2025 · unavailable fields are not reconstructed',headers,scope.map(r=>[r.name,r.subject,r[field],r.REPORTABLE,r.ACCOUNTABLE,r.BELOW_BASIC,r.BASIC,r.PROFICIENT,r.ADVANCED,r.LEVEL_NOT_DETERMINED,r.BELOW_BASIC_PCT,r.BASIC_PCT,r.PROFICIENT_PCT,r.ADVANCED_PCT,r.LEVEL_NOT_DETERMINED_PCT,r.lea,r.building??'Charter',r.source_file,r.source_row,reason(r,[field,'PROFICIENT','ADVANCED','REPORTABLE'])]));
 }
 function renderHistory() {
   const id='history',base=selected('historySchool',data.history);
@@ -132,7 +139,7 @@ function renderCoverage() {
   $('coverageContext').textContent=`${rows.length} records · Each cell shows its source value or unavailable status. Demographics / MAP: 2025; preliminary enrollment: 2025–26.`;
   $('coverageInsight').textContent='This matrix explains which comparisons are possible. Gray cells mean unavailable or suppressed, not zero. Building MAP results are explored separately in the MAP report.';
   storeTable('coverage','Coverage and source values',headers,rows.map(r=>[r.label,...fields.map(f=>r[f])]));
-  $('coverageData').querySelectorAll('tbody td').forEach(td=>{td.classList.add(td.textContent==='Unavailable'?'missing-cell':'reported-cell');});
+  $('coverageData').querySelectorAll('tbody td').forEach(td=>{td.classList.add(td.textContent==='Unavailable*'?'missing-cell':'reported-cell');});
   $('coveragePlot').hidden=true;
   legend('coverage',[{label:'Reported source value',color:'#dcebf9'},{label:'Unavailable / suppressed',color:'#e7e9ed'}]);
 }
@@ -144,18 +151,68 @@ function renderDirectory() {
   const usableFields=fields.filter(f=>rows.some(r=>r[f]!==null&&r[f]!==undefined));
   $('directoryContext').textContent=`${rows.length} of ${data.schools.length} school records match. Enrollment: source years in column headings. Demographics and MAP: 2025. DESE buildings are record counts, not physical campuses.`;
   $('directoryInsight').textContent=rows.length?'Use the column group to focus the directory, or download exactly these filtered values. Source names and identifiers are preserved.':'No schools match this search. Clear the search or reset this report.';
-  storeTable('directory','Source: Cohort Master · percentages and MAP are 2025',['School','LEA',...usableFields,'Source row'],rows.map(r=>[r.School,r['DESE LEA'],...usableFields.map(f=>r[f]),r.source_row]));
+  storeTable('directory','Source: Cohort Master · percentages and MAP are 2025',['School','LEA',...usableFields,'Source row','Missingness note'],rows.map(r=>[r.School,r['DESE LEA'],...usableFields.map(f=>r[f]),r.source_row,reason(r,usableFields)]));
   $('directoryPlot').hidden=true;$('directoryLegend').hidden=true;
 }
 
 function download(id) {
   const {headers,rows}=exportsByReport[id];
-  const cell=v=>{let s=String(v??'Unavailable');if(typeof v==='string'&&/^[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
-  const metadata=[['Report',$(id+'Title').textContent],['Filter context',$(id+'Context').textContent],['Generated UTC',data.generated_at]];
+  const cell=v=>{let s=String(v??'Unavailable*');if(typeof v==='string'&&/^[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
+  const metadata=[['Report',$(id+'Title').textContent],['Filter context',$(id+'Context').textContent],['Generated UTC',data.generated_at],['Missing data',data.missing_data_note]];
   const blob=new Blob(['\uFEFF'+[...metadata,[],headers,...rows].map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=`oscp-${id}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-const renderers={demographics:renderDemographics,enrollment:renderEnrollment,assessment:renderAssessment,history:renderHistory,timeline:renderTimeline,coverage:renderCoverage,directory:renderDirectory};
+function renderFrl() {
+  const rows=selected('frlSchool',data.demographic_counts).filter(r=>r.level===$('frlLevel').value);
+  const field=$('frlMeasure').value,rate=field==='rate';
+  const records=rows.map(r=>({...r,value:rate?(valid(r.LUNCH_COUNT_FREE_REDUCED)&&valid(r.JANUARY_MEMBERSHIP)&&r.JANUARY_MEMBERSHIP>0?100*r.LUNCH_COUNT_FREE_REDUCED/r.JANUARY_MEMBERSHIP:null):r.LUNCH_COUNT_FREE_REDUCED}));
+  const reportable=records.filter(r=>valid(r.value));
+  $('frlContext').textContent=`2025 · ${$('frlLevel').selectedOptions[0].textContent} · ${reportable.length}/${rows.length} records have the selected count/denominator.`;
+  $('frlInsight').textContent='FRL uses January membership, not preliminary enrollment. The chart uses count-derived percentages; small differences from one-decimal source rates reflect rounding. Summaries are ratios of sums, never an average of percentages.';
+  const state=data.benchmarks.frl;
+  reference('frl',`<strong>Missouri reportable-district subset: ${fmt(state.value)}%</strong><p>${fmt(state.numerator)} reported FRL count / ${fmt(state.denominator)} January membership · ${state.reportable_records}/${state.source_records} paired district rows, 2025. Not a complete statewide rate. Excludes ${state.excluded_missing_or_nonpositive_denominator} missing/nonpositive pairs and ${state.excluded_inconsistent_counts.length} count/membership conflicts, including source precision differences. Source counts may include fractional membership values.</p>`);
+  draw('frl','bar',reportable.map(r=>r.name),[{label:rate?'2025 FRL / January membership (%)':'2025 reported FRL count',values:reportable.map(r=>r.value)}],rate?'%':'Reported FRL count');
+  storeTable('frl','2025 FRL source counts and compatible membership',['School / building','Reported FRL count','January membership','Count-derived FRL (%)','Source FRL (%)','LEA','Source file','Source row','Missingness note'],records.map(r=>[r.name,r.LUNCH_COUNT_FREE_REDUCED,r.JANUARY_MEMBERSHIP,valid(r.LUNCH_COUNT_FREE_REDUCED)&&r.JANUARY_MEMBERSHIP>0?100*r.LUNCH_COUNT_FREE_REDUCED/r.JANUARY_MEMBERSHIP:null,r.LUNCH_COUNT_FREE_REDUCED_PCT,r.lea,r.source_file,r.source_row,reason(r,['LUNCH_COUNT_FREE_REDUCED','JANUARY_MEMBERSHIP'])]));
+}
+function renderSchoolList() {
+  const rows=selected('schoolListSchool',data.directory);
+  $('schoolListContext').textContent=`${rows.length} distinct (DESE LEA, building identifier) pairs in the supplied directory. Reporting year: Unavailable*.`;
+  $('schoolListInsight').textContent='These are DESE-listed individual school/building records across six sponsored charter networks. The worksheet does not establish a 2026 directory year or unique physical-campus count. Grade spans are directory values from an undated source.';
+  $('schoolListPlot').hidden=true;$('schoolListLegend').hidden=true;
+  storeTable('schoolList','Source: School Building List · header row 4 · directory undated',['Individual school / building','Charter network','LEA','Building identifier','Directory grades','Reporting year','Source row'],rows.map(r=>[r.name,data.schools.find(s=>s['DESE LEA']===r.lea).School,r.lea,r.building,r.grades,r.reporting_year,r.source_row]));
+}
+function renderGrowth() {
+  const subject=$('growthSubject').value;
+  const base=selected('growthSchool',data.growth).filter(r=>r.subject===subject);
+  options('growthGrades',[['all','All source grade spans'],...[...new Set(base.map(r=>r.grade_span))].sort().map(s=>[s,s])],'all');
+  const rows=base.filter(r=>$('growthGrades').value==='all'||r.grade_span===$('growthGrades').value);
+  const eligible=rows.filter(r=>r.eligible),target=eligible.filter(r=>r.designation==='Target');
+  const networks=data.schools.filter(s=>rows.some(r=>r.lea===s['DESE LEA']));
+  const values=networks.map(s=>{const selected=eligible.filter(r=>r.lea===s['DESE LEA']);return selected.length?100*selected.filter(r=>r.designation==='Target').length/selected.length:null;});
+  const summary=data.benchmarks.growth[subject],state=$('growthGrades').value==='all'?summary:summary.grade_spans[$('growthGrades').value];
+  $('growthContext').textContent=`2025 APR · ${subject} · ${target.length}/${eligible.length} eligible selected buildings designated Target · ${rows.length-eligible.length}/${rows.length} selected records unreported/ineligible.`;
+  $('growthInsight').textContent='Target is the exact APR designation with full growth points. On-Track does not count as Target. Eligibility requires positive points possible, earned points and designation; Participation records remain eligible. This is a building rate, not a percentage of students growing.';
+  reference('growth',`<strong>Missouri eligible-building Target rate: ${fmt(state?.value)}%</strong><p>${state?.numerator??'Unavailable*'} / ${state?.denominator??'Unavailable*'} eligible buildings · same ${esc(subject)} ALL growth indicator, 2025 · ${esc($('growthGrades').selectedOptions[0].textContent)}. ${$('growthGrades').value==='all'?'All-grade-span aggregate; select a grade span for a narrower comparison.':'Only the matching source grade span is included.'}</p>`);
+  draw('growth','bar',networks.map(s=>s.School),[{label:`${subject} · eligible buildings designated Target (%)`,values}],'%');
+  storeTable('growth','2025 APR building ALL growth measures',['Building','Network','Source grades','Designation','Points earned','Points possible','Points earned (%)','Eligible','LEA','Building identifier','Source row','Missingness note'],rows.map(r=>[r.name,data.schools.find(s=>s['DESE LEA']===r.lea).School,r.grade_span,r.designation,r.earned,r.possible,r.points_pct,r.eligible?'Yes':'No: measure unavailable',r.lea,r.building,r.source_row,reason(r,['possible','earned','designation'])]));
+}
+function renderKpis() {
+  const k=data.kpi_metrics,ela=k.map['Eng. Language Arts'],math=k.map.Mathematics,g=k.growth['Eng. Language Arts'];
+  const cards=[['students','Students Served',fmt(k.students.value),'2025–26 preliminary K–12 enrollment; sponsored schools only','Six charter networks; preschool excluded.','enrollmentPanel'],
+    ['demographics','Student Demographics',`${fmt(k.demographics.value)}%`,'2025 · students identifying as Black',`${fmt(k.demographics.numerator)} / ${fmt(k.demographics.denominator)} K–12 enrollment; six networks.`,'demographicsPanel'],
+    ['frl','Free/Reduced Lunch Students Served',fmt(k.frl.numerator),`2025 · ${fmt(k.frl.value)}% of January membership`,`${fmt(k.frl.numerator)} / ${fmt(k.frl.denominator)}; not preliminary enrollment.`,'frlPanel'],
+    ['schools','Sponsored Schools',fmt(k.schools.value),'DESE-listed individual school/building records across six charter networks','Directory year: Unavailable*. Building identifiers do not establish unique physical campuses.','schoolListPanel'],
+    ['map','MAP Scores',`${fmt(ela.value)}% ELA`,`2025 · Math: ${fmt(math.value)}% P+A`,`${ela.reportable_networks}/6 reportable networks; ELA ${fmt(ela.numerator)}/${fmt(ela.denominator)}, Math ${fmt(math.numerator)}/${fmt(math.denominator)} tested. Grade-matched above-state measure: Unavailable*.`,'assessmentPanel'],
+    ['growth','Growth',`${fmt(g.value)}%`,'2025 APR ELA · eligible buildings designated Target',`${g.numerator}/${g.denominator} eligible buildings. Math: ${fmt(k.growth.Mathematics.value)}% (${k.growth.Mathematics.numerator}/${k.growth.Mathematics.denominator}).`,'growthPanel']];
+  $('kpis').innerHTML=cards.map(([key,label,value,subtitle,note,target])=>`<a class="kpi kpi-link" data-kpi="${key}" href="#${target}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(subtitle)}</small><p>${esc(note)}</p><span class="card-action">Explore report →</span></a>`).join('');
+  $('missingFootnote').textContent=data.missing_data_note;
+  document.querySelectorAll('.kpi-link').forEach(link=>link.addEventListener('click',event=>{
+    event.preventDefault();if(link.dataset.kpi==='demographics'){$('demoMetric').value='Black %';renderDemographics();}
+    const target=document.querySelector(link.getAttribute('href'));history.replaceState(null,'',link.getAttribute('href'));
+    target.focus({preventScroll:true});target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  }));
+}
+const renderers={demographics:renderDemographics,enrollment:renderEnrollment,assessment:renderAssessment,history:renderHistory,timeline:renderTimeline,coverage:renderCoverage,directory:renderDirectory,frl:renderFrl,growth:renderGrowth,schoolList:renderSchoolList};
 function initialize() {
   const metric=control('demoMetric','Student measure',Object.entries(names));
   report('demographics','demographicsMount','Who our schools enroll · 2025','Compare one student characteristic at a time. Percentages describe the source school or building, not a combined average.',schoolControl('demoSchool')+levelControl('demoLevel')+metric+sortControl('demoSort'),'Source: OSCP DESE Cohort Master · Cohort Master / Building Cohort · 2025 demographics.');
@@ -165,8 +222,10 @@ function initialize() {
   report('coverage','coverageMount','Which values are available?','Check coverage before interpreting a comparison. Every reported value is displayed alongside unavailable fields.',schoolControl('coverageSchool')+levelControl('coverageLevel'),'Source: OSCP DESE Cohort Master · Cohort Master / Building Cohort. No missing data is treated as zero.');
   report('directory','directoryMount','Explore the school directory','Search source school names and identifiers, choose a column group, and download the filtered directory.',schoolControl('directorySchool')+'<div><label for="directorySearch">Search name or LEA</label><input type="search" id="directorySearch" placeholder="School name or code"></div>'+control('directoryFields','Column group',[['all','All available fields'],['enrollment','Enrollment & building records'],['demographics','Demographics · 2025'],['assessment','MAP outcomes · 2025']]),'Source: OSCP DESE Cohort Master · Cohort Master. Unverified location and grade spans are omitted.');
   report('enrollment','enrollmentMount','Enrollment in detail','Compare K–12 or reportable preschool enrollment at the charter or DESE building level. Select one period and measure at a time.',schoolControl('enrollSchool')+levelControl('enrollLevel')+control('enrollMetric','Enrollment & period',Object.entries(enrollmentMetrics))+sortControl('enrollSort'),'Source: OSCP DESE Cohort Master · Cohort Master / Building Cohort. Charter K–12 totals reconcile to building records.');
-  const total=data.schools.reduce((n,r)=>n+r['2025–26 K–12'],0),paired=data.schools.filter(s=>valid(s['MAP ELA P+A %'])&&valid(s['MAP Math P+A %'])).length;
-  $('kpis').innerHTML=[['Sponsored schools',data.schools.length,'Unique DESE charter identifiers'],['Preliminary K–12 enrollment',fmt(total),'2025–26 · preschool excluded'],['Schools with paired ELA / Math',`${paired} / ${data.schools.length}`,'2025 · reportable Proficient + Advanced']].map(([label,value,note])=>`<div class="kpi"><span>${label}</span><strong>${value}</strong><small>${note}</small></div>`).join('');
+  report('frl','frlMount','Free/reduced-price lunch · compatible source counts','Reported FRL counts and January membership from the same 2025 source record.',schoolControl('frlSchool')+levelControl('frlLevel')+control('frlMeasure','Measure',[['rate','FRL / January membership (%)'],['count','Reported FRL count']]),'Source: 2025 district / building demographic extracts, Sheet1; LUNCH_COUNT_FREE_REDUCED, JANUARY_MEMBERSHIP and LUNCH_COUNT_FREE_REDUCED_PCT.');
+  report('schoolList','schoolListMount','DESE-listed individual schools / buildings','Fourteen distinct directory identifiers across the six sponsored charter networks.',schoolControl('schoolListSchool'),'Source: dese_school_building_directory_undated.xlsx · School Building List, header row 4; CTYDIST + SCHNUM. No directory year inferred.');
+  report('growth','growthMount','APR academic growth · 2025','Share of eligible buildings with the exact APR Target designation, reported separately for ELA and Math.',schoolControl('growthSchool')+control('growthSubject','Subject',[['Eng. Language Arts','ELA'],['Mathematics','Math']])+control('growthGrades','Source grade span',[]),'Source: dese_apr_2025_building_supporting.xlsx, Sheet1; subject ALL_GROWTH_POINTS_POSSIBLE, ALL_GROWTH_POINTS_EARNED and ALL_GROWTH_PERFORMANCE_DESIGNATION. Building totals cross-checked against the APR summary.');
+  renderKpis();
   Object.entries(renderers).forEach(([id,render])=>{const form=$(id+'Filters');form.addEventListener('submit',e=>e.preventDefault());form.addEventListener('change',render);form.addEventListener('reset',()=>setTimeout(()=>{
     const defaults={demoMetric:'FRL %',enrollMetric:'2025–26 K–12',mapGroup:JSON.stringify(['MSIP Total','Total']),mapMetric:'PA_PCT',mapSubject:'all',historyMetric:'K–12 enrollment'};
     Object.entries(defaults).forEach(([key,value])=>{if(form.contains($(key))&&[...$(key).options].some(o=>o.value===value))$(key).value=value;});

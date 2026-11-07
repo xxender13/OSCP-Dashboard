@@ -88,6 +88,19 @@ def run():
             assert js("document.getElementById('reachCount').textContent") == '3,953'
             assert js("document.querySelectorAll('#directoryData tbody tr').length") == 6
             assert js("document.querySelectorAll('#historyData tbody tr').length") == 96
+            assert js("document.querySelectorAll('#kpis a.kpi-link').length") == 6
+            assert js("document.querySelectorAll('#schoolListData tbody tr').length") == 14
+            assert js("document.querySelectorAll('#growthData tbody tr').length") == 14
+            assert js("document.getElementById('missingFootnote').textContent.includes('Unavailable*')")
+            assert js("document.getElementById('assessmentReference').textContent.includes('Grade-matched comparison: Unavailable*')")
+            assert js("document.getElementById('frlReference').textContent.includes('536/564')")
+            # Native keyboard activation follows each card's anchor and focuses its report.
+            for card in js("Array.from(document.querySelectorAll('.kpi-link'),a=>({key:a.dataset.kpi,target:a.hash.slice(1)}))"):
+                js(f"document.querySelector('[data-kpi={card['key']}]').focus()")
+                cdp('Input.dispatchKeyEvent', {'type':'keyDown','key':'Enter','code':'Enter','windowsVirtualKeyCode':13})
+                cdp('Input.dispatchKeyEvent', {'type':'keyUp','key':'Enter','code':'Enter','windowsVirtualKeyCode':13})
+                assert js('document.activeElement.id') == card['target'], card
+                assert js('location.hash') == '#'+card['target']
             chart_loaded = js('Boolean(window.Chart)')
             if chart_loaded:
                 assert js('charts.timeline.scales.y.ticks.filter(t=>t.label.length).length') == 6
@@ -98,6 +111,20 @@ def run():
 
             def values(id):
                 return js(f"Array.from(document.getElementById({json.dumps(id)}).options,o=>o.value)")
+
+            for school in ['all',*[s['DESE LEA'] for s in json.loads((ROOT/'dashboard-data.json').read_text(encoding='utf-8'))['schools']]]:
+                choose('growthSchool',school)
+                for subject in values('growthSubject'):
+                    choose('growthSubject',subject)
+                    for grade in values('growthGrades'):
+                        choose('growthGrades',grade)
+                        assert js("document.querySelectorAll('#growthData tbody tr').length") >= 1
+                choose('frlSchool',school)
+                for level in values('frlLevel'):
+                    choose('frlLevel',level)
+                    for measure in values('frlMeasure'):
+                        choose('frlMeasure',measure)
+                        assert js("document.querySelectorAll('#frlData tbody tr').length") >= 1
 
             snapshot = js("document.getElementById('assessmentContext').textContent")
             schools = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))['schools']
@@ -149,19 +176,32 @@ def run():
             assert js("document.getElementById('mapGroup').value") == '["MSIP Total","Total"]'
             assert js("document.querySelectorAll('#historyData tbody tr').length") == 96
             assert js("document.querySelectorAll('#directoryData tbody tr').length") == 6
+            choose('growthSchool','115911')
+            choose('growthGrades','PK–K')
+            assert js("document.getElementById('growthPlot').hidden") is True
+            assert js("document.getElementById('growthData').textContent.includes('Unavailable*')")
+            js("document.getElementById('resetAll').click()")
+            time.sleep(.1)
             js("document.getElementById('demoSchool').focus()")
             cdp('Input.dispatchKeyEvent', {'type': 'keyDown', 'key': 'Tab', 'code': 'Tab', 'windowsVirtualKeyCode': 9})
             cdp('Input.dispatchKeyEvent', {'type': 'keyUp', 'key': 'Tab', 'code': 'Tab', 'windowsVirtualKeyCode': 9})
             assert js('document.activeElement.id') == 'demoLevel'
             for width in (320, 768, 1440):
+                cdp('Emulation.setEmulatedMedia', {'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
                 cdp('Emulation.setDeviceMetricsOverride', {'width': width, 'height': 1000, 'deviceScaleFactor': 1, 'mobile': False})
                 time.sleep(.3)
                 dimensions = js('({width:innerWidth,content:document.documentElement.scrollWidth})')
                 assert dimensions['content'] <= width, f'Page overflow at {width}: {dimensions}'
+                expected_columns = 1 if width==320 else 2 if width==768 else 3
+                assert js("getComputedStyle(document.getElementById('kpis')).gridTemplateColumns.split(' ').length") == expected_columns
                 js('window.scrollTo(0,0)')
                 screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
                 (ROOT / 'qa' / f'dashboard-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
-                for report in ('demographics', 'assessment', 'history', 'timeline'):
+                js("document.getElementById('kpis').scrollIntoView()")
+                time.sleep(.1)
+                screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
+                (ROOT / 'qa' / f'kpis-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
+                for report in ('demographics', 'assessment', 'history', 'timeline','frl','growth'):
                     js(f"document.getElementById('{report}Title').scrollIntoView()")
                     time.sleep(.1)
                     screenshot = cdp('Page.captureScreenshot', {'captureBeyondViewport': False})
@@ -184,7 +224,7 @@ def run():
             assert not errors, errors
             result = {'passed': True, 'chart_cdn_loaded': chart_loaded, 'viewports': [320, 768, 1440],
                 'checks': ['repository-subpath loading', 'independent filters', 'six school and two reporting level filters', 'all demographic and MAP measure filters', 'student group and subject filters', 'historical year range', 'filtered CSV content', 'search', 'reset',
-                    'missing metric exclusion', 'MAP suppression coverage', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions']}
+                    'missing metric exclusion', 'MAP suppression coverage', 'six keyboard card anchors', '1/2/3 column card layouts', 'growth and FRL filters', 'ineligible growth missing values', 'missingness footnotes', 'state reference limitations', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions']}
             (ROOT / 'qa' / 'browser-results.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
             print(json.dumps(result, indent=2))
         finally:

@@ -8,8 +8,30 @@ import openpyxl
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / 'data'
-MASTER = 'OSCP_DESE_Cohort_Master_2025_2026.xlsx'
-GALA = 'SLU_Gala_Sponsorship_Tracker_with_Dropdowns.xlsx'
+MASTER = 'oscp_dese_cohort_master_2025_2026.xlsx'
+GALA = 'oscp_gala_sponsorship_tracker.xlsx'
+MAP_DISTRICT = 'dese_map_2025_district_content_area.xlsx'
+MAP_SCHOOL = 'dese_map_2025_school_content_area.xlsx'
+MAP_STATE = 'dese_map_2025_state_content_area.xlsx'
+DEMO_DISTRICT = 'dese_district_demographics_1991_2025.xlsx'
+DEMO_BUILDING = 'dese_building_demographics_2006_2025.xlsx'
+DIRECTORY = 'dese_school_building_directory_undated.xlsx'
+APR_BUILDING = 'dese_apr_2025_building_supporting.xlsx'
+APR_SUMMARY = 'dese_apr_2025_building_summary.xlsx'
+APR_DISTRICT = 'dese_apr_2025_district_supporting.xlsx'
+SOURCE_PATHS = {
+    MASTER: DATA / 'master' / MASTER,
+    GALA: DATA / 'sponsorships' / GALA,
+    MAP_DISTRICT: DATA / 'assessments' / MAP_DISTRICT,
+    MAP_SCHOOL: DATA / 'assessments' / MAP_SCHOOL,
+    MAP_STATE: DATA / 'assessments' / MAP_STATE,
+    DEMO_DISTRICT: DATA / 'enrollment_demographics' / DEMO_DISTRICT,
+    DEMO_BUILDING: DATA / 'enrollment_demographics' / DEMO_BUILDING,
+    DIRECTORY: DATA / 'enrollment_demographics' / DIRECTORY,
+    APR_BUILDING: DATA / 'accountability' / APR_BUILDING,
+    APR_SUMMARY: DATA / 'accountability' / APR_SUMMARY,
+    APR_DISTRICT: DATA / 'accountability' / APR_DISTRICT,
+}
 ENROLL = '2025–26 K–12'
 CODES = {'048914', '115926', '115911', '048922', '048905', '048925'}
 
@@ -38,16 +60,21 @@ def code(value, width=6):
 def read_workbooks():
     """Inspect every sheet, header and nonempty row; retain source row numbers locally."""
     inventory, tables = [], {}
-    for path in sorted(DATA.glob('*.xlsx')):
+    for filename, path in sorted(SOURCE_PATHS.items()):
         workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
         tables[path.name] = {}
         for sheet in workbook:
             iterator = iter(sheet.values)
+            header_row = 4 if filename == DIRECTORY else 1
+            for _ in range(header_row - 1):
+                next(iterator, ())
             headers = [str(v).strip() if v is not None else '' for v in next(iterator, ())]
             records = []
-            for row_number, values in enumerate(iterator, 2):
+            for row_number, values in enumerate(iterator, header_row + 1):
                 if any(clean(v) is not None for v in values):
-                    records.append({'_row': row_number, **{k: clean(v) for k, v in zip(headers, values) if k}})
+                    from reporting import missing_reason
+                    records.append({'_row': row_number, **{k: clean(v) for k, v in zip(headers, values) if k},
+                        '_missingness': {k: missing_reason(v) for k,v in zip(headers,values) if k and clean(v) is None}})
             tables[path.name][sheet.title] = records
             inventory.append({'file': path.name, 'sheet': sheet.title, 'columns': headers, 'nonempty_rows': len(records)})
         workbook.close()
@@ -57,12 +84,12 @@ def read_workbooks():
 def build():
     tables, inventory = read_workbooks()
     master = tables[MASTER]
-    schools = [{k: v for k, v in r.items() if k != '_row'} for r in master['Cohort Master'] if r.get('DESE LEA')]
+    schools = [{k: v for k, v in r.items() if not k.startswith('_')} for r in master['Cohort Master'] if r.get('DESE LEA')]
     assert len(schools) == 6 and {code(s['DESE LEA']) for s in schools} == CODES, 'School codes do not match the six-school cohort'
     assert len({s['DESE LEA'] for s in schools}) == len(schools), 'Duplicate school'
     checks, exclusions = [], []
-    raw_district = tables['2025 District_Content Area All and Disag.xlsx']['Sheet1']
-    raw_building = tables['2025 School_content area all and disag.xlsx']['Sheet1']
+    raw_district = tables[MAP_DISTRICT]['Sheet1']
+    raw_building = tables[MAP_SCHOOL]['Sheet1']
     map_checks = 0
     for school in schools:
         lea = code(school['DESE LEA'])
@@ -108,7 +135,7 @@ def build():
         for row in rows:
             if not any(row.get(k) for k in ('Organization Name', 'Event Name', 'Event Date')):
                 continue
-            record = {k: v for k, v in row.items() if k != '_row'}
+            record = {k: v for k, v in row.items() if not k.startswith('_')}
             signature = json.dumps({k: v.casefold() if isinstance(v, str) else v for k, v in record.items() if v is not None}, sort_keys=True)
             origin = {'sheet': sheet, 'row': row['_row']}
             if signature in signatures:
@@ -133,8 +160,8 @@ def build():
             ('Black %', 'Race/ethnicity · Black'), ('Hispanic %', 'Race/ethnicity · Hispanic'),
             ('Multiracial %', 'Race/ethnicity · Multiracial'), ('White %', 'Race/ethnicity · White')]]]
     metrics = [m for m in metrics if any(numeric(s.get(m['id'])) is not None for s in schools)]
-    public_buildings = [{k: v for k, v in row.items() if k != '_row'} | {'source_row': row['_row']} for row in master['Building Cohort']]
-    public_history = [{k: v for k, v in row.items() if k != '_row'} | {'source_row': row['_row']} for row in master['Historical Demographics']]
+    public_buildings = [{k: v for k, v in row.items() if not k.startswith('_')} | {'source_row': row['_row']} for row in master['Building Cohort']]
+    public_history = [{k: v for k, v in row.items() if not k.startswith('_')} | {'source_row': row['_row']} for row in master['Historical Demographics']]
     for row in public_buildings + public_history:
         row['DESE LEA'] = code(row['DESE LEA'])
         assert row['DESE LEA'] in CODES
@@ -146,7 +173,7 @@ def build():
     assert len({(r['DESE LEA'], r['Year']) for r in public_history}) == len(public_history), 'Duplicate historical school-year'
     building_keys = {(r['DESE LEA'], code(r['Building code'], 4)) for r in public_buildings}
     assessment, assessment_keys = [], set()
-    for filename, level in [('2025 District_Content Area All and Disag.xlsx', 'Charter'), ('2025 School_content area all and disag.xlsx', 'Building')]:
+    for filename, level in [(MAP_DISTRICT, 'Charter'), (MAP_SCHOOL, 'Building')]:
         for row in tables[filename]['Sheet1']:
             lea, building = code(row['COUNTY_DISTRICT']), code(row['SCHOOL_CODE'], 4)
             if lea not in CODES or (level == 'Building' and (lea, building) not in building_keys):
@@ -165,28 +192,35 @@ def build():
                 record[field] = value
             p, a, n = (record[f] for f in ('PROFICIENT', 'ADVANCED', 'REPORTABLE'))
             record['PA_PCT'] = round(100 * (p + a) / n, 2) if all(v is not None for v in (p, a, n)) and n > 0 else None
+            record['grade_scope'] = row['GRADE_LEVEL'] or 'All tested grades in this reporting unit'
+            record['missingness'] = {k: v for k,v in row['_missingness'].items() if k in record}
+            if record['PA_PCT'] is None:
+                record['missingness']['PA_PCT'] = {'reason': 'unavailable_components', 'detail': 'Combined proficiency requires published Proficient, Advanced and positive Reportable counts. No suppressed component is reconstructed.'}
             assert record['PA_PCT'] is None or 0 <= record['PA_PCT'] <= 100
             assessment.append(record)
     payload = {'generated_at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'dashboard_year': '2026–2027',
         'buildings': public_buildings, 'history': public_history, 'assessments': assessment,
         'data_inventory': [{'file': s['file'], 'sheet': s['sheet'], 'rows': s['nonempty_rows']} for s in inventory],
-        'schools': schools, 'metrics': metrics, 'sources': [{k:v for k,v in s.items() if k!='_row'} for s in master['Source Register']],
+        'schools': schools, 'metrics': metrics, 'sources': [{k:v for k,v in s.items() if not k.startswith('_')} for s in master['Source Register']],
         'definitions': {'enrollment': 'Preliminary K–12 enrollment; preschool excluded. Not finalized 2026–27 enrollment.',
             'map': '2025 charter-level MAP Proficient + Advanced counts divided by reportable students × 100. Suppressed components are never reconstructed.',
             'demographics': '2025 DESE charter-level percentages from the supplied cohort master. IEP incidence is the source field, not independently recalculated.'},
         'confirmed_events': confirmed}
+    from reporting import build_reporting
+    reporting_qa = build_reporting(payload, tables)
     (ROOT / 'dashboard-data.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
     qa_dir = ROOT / 'qa'
     qa_dir.mkdir(exist_ok=True)
     (qa_dir / 'workbook-inventory.json').write_text(json.dumps(inventory, ensure_ascii=False, indent=2), encoding='utf-8')
     (qa_dir / 'event-audit.json').write_text(json.dumps({'records': events, 'duplicates': duplicates}, ensure_ascii=False, indent=2, default=str), encoding='utf-8')
-    gaps = ['No verified location or grade-span fields: omitted from filters and school table.',
-        'No verified physical campus counts; DESE building records are used only for validation.',
+    (qa_dir / 'kpi-calculations.json').write_text(json.dumps(reporting_qa, ensure_ascii=False, indent=2), encoding='utf-8')
+    gaps = ['Directory grade spans are retained as undated source values; no verified 2026 directory period is claimed.',
+        'No verified physical campus counts; directory building identifiers are distinct school records, not physical campuses.',
         'No finalized 2026–27 enrollment; only 2025–26 preliminary enrollment is shown.',
         'No confirmed scholarship awards or unduplicated additional partnership counts.',
         'Race/ethnicity categories are incomplete; separate category comparisons only. No inferred remainder.',
         'Historical records are displayed separately for 2007–2025. School coverage varies by year; preliminary 2025–26 enrollment is not appended to the historical series.',
-        'Original enrollment and demographic extracts listed in Source Register were not supplied; values are traceable to the cohort master, not independently verified against those absent originals.',
+        'Demographic extracts, state MAP and APR inputs are now used for separately defined KPI reporting. Original preliminary enrollment extracts remain absent; existing 3,953 total is traced to the reconciled cohort master.',
         'No confirmed community events; blank approval fields do not establish approval. Requested amounts, private notes, and invite lists are excluded from public JSON.']
     report = ['# Data quality report', '', f"Generated: {payload['generated_at']}", '',
         f"PASS: {len(schools)} unique LEAs; {sum(s[ENROLL] for s in schools):,} preliminary K–12 enrollment; {map_checks} MAP records matched to raw DESE district/building sources.",
@@ -198,8 +232,9 @@ def build():
         '- Null, blank, NA, NULL, and * remain unavailable; no missing-to-zero conversion.',
         '- MAP percentages require both published component counts and a positive reportable denominator. No subtraction to reconstruct suppressed counts.',
         '- Public totals sum unique charter enrollment only. Building enrollment is a reconciliation check, never additional reach.',
-        '- Each public school retains its source name, LEA, and Cohort Master source row. All comparative records use charter-level 2025 metrics.',
+        '- Each public school retains its source name, LEA, and Cohort Master source row. Charter and building reporting levels remain separate; statewide demographic and APR denominators use only one level each.',
         '- Public deployment folder contains only HTML, CSS, JavaScript and aggregate JSON. Keep qa/ and data/ private.']
+    report += ['', '## Candi feedback: KPI definitions, denominators and Missouri references', reporting_qa['markdown']]
     (qa_dir / 'QA-report.md').write_text('\n'.join(report) + '\n', encoding='utf-8')
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
