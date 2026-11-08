@@ -25,6 +25,7 @@ class QuietHandler(SimpleHTTPRequestHandler):
 
 def run():
     (ROOT/'qa'/'ui-redesign').mkdir(parents=True,exist_ok=True)
+    (ROOT/'qa'/'demographics-explorer').mkdir(parents=True,exist_ok=True)
     chrome = Path(os.environ.get('PROGRAMFILES', 'C:/Program Files')) / 'Google/Chrome/Application/chrome.exe'
     if not chrome.exists():
         raise RuntimeError('Chrome is required for browser tests; update the executable path for your system.')
@@ -250,6 +251,76 @@ def run():
             cdp('Input.dispatchKeyEvent', {'type': 'keyDown', 'key': 'Tab', 'code': 'Tab', 'windowsVirtualKeyCode': 9})
             cdp('Input.dispatchKeyEvent', {'type': 'keyUp', 'key': 'Tab', 'code': 'Tab', 'windowsVirtualKeyCode': 9})
             assert js('document.activeElement.id') == 'demoMetric'
+            # The new workspace is opt-in and coordinated, not a homepage replacement.
+            assert js("document.getElementById('demographicsExplorer').open") is False
+            old_summary=js("document.getElementById('kpis').textContent")
+            js("document.querySelector('a[href=\"#demographicsExplorer\"]').click()")
+            time.sleep(.2)
+            assert js("document.getElementById('demographicsExplorer').open") is True
+            assert js('DemographicsExplorer.state.network') == '048914'
+            assert js('DemographicsExplorer.state.year') == 2025
+            assert js("document.querySelectorAll('#dxKpis .dx-kpi').length") == 8
+            assert js("document.querySelector('#dxKpis [data-dx-kpi=enrollment]').textContent.includes('1,414')")
+            for network in values('dxNetwork'):
+                choose('dxNetwork',network)
+                buildings=values('dxBuilding')
+                assert all(b=='all' or network=='all' or b.startswith(network+'/') for b in buildings)
+                for measure in values('dxMeasure'):
+                    choose('dxMeasure',measure)
+                    assert js('DemographicsExplorer.state.measure') == measure
+                    assert js("document.getElementById('dxActive').textContent.includes(document.getElementById('dxYear').value)")
+            choose('dxNetwork','all');choose('dxMeasure','black');choose('dxYear',2025)
+            assert js("document.querySelector('#dxKpis [data-dx-kpi=black]').textContent.includes('32.07%')")
+            assert js("document.querySelector('#dxKpis [data-dx-kpi=iep]').textContent.includes('Unavailable*')")
+            choose('dxPeerLevel','Building')
+            assert js("document.querySelectorAll('#dxPeerButtons button').length") == 14
+            choose('dxSort','name')
+            names=js("[...document.querySelectorAll('#dxPeerButtons button')].map(b=>b.textContent)")
+            assert len(names)==14
+            choose('dxBuilding','115911/6956')
+            assert js('DemographicsExplorer.state.network') == '115911'
+            assert js("document.getElementById('dxNotice').textContent.includes('updated')")
+            choose('dxNetwork','048914')
+            assert js('DemographicsExplorer.state.building') == 'all'
+            assert js("document.getElementById('dxNotice').textContent.includes('cleared')")
+            for year in values('dxYear'):
+                choose('dxYear',year)
+                assert js('DemographicsExplorer.state.year') == int(year)
+                assert js('DemographicsExplorer.exportRows().every(r=>r.year<=DemographicsExplorer.state.year)')
+                if chart_loaded:
+                    assert js('DemographicsExplorer.chartObjects.dxNeeds.data.datasets.every(s=>s.spanGaps===false)')
+            choose('dxYear',2007)
+            assert js("document.getElementById('dxStateInsight').textContent.includes('unavailable')")
+            # Selecting a newer building visibly explains any necessary year change.
+            choose('dxBuilding','048914/1920')
+            assert js('DemographicsExplorer.state.year') >= 2007
+            if js('DemographicsExplorer.state.year') != 2007:
+                assert js("document.getElementById('dxNotice').textContent.includes('Reporting year changed')")
+            js("document.getElementById('dxReset').click()")
+            for series in ('frl','el','iep'):
+                js(f"document.querySelector('#dxSeries input[value={series}]').click()")
+                assert series not in js('DemographicsExplorer.state.series')
+            js("document.getElementById('dxReset').click()")
+            if chart_loaded:
+                assert js('Object.keys(DemographicsExplorer.chartObjects).length') == 5
+                js("document.getElementById('dxSchoolsPlot').scrollIntoView({behavior:'instant',block:'start'})")
+                time.sleep(.1)
+                point=js("(()=>{const c=DemographicsExplorer.chartObjects.dxSchools,p=c.getDatasetMeta(0).data[0],r=c.canvas.getBoundingClientRect();return {x:r.left+(p.base+p.x)/2,y:r.top+p.y}})()")
+                cdp('Input.dispatchMouseEvent',{'type':'mousePressed','x':point['x'],'y':point['y'],'button':'left','clickCount':1})
+                cdp('Input.dispatchMouseEvent',{'type':'mouseReleased','x':point['x'],'y':point['y'],'button':'left','clickCount':1})
+                time.sleep(.15)
+                assert js('DemographicsExplorer.state.building') != 'all'
+            js("document.getElementById('dxReset').click();document.querySelector('#dxPeerButtons button').click()")
+            assert js('DemographicsExplorer.state.building') != 'all'
+            js("window.dxBlob=null;window.savedCreateURL=URL.createObjectURL;URL.createObjectURL=b=>{window.dxBlob=b;return 'blob:dx-test'};window.savedAnchorClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){};document.getElementById('dxExport').click()")
+            dx_csv=js('window.dxBlob.text()')
+            assert 'Source-era name' in dx_csv and 'Current-year peers' in dx_csv and 'Published percentage' in dx_csv
+            assert 'Shared filters' in dx_csv and '2007' not in dx_csv.split('Data rules')[0]
+            js("URL.createObjectURL=window.savedCreateURL;HTMLAnchorElement.prototype.click=window.savedAnchorClick;document.getElementById('dxReset').click()")
+            assert js("document.getElementById('kpis').textContent") == old_summary
+            assert js('DemographicsExplorer.state.network') == '048914'
+            assert js("document.getElementById('dxDetails').open") is False
+            js("document.getElementById('demographicsExplorer').open=false")
             js("document.querySelectorAll('.report-disclosure,.advanced-filters,.data-disclosure').forEach(d=>d.open=false)")
             for width in (320, 375, 768, 1024, 1440):
                 cdp('Emulation.setEmulatedMedia', {'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
@@ -298,6 +369,19 @@ def run():
                 screenshot=cdp('Page.captureScreenshot',{'captureBeyondViewport':False})
                 (ROOT/'qa'/'ui-redesign'/f'directory-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
                 js("document.querySelector('.directory-disclosure').open=false")
+                js("document.getElementById('demographicsExplorer').open=true")
+                time.sleep(.15)
+                js("document.querySelector('.dx-header').scrollIntoView();document.activeElement.blur()")
+                assert js('document.documentElement.scrollWidth')<=width, f'Explorer overflow at {width}'
+                screenshot=cdp('Page.captureScreenshot',{'captureBeyondViewport':False})
+                (ROOT/'qa'/'demographics-explorer'/f'explorer-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
+                for plot in ('dxRace','dxNeeds','dxEnrollment','dxSchools','dxState'):
+                    js(f"document.getElementById('{plot}Heading').scrollIntoView()")
+                    time.sleep(.05)
+                    assert js('document.documentElement.scrollWidth')<=width
+                    screenshot=cdp('Page.captureScreenshot',{'captureBeyondViewport':False})
+                    (ROOT/'qa'/'demographics-explorer'/f'{plot}-{width}.png').write_bytes(base64.b64decode(screenshot['data']))
+                js("document.getElementById('demographicsExplorer').open=false")
                 for report in ('demographics', 'assessment', 'history', 'timeline','frl','growth','matchedMap'):
                     js(f"document.getElementById('{report}Disclosure') && (document.getElementById('{report}Disclosure').open=true)")
                     time.sleep(.1)
@@ -324,10 +408,17 @@ def run():
             assert js("document.querySelectorAll('.data-disclosure:not([open])').length") == 0
             assert js("document.getElementById('networkStory').textContent.includes('3,953')")
             assert js("document.getElementById('growthStory').textContent.includes('7')")
+            js("document.querySelector('a[href=\"#demographicsExplorer\"]').click()")
+            time.sleep(.2)
+            assert js("document.getElementById('dxDetails').open") is True
+            assert js("document.getElementById('dxRaceFallback').textContent.includes('Black')")
+            choose('dxNetwork','all')
+            assert js("document.querySelector('#dxKpis [data-dx-kpi=black]').textContent.includes('32.07%')")
+            js("document.getElementById('dxReset').click()")
             assert not errors, errors
             result = {'passed': True, 'chart_cdn_loaded': chart_loaded, 'viewports': [320, 375, 768, 1024, 1440],
                 'checks': ['repository-subpath loading', 'independent filters', 'six school and two reporting level filters', 'all demographic and MAP measure filters', 'student group and subject filters', 'historical year range', 'filtered CSV content', 'search', 'reset',
-                    'missing metric exclusion', 'MAP suppression coverage', 'six keyboard card anchors', '1/2/3 column card layouts', 'growth and FRL filters', 'ineligible growth missing values', 'missingness footnotes', 'official state references', 'single-grade subject/group comparisons', 'dated directory and shared-address filters', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions', 'public demographic filters', 'public school search and network filters', 'mobile menu keyboard and Escape', 'six navigation links and active section', 'progressive disclosure', 'dynamic MAP title and takeaway', 'screen-reader chart alternatives']}
+                    'missing metric exclusion', 'MAP suppression coverage', 'six keyboard card anchors', '1/2/3 column card layouts', 'growth and FRL filters', 'ineligible growth missing values', 'missingness footnotes', 'official state references', 'single-grade subject/group comparisons', 'dated directory and shared-address filters', 'keyboard filter focus', 'no page overflow', 'CDN failure tables', 'no browser exceptions', 'public demographic filters', 'public school search and network filters', 'mobile menu keyboard and Escape', 'six navigation links and active section', 'progressive disclosure', 'dynamic MAP title and takeaway', 'screen-reader chart alternatives', 'coordinated demographic workspace', 'dependent network/building/year filters', 'all historical measure selections', 'real chart-click cross-filtering', 'keyboard peer selectors', 'source-preserving explorer CSV', 'no historical state benchmark carry-forward', 'explorer CDN failure alternatives']}
             (ROOT / 'qa' / 'browser-results.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
             print(json.dumps(result, indent=2))
         finally:

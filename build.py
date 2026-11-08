@@ -210,6 +210,8 @@ def build():
     reporting_qa = build_reporting(payload, tables)
     from independent_reporting import apply_independent_findings
     independent_qa = apply_independent_findings(payload, tables)
+    from demographics_explorer import extract_demographic_history
+    payload['demographics_explorer'] = extract_demographic_history(payload, tables)
     (ROOT / 'dashboard-data.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
     qa_dir = ROOT / 'qa'
     qa_dir.mkdir(exist_ok=True)

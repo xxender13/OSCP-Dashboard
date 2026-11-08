@@ -243,6 +243,7 @@ function sourceNote(text,url,label='Official source') {
 }
 function revealTarget(hash,focus=true) {
   const target=document.querySelector(hash);if(!target)return;
+  if(target.tagName==='DETAILS')target.open=true;
   const disclosure=target.closest('.report-disclosure');if(disclosure)disclosure.open=true;
   if(focus&&target.hasAttribute('tabindex'))target.focus({preventScroll:true});
   history.replaceState(null,'',hash);
@@ -346,6 +347,155 @@ function initialize() {
   $('dashboard').hidden=false;$('loadStatus').hidden=true;$('chartFallback').hidden=Boolean(window.Chart);
   Object.values(renderers).forEach(render=>render());
   if(!window.Chart)document.querySelectorAll('.data-disclosure').forEach(d=>d.open=true);
-  renderPublicStory();setupStoryNavigation();
+  renderPublicStory();setupStoryNavigation();DemographicsExplorer.initialize();
 }
+const DemographicsExplorer=(()=>{
+  const defaults=()=>({network:'048914',building:'all',year:2025,measure:'black',sort:'desc',peerLevel:'auto',series:['frl','el','iep'],compare:[]});
+  let state=defaults(),records=[],index=new Map(),mounted=false,initialized=false;
+  const chartObjects={},raceKeys=['black','hispanic','white','multiracial'];
+  const metricColors={black:'#003da5',hispanic:'#007875',white:'#687887',multiracial:'#764e9b',frl:'#003da5',el:'#007875',iep:'#764e9b'};
+  const definition=k=>data.demographics_explorer.metrics[k];
+  const unitKey=r=>`${r.lea}/${r.building??''}`;
+  const networkUnits=()=>data.schools.map(s=>({lea:s['DESE LEA'],building:null,name:s.School,level:'Network'}));
+  const buildingUnits=()=>data.directory.map(r=>({lea:r.lea,building:r.building,name:r.name,level:'Building'}));
+  function selectedUnits(){return state.building!=='all'?buildingUnits().filter(r=>unitKey(r)===state.building):networkUnits().filter(r=>state.network==='all'||r.lea===state.network);}
+  const record=(unit,year)=>index.get(`${unitKey(unit)}/${year}`);
+  function summary(units,year,key){
+    const rows=units.map(u=>record(u,year)),values=rows.map(r=>r?.metrics[key]),available=values.filter(v=>valid(v?.value));
+    const base={year,key,units:units.length,reportable:available.length,numerator:null,denominator:null,value:null,population:definition(key).population};
+    if(units.length===1&&available.length===1)return {...base,...available[0]};
+    if(!units.length||available.length!==units.length)return {...base,reason:`${available.length} of ${units.length} selected units report this value in ${year??'this year'}. No incomplete total is presented.`};
+    if(key==='iep')return {...base,reason:'IEP incidence is a published single-unit rate. Select one network or building; an aggregate denominator is not verified.'};
+    if(!values.every(v=>v.aggregatable))return {...base,reason:'Compatible count/denominator pairs are not published for every selected unit. Source percentages are never averaged.'};
+    const n=values.reduce((a,v)=>a+v.numerator,0),d=key==='enrollment'?null:values.reduce((a,v)=>a+v.denominator,0);
+    return {...base,numerator:n,denominator:d,value:key==='enrollment'?n:100*n/d,method:key==='enrollment'?'sum_of_counts':'ratio_of_sums'};
+  }
+  function availableYears(){const units=selectedUnits();return data.demographics_explorer.years.filter(y=>units.some(u=>valid(record(u,y)?.metrics[state.measure].value)));}
+  function setOptions(id,entries,value){$(id).replaceChildren(...entries.map(([v,label])=>new Option(label,String(v))));$(id).value=String(value);}
+  function apply(patch,notice=''){
+    const active=document.activeElement,checkboxFocus=active?.type==='checkbox'?{group:active.closest('.dx-series')?.id,value:active.value}:null;
+    state={...state,...patch};const messages=notice?[notice]:[];
+    if(state.building!=='all'){
+      const unit=buildingUnits().find(r=>unitKey(r)===state.building);
+      if(patch.network&&unit?.lea!==state.network){state.building='all';messages.push('School selection cleared because it belongs to another network. The view now uses network totals.');}
+      else if(unit&&state.network!==unit.lea){state.network=unit.lea;messages.push('Charter network updated to the selected school’s network.');}
+    }
+    const years=availableYears();
+    if(!years.includes(state.year)){
+      const old=state.year;state.year=years.at(-1)??null;
+      messages.push(state.year===null?'No reportable years exist for this selection.':`Reporting year changed from ${old??'unavailable'} to ${state.year}; the previous year has no published value for this measure and selection.`);
+    }
+    state.compare=state.compare.filter(lea=>lea!==state.network).slice(0,state.network==='all'?3:2);
+    if(state.building!=='all'&&state.compare.length){state.compare=[];messages.push('Extra network trend comparisons cleared to keep the building reporting level separate.');}
+    render(messages.join(' '));
+    if(checkboxFocus?.group)$(checkboxFocus.group)?.querySelector(`input[value="${CSS.escape(checkboxFocus.value)}"]`)?.focus({preventScroll:true});
+  }
+  function panel(id,title,question,extra=''){
+    return `<article class="dx-panel" aria-labelledby="${id}Heading"><h4 id="${id}Heading">${title}</h4><p class="dx-question">${question}</p>${extra}<p id="${id}Insight" class="dx-insight"></p><div id="${id}Legend" class="legend"></div><div id="${id}Plot" class="dx-plot"><canvas id="${id}Chart" role="img" aria-labelledby="${id}Heading" aria-describedby="${id}Insight"></canvas></div><div id="${id}Fallback" class="dx-chart-alternative" hidden></div></article>`;
+  }
+  function mount(){
+    const metricOptions=Object.entries(data.demographics_explorer.metrics).filter(([k])=>k!=='enrollment').map(([k,m])=>`<option value="${k}">${raceKeys.includes(k)?'Race / ethnicity: ':''}${esc(m.label)}</option>`).join('');
+    $('demographicsExplorerMount').innerHTML=`<div class="dx-header"><div><p class="eyebrow">COORDINATED DATA WORKSPACE</p><h3>Student Demographics Explorer</h3><p>Explore student characteristics, school differences, and historical trends across SLU-sponsored charter networks.</p></div><span id="dxPeriod" class="tag"></span></div><form id="dxFilters" class="dx-filters"><div><label for="dxNetwork">Charter network</label><select id="dxNetwork"></select></div><div><label for="dxBuilding">School / building</label><select id="dxBuilding"></select></div><div><label for="dxYear">Reporting year</label><select id="dxYear"></select></div><div><label for="dxMeasure">Demographic measure</label><select id="dxMeasure">${metricOptions}</select></div><button id="dxReset" type="button">Reset all filters</button></form><p id="dxNotice" class="notice" role="status" hidden></p><p id="dxActive" class="dx-active" aria-live="polite"></p><div id="dxKpis" class="dx-kpis" aria-label="Demographic measures for the selected population"></div><div class="dx-grid">${panel('dxRace','Reported racial / ethnic categories','What does our student population look like?')}${panel('dxNeeds','Student characteristics over time','How have student needs changed over time?','<div id="dxSeries" class="dx-series" role="group" aria-label="Visible historical measures"></div>')}${panel('dxEnrollment','Historical K–12 enrollment','How has enrollment changed?','<details class="dx-comparison-options"><summary>Compare network trends</summary><p id="dxCompareHelp">Choose up to two additional networks. Building and network levels are kept separate.</p><div id="dxCompareOptions" class="dx-series"></div></details>')}${panel('dxSchools','Compare schools and networks','How do sponsored schools differ?',`<div class="dx-sort"><div><label for="dxPeerLevel">Compare reporting level</label><select id="dxPeerLevel"><option value="auto">Automatic</option><option value="Building">School/building records</option><option value="Network">Charter networks</option></select></div><div><label for="dxSort">Sort comparison</label><select id="dxSort"><option value="desc">Highest to lowest</option><option value="name">Alphabetical</option></select></div></div><p class="source">Select a chart bar or use its selection button below to filter the workspace.</p>`)}${panel('dxState','Missouri state context','How does this compare with Missouri?')}<div class="dx-peer-actions"><p class="source">Keyboard-accessible school / network selections</p><div id="dxPeerButtons"></div></div></div><details id="dxDetails" class="dx-data"><summary>View detailed data &amp; source records</summary><button id="dxExport" type="button">Download filtered CSV</button><p class="source">Table and CSV include selected-unit history through the reporting year, current-year peer comparisons and optional enrollment comparison history. The “Used in” field distinguishes these populations. CSV retains source counts, published percentages, full-precision derived rates and missingness reasons.</p><div id="dxData" class="scroll" tabindex="0" role="region" aria-label="Filtered demographic source records"></div></details><details class="dx-method"><summary>Metric definitions, source information &amp; limitations</summary><dl>${Object.entries(data.demographics_explorer.metrics).map(([k,m])=>`<dt>${esc(m.label)}</dt><dd>${esc(m.population)}</dd>`).join('')}</dl><p>FRL means free/reduced-price lunch. EL means English learners. IEP means Individualized Education Program. These measures have different populations and are not added together.</p><p>${esc(data.demographics_explorer.rules.aggregate)}</p><p>${esc(data.demographics_explorer.rules.history)}</p><p>${esc(data.demographics_explorer.rules.period)}</p><p>Race bars are four independently reported categories, not an exhaustive distribution. Source * is suppression with no inferred cause; blank/NULL is unreported. Missing values remain unavailable, never zero.</p><p>Sources: DESE district demographics 1991–2025 and building demographics 2006–2025, Sheet1. Only the six current cohort network identifiers and 14 verified building identifiers are included. Exact filenames, names and rows are retained in the data and export. Current directory names label historical identifiers; source-era names are preserved in CSV. No attendance metrics are available.</p><p id="dxStateSource"></p></details>`;
+    $('dxFilters').addEventListener('submit',e=>e.preventDefault());
+    [['dxNetwork','network'],['dxBuilding','building'],['dxMeasure','measure'],['dxYear','year'],['dxSort','sort'],['dxPeerLevel','peerLevel']].forEach(([id,key])=>$(id).addEventListener('change',()=>apply({[key]:key==='year'?Number($(id).value):$(id).value})));
+    $('dxReset').addEventListener('click',()=>{state=defaults();apply({},'Explorer filters reset. Other dashboard reports are unchanged.');});
+    $('dxExport').addEventListener('click',exportCsv);mounted=true;
+  }
+  function enrollmentUnits(){
+    if(state.building!=='all')return selectedUnits();
+    const networks=networkUnits();
+    if(state.network!=='all')return networks.filter(n=>n.lea===state.network||state.compare.includes(n.lea));
+    if(state.compare.length)return networks.filter(n=>state.compare.includes(n.lea));
+    return [...networks].sort((a,b)=>(record(b,state.year)?.metrics.enrollment.value??-1)-(record(a,state.year)?.metrics.enrollment.value??-1)).slice(0,3);
+  }
+  function peers(){const level=state.peerLevel==='auto'?(state.network==='all'?'Network':'Building'):state.peerLevel;return (level==='Network'?networkUnits():buildingUnits()).filter(r=>state.network==='all'||r.lea===state.network);}
+  function historyYears(units){const years=records.filter(r=>r.year<=state.year&&units.some(u=>unitKey(u)===unitKey(r))).map(r=>r.year);return years.length?Array.from({length:Math.max(...years)-Math.min(...years)+1},(_,i)=>Math.min(...years)+i):[];}
+  function sourceDetail(units,year,key){
+    const rows=units.map(u=>record(u,year)).filter(Boolean),m=summary(units,year,key);
+    return `${m.population}; ${year}; ${m.denominator!==null?`${m.numerator??'unavailable'} / ${m.denominator}; `:''}${[...new Set(rows.map(r=>r.source_file))].join(', ')}, Sheet1 rows ${rows.map(r=>r.source_row).join(', ')||'unavailable'}`;
+  }
+  function drawChart(id,type,labels,series,percent=true,onClick=null){
+    if(chartObjects[id]){chartObjects[id].destroy();delete chartObjects[id];}
+    const reported=series.some(s=>s.values.some(valid));
+    $(id+'Plot').hidden=!window.Chart||!reported;
+    $(id+'Fallback').hidden=Boolean(window.Chart)&&reported;
+    $(id+'Legend').innerHTML=series.map(s=>`<span><b style="background:${s.color};${s.outline?'background:#fff;border:2px solid '+s.color:''}"></b>${esc(s.label)}${s.dash?.length?(s.dash[0]===2?' · dotted line':' · dashed line'):''}</span>`).join('');
+    $(id+'Fallback').innerHTML=reported?`<ul>${labels.map((label,i)=>`<li><b>${esc(label)}</b>: ${series.map(s=>`${esc(s.label)} ${valid(s.values[i])?fmt(s.values[i])+(percent?'%':''):'Unavailable*'}`).join(' · ')}</li>`).join('')}</ul>`:'<p>No reportable values for this selection. Missing data is not zero.</p>';
+    if(!window.Chart||!reported)return;
+    const horizontal=type==='bar';
+    $(id+'Plot').style.height=horizontal?`${Math.max(240,labels.length*(series.length>1?85:64)+55)}px`:'300px';
+    const valueLabels={id:'dxValues',afterDatasetsDraw(c){if(!horizontal)return;const ctx=c.ctx;ctx.save();ctx.font='12px system-ui';ctx.fillStyle='#182e43';c.data.datasets.forEach((set,i)=>c.getDatasetMeta(i).data.forEach((bar,j)=>{if(valid(set.data[j]))ctx.fillText(fmt(set.data[j])+(percent?'%':''),bar.x+5,bar.y+4);}));ctx.restore();}};
+    chartObjects[id]=new Chart($(id+'Chart'),{type,data:{labels,datasets:series.map((s,i)=>({label:s.label,data:s.values,borderColor:s.color,backgroundColor:s.barColors??(s.outline?'#fff':s.color),borderWidth:horizontal?(s.outline?2:0):2,borderDash:s.dash??[],pointStyle:['circle','rect','triangle','rectRot'][i%4],pointRadius:3,spanGaps:false,maxBarThickness:20,borderRadius:2}))},plugins:[valueLabels],options:{animation:false,responsive:true,maintainAspectRatio:false,indexAxis:horizontal?'y':'x',layout:{padding:{right:horizontal?62:12}},onClick:onClick?(_,elements)=>{if(elements.length){const selectedIndex=elements[0].index;requestAnimationFrame(()=>onClick(selectedIndex));}}:undefined,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(horizontal?ctx.parsed.x:ctx.parsed.y)}${percent?'%':''}`,afterLabel:ctx=>series[ctx.datasetIndex].details?.[ctx.dataIndex]??''}}},scales:horizontal?{x:{beginAtZero:true,...(percent?{max:100}:{}),grid:{color:'#e7edf3'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11},callback:function(v){return wrapLabel(this.getLabelForValue(v),this.chart.width<440?14:24);}}}}:{x:{grid:{display:false},ticks:{maxTicksLimit:6,font:{size:10}}},y:{beginAtZero:true,...(percent?{max:100}:{}),title:{display:true,text:percent?'Percent (%)':'K–12 students'},ticks:{font:{size:10}}}}}});
+  }
+  function kpiHtml(key){
+    const m=summary(selectedUnits(),state.year,key),count=key==='enrollment';
+    const source=m.value===null?m.reason:m.denominator!==null?`${fmt(m.numerator)} / ${fmt(m.denominator)} · ${m.population}`:m.population;
+    return `<article class="dx-kpi" data-dx-kpi="${key}"><span>${esc(definition(key).label)}</span><strong>${valid(m.value)?fmt(m.value)+(count?'':'%'):'Unavailable*'}</strong><small>${state.year??'No reportable year'} · ${esc(source)}</small></article>`;
+  }
+  function render(notice=''){
+    if(!mounted)return;
+    const units=selectedUnits(),years=availableYears(),label=state.building!=='all'?units[0]?.name:state.network==='all'?'All six charter networks':units[0]?.name;
+    setOptions('dxNetwork',schoolEntries(),state.network);
+    setOptions('dxBuilding',[['all','All (use network totals)'],...buildingUnits().filter(r=>state.network==='all'||r.lea===state.network).map(r=>[unitKey(r),r.name])],state.building);
+    setOptions('dxYear',years.length?years.map(y=>[y,y]):[['','No reportable years']],state.year??'');$('dxYear').disabled=!years.length;
+    $('dxMeasure').value=state.measure;$('dxSort').value=state.sort;$('dxPeerLevel').value=state.peerLevel;
+    $('dxPeriod').textContent=state.year?`Historical data · ${state.year}`:'No reportable year';
+    $('dxNotice').textContent=notice;$('dxNotice').hidden=!notice;
+    $('dxActive').textContent=`${label??'No population'} · ${state.building==='all'?'Network level':'Building level'} · ${state.year??'Unavailable year'} · ${definition(state.measure).label}. Trend charts end at this year; peer comparisons use this year only.`;
+    $('dxKpis').innerHTML=Object.keys(data.demographics_explorer.metrics).map(kpiHtml).join('');
+    const race=raceKeys.map(k=>summary(units,state.year,k));
+    $('dxRaceInsight').textContent=`${race.filter(m=>valid(m.value)).length} of 4 selected categories are reportable for ${label}, ${state.year??'no reportable year'}. These are independent, incomplete category bars—not a complete distribution. No remainder is inferred.`;
+    drawChart('dxRace','bar',raceKeys.map(k=>definition(k).label),[{label:'Independently reported category (%)',color:'#003da5',barColors:raceKeys.map(k=>metricColors[k]),values:race.map(m=>m.value),details:raceKeys.map(k=>sourceDetail(units,state.year,k))}],true);
+    $('dxRaceLegend').innerHTML=raceKeys.map(k=>`<span><b style="background:${metricColors[k]}"></b>${esc(definition(k).label)}</span>`).join('');
+    const histYears=historyYears(units);
+    $('dxSeries').innerHTML=['frl','el','iep'].map(k=>`<label><input type="checkbox" value="${k}" ${state.series.includes(k)?'checked':''}>${esc(definition(k).label)}</label>`).join('');
+    $('dxSeries').querySelectorAll('input').forEach(n=>n.addEventListener('change',()=>apply({series:[...$('dxSeries').querySelectorAll('input:checked')].map(i=>i.value)})));
+    const needs=state.series.map((k,i)=>({label:definition(k).label,color:metricColors[k],dash:{frl:[],el:[7,4],iep:[2,4]}[k],values:histYears.map(y=>summary(units,y,k).value),details:histYears.map(y=>sourceDetail(units,y,k))}));
+    $('dxNeedsInsight').textContent=`${label}: ${histYears[0]??'—'}–${histYears.at(-1)??'—'}. Only published/compatible values are plotted. Gaps remain disconnected. FRL uses January membership; EL uses K–12 enrollment; IEP is a published incidence rate. Historical definitions may vary. ${units.length>1?'IEP has no verified combined denominator; select one network or school for that line.':''}`;
+    if(!state.series.length)$('dxNeedsInsight').textContent='No historical measure is selected. Use the labelled checkboxes to show FRL, English learners or IEP incidence. Source data has not been removed.';
+    drawChart('dxNeeds','line',histYears.map(String),needs);
+    const trendUnits=enrollmentUnits(),enrollYears=historyYears(trendUnits);
+    $('dxCompareOptions').innerHTML=networkUnits().filter(n=>n.lea!==state.network).map(n=>`<label><input type="checkbox" value="${n.lea}" ${state.compare.includes(n.lea)?'checked':''} ${state.building!=='all'?'disabled':''}>${esc(n.name)}</label>`).join('');
+    $('dxCompareHelp').textContent=state.building!=='all'?'Network comparisons are disabled for a building-level view.':state.network==='all'?'Showing up to three network lines. Select up to three networks to compare; no lines are summed.':'Choose up to two additional networks; no building totals are added.';
+    $('dxCompareOptions').querySelectorAll('input').forEach(n=>n.addEventListener('change',()=>{const chosen=[...$('dxCompareOptions').querySelectorAll('input:checked')].map(i=>i.value),limit=state.network==='all'?3:2;if(chosen.length>limit){n.checked=false;$('dxNotice').hidden=false;$('dxNotice').textContent=`Choose at most ${limit} comparison networks to keep labels readable.`;return;}apply({compare:chosen});}));
+    $('dxEnrollmentInsight').textContent=`${trendUnits.length} ${state.building==='all'?'network':'building'} historical series, ${enrollYears[0]??'—'}–${enrollYears.at(-1)??'—'}. Each line keeps its own identifier. Missing years are gaps; preliminary 2025–26 enrollment is excluded. Changes may reflect enrollment and reporting changes; no causal interpretation is inferred.`;
+    drawChart('dxEnrollment','line',enrollYears.map(String),trendUnits.map((u,i)=>({label:u.name,color:colors[i],dash:[[],[7,4],[2,3]][i],values:enrollYears.map(y=>record(u,y)?.metrics.enrollment.value??null),details:enrollYears.map(y=>sourceDetail([u],y,'enrollment'))})),false);
+    const peerUnits=peers(),ranked=peerUnits.map(u=>({unit:u,m:summary([u],state.year,state.measure)})).sort((a,b)=>state.sort==='name'?a.unit.name.localeCompare(b.unit.name):(b.m.value??-1)-(a.m.value??-1)),reportable=ranked.filter(r=>valid(r.m.value));
+    $('dxSchoolsInsight').textContent=`${reportable.length} of ${ranked.length} current-cohort ${peerUnits[0]?.level==='Network'?'networks':'school records'} report ${definition(state.measure).label.toLowerCase()} in ${state.year??'this year'}. ${state.building!=='all'?'Sibling schools remain visible as same-year peer context; other panels use the selected school.':'Click or choose a record to focus the workspace.'} Missing rates are excluded, not plotted at zero.`;
+    drawChart('dxSchools','bar',reportable.map(r=>r.unit.name),[{label:definition(state.measure).label+' (%)',color:'#003da5',values:reportable.map(r=>r.m.value),details:reportable.map(r=>`${r.m.population}; ${state.year}; ${record(r.unit,state.year).source_file}, row ${record(r.unit,state.year).source_row}`)}],true,i=>selectPeer(reportable[i].unit));
+    $('dxPeerButtons').innerHTML=ranked.map((r,i)=>`<button type="button" data-peer="${i}" ${state.building===unitKey(r.unit)?'aria-pressed="true"':'aria-pressed="false"'}>${esc(r.unit.name)} <span>${valid(r.m.value)?fmt(r.m.value)+'%':'Unavailable*'}</span></button>`).join('');
+    $('dxPeerButtons').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>selectPeer(ranked[Number(b.dataset.peer)].unit)));
+    renderState(units);renderData();
+    if(!window.Chart){$('dxDetails').open=true;$('dxNotice').hidden=false;$('dxNotice').textContent=(notice?notice+' ':'')+'Chart library unavailable. Chart alternatives and the detailed data remain available; filters and CSV still work.';}
+  }
+  function selectPeer(unit){apply(unit.building?{network:unit.lea,building:unitKey(unit)}:{network:unit.lea,building:'all'},`${unit.name} selected from the peer comparison. All applicable panels updated.`);}
+  function renderState(units){
+    const metric=summary(units,state.year,state.measure),b=state.year===2025?data.benchmarks[state.measure]:null;
+    const validState=valid(b?.value);
+    $('dxStateInsight').textContent=validState?`Missouri published context: ${fmt(b.value)}% (${b.year}). ${b.population} Selected population: ${state.year}. This is contextual, not a directly matched comparison; no percentage-point difference is calculated. ${valid(metric.value)?'':'The selected combined rate is unavailable; only the published state context is shown.'}`:'Missouri comparison unavailable for this measure and reporting period.';
+    drawChart('dxState','bar',['Selected population','Missouri context'],validState?[{label:`Selected · ${state.year}`,color:'#003da5',values:[metric.value,null],details:[metric.population,'']},{label:`Missouri · ${b.year}`,color:'#687887',outline:true,values:[null,b.value],details:['',b.population]}]:[]);
+    $('dxStateSource').innerHTML=validState?`<a href="${esc(b.source_url)}" target="_blank" rel="noopener">Official Missouri source · ${esc(b.year)}${b.source_page?' · page '+b.source_page:''}</a>. Published rounded values; underlying missing counts are not reconstructed.`:'No official historical statewide benchmark is carried forward into this selected year.';
+  }
+  function exportRows(){
+    const selected=new Set(selectedUnits().map(unitKey)),peer=new Set(peers().map(unitKey)),enrollment=new Set(enrollmentUnits().map(unitKey));
+    return records.filter(r=>r.year<=state.year&&(selected.has(unitKey(r))||r.year===state.year&&peer.has(unitKey(r))||enrollment.has(unitKey(r)))).map(r=>({...r,used_in:[selected.has(unitKey(r))?'Selected population history':'',r.year===state.year&&peer.has(unitKey(r))?'Current-year peers':'',enrollment.has(unitKey(r))?'Enrollment trends':''].filter(Boolean).join('; ')}));
+  }
+  function renderData(){
+    const rows=exportRows(),keys=Object.keys(data.demographics_explorer.metrics);
+    table('dxData',`Filtered records through ${state.year??'unavailable year'} · levels and populations stay separate`,['Name','Level','Year',...keys.map(k=>definition(k).label+(k==='enrollment'?'':' (%)')),'Source file','Source row','Used in'],rows.map(r=>[r.name,r.level,String(r.year),...keys.map(k=>r.metrics[k].value),r.source_file,r.source_row,r.used_in]));
+  }
+  function exportCsv(){
+    const rows=exportRows(),keys=Object.keys(data.demographics_explorer.metrics),cell=v=>{let s=String(v??'Unavailable*');if(typeof v==='string'&&/^[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
+    const metadata=[['Student Demographics Explorer'],['Shared filters',JSON.stringify(state)],['Data rules',data.demographics_explorer.rules.aggregate],['History scope','Through selected year; current-year peers and optional enrollment comparison histories are separately labelled.'],[]];
+    const header=['Name','Source-era name','Level','Year','Network ID','Building ID','Metric','Value','Numerator','Denominator','Published percentage','Method','Population','Missingness / limitation','Source file','Source sheet','Source row','Used in'];
+    const values=rows.flatMap(r=>keys.map(k=>{const m=r.metrics[k];return [r.name,r.source_name,r.level,r.year,r.lea,r.building??'Network',definition(k).label,m.value,m.numerator,m.denominator,m.published_pct,m.method,m.population,[m.reason,...Object.values(m.missingness).map(v=>`${v.reason}: ${v.detail}`)].filter(Boolean).join(' '),r.source_file,r.source_sheet,r.source_row,r.used_in];}));
+    const blob=new Blob(['\uFEFF'+[...metadata,header,...values].map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`oscp-demographics-${state.year??'unavailable'}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function initialize(){
+    records=data.demographics_explorer.records;index=new Map(records.map(r=>[`${unitKey(r)}/${r.year}`,r]));
+    $('demographicsExplorer').addEventListener('toggle',()=>{if(!$('demographicsExplorer').open)return;if(!mounted)mount();if(!initialized){initialized=true;apply();}else Object.values(chartObjects).forEach(c=>c.resize());});
+    if($('demographicsExplorer').open){mount();initialized=true;apply();}
+  }
+  return {initialize,apply,summary,selectedUnits,exportRows,get state(){return structuredClone(state);},get chartObjects(){return chartObjects;}};
+})();
 fetch('./dashboard-data.json').then(r=>{if(!r.ok)throw Error('Data file could not be retrieved');return r.json();}).then(payload=>{data=payload;initialize();}).catch(error=>{$('loadStatus').hidden=false;$('loadStatus').textContent=`Dashboard could not load: ${error.message}. Please reload or try again later.`;});

@@ -12,6 +12,7 @@ class RedesignContractTests(unittest.TestCase):
     def test_verified_payload_is_unchanged(self):
         data=json.loads((ROOT/'dist/dashboard-data.json').read_text(encoding='utf-8'))
         data.pop('generated_at')
+        data.pop('demographics_explorer',None)
         normalized=json.dumps(data,sort_keys=True,ensure_ascii=True,separators=(',',':')).encode()
         self.assertEqual(hashlib.sha256(normalized).hexdigest(),
             '5321d0a4570546e753132db90aa279c735b8c792e40ed7e85ced54b73a23de84',
