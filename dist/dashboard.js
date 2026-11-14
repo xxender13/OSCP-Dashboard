@@ -20,7 +20,7 @@ window.Dashboard = (() => {
   const levelKey = (full = false) =>
     `<div class="four-level-key${full ? " home-level-key" : ""}">${dashboardConfig.levels.map((l) => `<div>${levelChip(l)}${full ? `<p>${esc(l.meaning.replace("{schools}", data.schools.length).replace("{school_buildings}", data.directory.length))}</p>` : ""}</div>`).join("")}</div>`;
   const titleBar = (id) =>
-    `<div class="canvas-title"><div><h2>${esc(definition(id).nav_label)}</h2><p>${esc(definition(id).question)}</p></div></div>`;
+    `<div class="canvas-title"><div><h2>${esc(definition(id).title ?? definition(id).nav_label)}</h2><p>${esc(definition(id).question)}</p></div></div>`;
   const actions = (id) =>
     `<div class="dashboard-actions" data-export-ignore>${["students", "learning", "growth"].includes(id) ? `<button data-sort-value="${id}" aria-pressed="${Analytics.state[id]?.sort === "value"}">Sort by value</button>` : ""}<button data-canvas-export="${id}">Export this view</button><button data-canvas-print="${id}">Print / PDF</button><span class="export-status" role="status"></span></div>`;
   function coverage(
@@ -310,6 +310,7 @@ window.Dashboard = (() => {
     );
   }
   function simple(topic, params) {
+    if (topic === "sponsorships") return Support.render(params);
     if (topic === "home") return;
     const host = $("panel-" + topic),
       s = Analytics.parse(topic, params);
@@ -382,7 +383,7 @@ window.Dashboard = (() => {
       if (glossary)
         glossary.insertAdjacentHTML(
           "beforeend",
-          "<dt>DESE</dt><dd>Missouri Department of Elementary and Secondary Education.</dd><dt>APR</dt><dd>Annual Performance Report.</dd><dt>FRL</dt><dd>Free or reduced-price lunch eligibility.</dd><dt>EL</dt><dd>English learners.</dd><dt>PK</dt><dd>Preschool.</dd>",
+          "<dt>DESE</dt><dd>Missouri Department of Elementary and Secondary Education.</dd><dt>APR</dt><dd>Annual Performance Report.</dd><dt>FRL</dt><dd>Free or reduced-price lunch eligibility.</dd><dt>EL</dt><dd>English learners.</dd><dt>PK</dt><dd>Preschool.</dd><dt>Participation instances</dt><dd>Provisional reported activity participation, potentially counting the same person more than once. Separate from enrollment.</dd><dt>Unique students served</dt><dd>Unduplicated individuals; not available for community activities.</dd>",
         );
     }
     decorateCards(host);

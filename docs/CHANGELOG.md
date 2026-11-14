@@ -1,3 +1,14 @@
+# Sponsorship requests and 2026 community participation
+
+November 14, 2026 - integrated into the existing eight-tab design.
+
+- Replaced the static sponsorship placeholder with Sponsorships & Community Support and a dedicated Community Engagement & Student Participation section inside the existing OSCP Sponsorships destination. Other dashboards and academic calculations remain unchanged. Section links and shared styling preserve existing navigation.
+- Added source-traceable public support packets, with 26 deduplicated workbook entries (65 source rows, 39 repeats), 19 requested amounts totalling $130,220, unknown decisions and no inferred payments. Blank fiscal years disable the year filter; year-labelled worksheet membership remains provenance only. With just one dated entry, a table replaces an unsupported sponsorship time trend. Organization, request status and search filters are available.
+- Added the reviewed 23-row engagement CSV, a timeline, participation/range bars, category counts, details and CSV/PNG controls. All views say provisional. Fifteen compatible exact-count student activities total 16,860 participation instances, never unique students. The 700-900 estimate, general attendees, two ongoing programs and three planned activities remain separate. Dates passing never changes planned status. No finalist subset or student facilitators are added.
+- Defaults show all entries and count types, all activities including large events, and all dates/statuses. Smaller-activity mode uses an explicitly labelled maximum of 1,000. Missing locations remain null unless SLU is explicitly named. Categories are documented editorial classifications, not source outcomes. The official organization name Caring for Kids Network is preserved; it is not used as an education-level term.
+- Public output excludes personal source names, funding labels, invitation/contact fields, private notes and original worksheet titles containing internal terms. The original notes and workbook evidence stay local and ignored. Existing tracked internal files are retained without staging generated updates.
+- The expanded support dashboard prints two readable summary pages; its print timeline groups activities by month and full rows remain in CSV. Other dashboards retain one-page printing. Presentation keeps the support dashboard as one scrollable slide. Added data, range, status, deduplication, filter/export and responsive regression checks.
+
 # Configured Home and eight dashboard frames
 
 November 14, 2026 - `redesign-three-levels` - PR #1

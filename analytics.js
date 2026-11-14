@@ -2026,6 +2026,7 @@ window.Analytics = (() => {
             new URLSearchParams(query(state[topic] ?? defaultState(topic))),
           );
         } else if (topic !== "home") {
+          if (topic === "sponsorships") await Support.load();
           if (topic === "explore") {
             await loadExplorer();
             renderReport();

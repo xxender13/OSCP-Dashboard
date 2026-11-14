@@ -16,10 +16,11 @@ jobs:
       - run: node --check dist/app.js
       - run: node --check dist/analytics.js
       - run: node --check dist/dashboard.js
+      - run: node --check dist/support.js
       - run: node --check dist/vendor/chart.umd.min.js
       - run: node --check dist/vendor/html2canvas.min.js
       - name: Check public content and headline regressions
-        run: python -m unittest test_public_content test_ui test_dashboard_config
+        run: python -m unittest test_public_content test_ui test_dashboard_config test_support_data
       - name: Validate confirmed-input rules without private workbooks
         run: >-
           python -m unittest

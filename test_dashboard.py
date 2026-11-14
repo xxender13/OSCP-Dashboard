@@ -169,13 +169,48 @@ def run():
                     for panel in js('Dashboard.definition(active).panels'):
                         assert js('!!document.getElementById('+json.dumps(panel)+')'),(topic,panel)
                 visible=js("document.getElementById('panel-'+active).innerText")
-                assert not re.search(r'\b(network|LEA|district|record|owner|awaiting|pending|best|worst|leading|success)\b|campus count|Withheld by DESE|Not applicable',visible,re.I),(topic,visible[:300])
+                # Preserve the official organization name; this is not an education-level label.
+                visible=visible.replace("Caring for Kids Network","Caring for Kids")
+                assert not re.search(r'\b(network|LEA|district|record|owner|awaiting|pending|best|worst|leading|success)\b|campus count|Withheld by DESE|Not applicable',visible,re.I),(topic,[(m.group(),visible[max(0,m.start()-40):m.end()+40]) for m in re.finditer(r'\b(network|LEA|district|record|owner|awaiting|pending|best|worst|leading|success)\b|campus count|Withheld by DESE|Not applicable',visible,re.I)])
                 if topic in ['students','learning','growth']:
                     assert js("document.querySelectorAll('#canvas-'+active+' [data-panel]').length")==4
                     assert js('Analytics.renderMs')<200
                     assert js("[...document.querySelectorAll('#canvas-'+active+' [data-panel]')].every(n=>n.querySelector('.chart-summary')?.textContent&&n.querySelector('[data-panel-table]')&&n.querySelector('.panel-table table'))")
                     assert js("[...document.querySelectorAll('#canvas-'+active+' .panel-caption')].every(n=>/20[0-9][0-9]/.test(n.textContent)&&/Schools|School buildings/.test(n.textContent))")
                 screenshot(topic+'-1440')
+                if topic=='sponsorships':
+                    js("document.getElementById('engagement-heading').scrollIntoView()")
+                    screenshot('community-engagement-1440')
+                    js('scrollTo(0,0)')
+            route_to('sponsorships')
+            assert js("Support.packet.sponsorships.summary.unique_entries")==26
+            assert js("Support.packet.engagement.summary.activities")==23
+            assert '16,860' in js("document.getElementById('engagement-instances').innerText")
+            assert js("document.querySelector('[name=fiscal_year]').disabled")
+            change('#canvas-sponsorships [name=engagement_status]','Planned')
+            assert len(js('Support.filtered().engagement'))==3
+            assert 'Not available' in js("document.getElementById('engagement-instances').innerText")
+            assert all(r['status']=='Planned' for r in js('Support.filtered().engagement'))
+            click('#canvas-sponsorships button[type=reset]')
+            change('#canvas-sponsorships [name=size]','small')
+            assert len(js('Support.filtered().engagement'))==20
+            assert not any(r['participants_max']>1000 for r in js('Support.filtered().engagement'))
+            click('#canvas-sponsorships button[type=reset]')
+            change('#canvas-sponsorships [name=search]','SLPS')
+            assert len(js('Support.filtered().engagement'))==1
+            assert js('Support.filtered().engagement[0].participants_min')==700
+            assert js('Support.filtered().engagement[0].participants_max')==900
+            js("window.originalSupportDownload=window.download;window.supportDownload=null;window.download=async(blob,name)=>{window.supportDownload={name,text:await blob.text()}};Support.exportCsv('engagement-details')")
+            until('!!window.supportDownload')
+            assert '700' in js('window.supportDownload.text') and '900' in js('window.supportDownload.text')
+            assert 'SLPS College Fair' in js('window.supportDownload.text')
+            assert 'Basketball' not in js('window.supportDownload.text')
+            js('window.download=window.originalSupportDownload')
+            click('#canvas-sponsorships button[type=reset]')
+            change('#canvas-sponsorships [name=organization]','Cardinal Ritter')
+            assert all(r['organization']=='Cardinal Ritter' for r in js('Support.filtered().sponsorships'))
+            assert js("document.querySelector('#support-approvals strong').textContent")=='Not available'
+            click('#canvas-sponsorships button[type=reset]')
             # Every Home tile and directory link reaches the specified dashboard.
             for tile,topic,measure in [('enrollment','students',None),('schools','schools',None),('lunch','students','frl'),('black','students','black'),('map','learning',None),('growth','growth',None)]:
                 route_to('home');click('[data-home-tile='+tile+']');assert js('active')==topic
@@ -250,6 +285,11 @@ def run():
             js('window.testBlob=null');click('#reading [data-panel-png]');until("window.testBlob?.type==='image/png'");assert js('window.testBlob.size')>10000
             js('window.testBlob=null');click('#canvas-learning [data-canvas-export]');until("window.testBlob?.type==='image/png'");assert js('window.testBlob.size')>30000
             (shots/'learning-export.png').write_bytes(base64.b64decode(js("new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.readAsDataURL(window.testBlob)})")))
+            route_to('sponsorships')
+            js('window.testBlob=null');click('#engagement-categories [data-support-png]');until("window.testBlob?.type==='image/png'");assert js('window.testBlob.size')>10000
+            js('window.testBlob=null');SupportCSV=js("Support.exportCsv('support-details');true")
+            assert 'Requested amount' in js('window.testBlob.text()') and 'General sheet' in js('window.testBlob.text()')
+            assert 'Funding Source' not in js('window.testBlob.text()')
             js('URL.createObjectURL=window.oldURL;HTMLAnchorElement.prototype.click=window.oldClick')
             # Each configured Explorer filter appears in its applicable report.
             found=set()
@@ -279,6 +319,10 @@ def run():
                     if topic in ['students','learning','growth']:
                         assert js("getComputedStyle(document.querySelector('#canvas-'+active+' .analytic-grid')).gridTemplateColumns.split(' ').length")==(1 if width<900 else 2)
                     if width==390:screenshot(topic+'-390',full=True)
+                    if width==390 and topic=='sponsorships':
+                        js("document.getElementById('engagement-heading').scrollIntoView()")
+                        screenshot('community-engagement-390')
+                        js('scrollTo(0,0)')
             viewport(1920,1080);navigate('?present=1');until("presenting&&document.querySelector('.deck-active')?.id==='canvas-home'")
             assert js('deck.length')==len(destinations)
             for topic in destinations:
@@ -292,15 +336,18 @@ def run():
             for topic in destinations:
                 js('document.body.dataset.printCanvas='+json.dumps(topic))
                 output=base64.b64decode(cdp('Page.printToPDF',{'landscape':True,'printBackground':True,'preferCSSPageSize':True})['data'])
-                (shots/(topic+'-print.pdf')).write_bytes(output);document=PdfReader(io.BytesIO(output));assert len(document.pages)==1,(topic,len(document.pages))
-                printed=document.pages[0].extract_text()
+                (shots/(topic+'-print.pdf')).write_bytes(output);document=PdfReader(io.BytesIO(output));assert len(document.pages)==(2 if topic=='sponsorships' else 1),(topic,len(document.pages))
+                printed=' '.join(p.extract_text() for p in document.pages)
                 assert len(printed)>100,(topic,'blank or incomplete PDF')
                 if topic=='home':
                     assert 'They do not show that SLU sponsorship caused them.' in printed
                     assert 'What the terms and data years mean.' in printed
+                if topic=='sponsorships':
+                    assert 'Community Engagement & Student Participation' in printed
+                    assert '16,860' in printed and 'Undated' in printed
                 if topic=='schools':
                     assert '3,247' in printed and '706' in printed,(topic,'city totals clipped')
-                if topic!='home':assert js('Dashboard.definition('+json.dumps(topic)+').nav_label') in printed,(topic,printed[:150])
+                if topic!='home':assert js('(Dashboard.definition('+json.dumps(topic)+').title??Dashboard.definition('+json.dumps(topic)+').nav_label)') in printed,(topic,printed[:150])
             js('delete document.body.dataset.printCanvas');cdp('Emulation.setEmulatedMedia',{'media':'screen'})
             navigate('?embed=1');assert js("getComputedStyle(document.querySelector('header')).display")=='none'
             message=js("new Promise(resolve=>{let f=document.createElement('iframe');f.id='embed-test';window.addEventListener('message',function receive(e){if(e.source===f.contentWindow){window.removeEventListener('message',receive);resolve(e.data)}});f.src=location.origin+location.pathname+'?embed=1';document.body.appendChild(f);setTimeout(()=>resolve(null),5000)})")
@@ -311,7 +358,7 @@ def run():
             assert not js('!!window.Chart');assert js("document.getElementById('reading-table').open")
             navigate('explorer.html#explore/map');assert js('active')=='explore'
             assert not errors,errors
-            result={'passed':True,'widths':[320,375,390,768,1024,1440,1920],'presentation':[1920,1080],'checks':['configured eight dashboards','Home content and links','config filter/panel parity','MAP coverage labels','student group and course choices','source suppression','shared URL filters','school search and legacy routes','geometry and chart containment','dropdowns and anchors','CSV/PNG exports','one-dashboard presentation','one-dashboard PDF','embed height','self-hosted fallback']}
+            result={'passed':True,'widths':[320,375,390,768,1024,1440,1920],'presentation':[1920,1080],'checks':['configured eight dashboards','sponsorship provenance and filters','engagement ranges, plans and CSV','Home content and links','config filter/panel parity','MAP coverage labels','student group and course choices','source suppression','shared URL filters','school search and legacy routes','geometry and chart containment','dropdowns and anchors','CSV/PNG exports','one-dashboard presentation','landscape PDFs; two support sections','embed height','self-hosted fallback']}
             (shots/'results.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
         finally:
             if connection:connection.close()

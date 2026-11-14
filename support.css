@@ -1,0 +1,303 @@
+.support-frame .support-body {
+  padding: 16px;
+}
+.support-section {
+  margin-bottom: 32px;
+  min-width: 0;
+}
+.support-section > h3 {
+  font-size: 24px;
+  margin: 8px 0;
+}
+.support-section > p,
+.support-filter-note {
+  margin: 8px 0 16px;
+  font-size: 16px;
+}
+.support-filter-note {
+  padding: 0 16px;
+}
+.support-section .kpi-strip {
+  padding: 0;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  margin-bottom: 16px;
+}
+.support-frame .mini-kpi strong {
+  font-size: clamp(22px, 2.2vw, 32px);
+}
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.support-grid > *,
+.support-panel > *,
+.support-filters > * {
+  min-width: 0;
+}
+.support-panel {
+  border: 1px solid #dce1e7;
+  border-radius: 12px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  height: var(--panel-h);
+  position: relative;
+  min-width: 0;
+}
+.support-panel .panel-title {
+  flex-shrink: 0;
+}
+.support-panel h3 {
+  font-size: 18px;
+}
+.support-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.support-meta .level {
+  font-size: 12px;
+  white-space: normal;
+}
+.support-panel .support-meta {
+  max-width: 220px;
+}
+.support-panel .chart-summary {
+  font-size: 16px;
+  margin: 8px 16px;
+}
+.support-panel .panel-caption {
+  font-size: 12px;
+  margin: 8px 16px;
+}
+.support-plot {
+  min-height: 0;
+  flex: 1;
+  position: relative;
+  padding: 0 8px;
+}
+.support-timeline {
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+  padding: 0 16px;
+}
+.support-timeline-item {
+  display: flex;
+  flex-direction: column;
+  border-left: 4px solid #003da5;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #f5f7fb;
+}
+.support-timeline-item.is-planned {
+  border-left: 4px dashed #8a650e;
+  background: #faf6eb;
+}
+.support-timeline-item time,
+.support-timeline-item small {
+  font-size: 14px;
+}
+.support-panel .scroll {
+  max-width: 100%;
+  overflow: auto;
+  min-height: 0;
+}
+.support-panel table {
+  min-width: 680px;
+  font-size: 14px;
+}
+.support-panel td,
+.support-panel th {
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.support-panel .support-data-table {
+  margin: 0 16px;
+  overflow: auto;
+  min-height: 0;
+  flex-shrink: 1;
+}
+.support-detail-panel {
+  margin-bottom: 16px;
+}
+.support-detail-panel .support-data-table {
+  flex: 1;
+}
+.support-empty {
+  padding: 16px;
+}
+.support-table-mode .support-plot,
+.support-table-mode .support-timeline {
+  display: none;
+}
+.support-table-mode .support-data-table {
+  flex: 1;
+}
+.support-filters {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.support-filters label span {
+  display: block;
+  margin-bottom: 8px;
+}
+.support-filters select,
+.support-filters input {
+  width: 100%;
+  min-width: 0;
+}
+.present .support-frame.deck-active {
+  overflow: auto !important;
+}
+@media (max-width: 899px) {
+  .support-grid {
+    grid-template-columns: 1fr;
+  }
+  .support-frame .support-body {
+    padding: 16px;
+  }
+}
+@media (max-width: 599px) {
+  .support-panel .panel-title {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .support-panel h3 {
+    font-size: 16px;
+  }
+  .support-panel .support-meta {
+    max-width: none;
+  }
+}
+@media print {
+  .support-frame {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .support-frame .support-filters,
+  .support-frame .support-filter-note,
+  .support-frame .active-filters,
+  .support-frame .dashboard-actions,
+  .support-frame .support-detail-panel {
+    display: none !important;
+  }
+  .support-frame .support-body {
+    padding: 0;
+  }
+  .support-frame .support-section {
+    break-after: page;
+    height: 158mm;
+    margin: 0;
+  }
+  .support-frame .support-section:last-child {
+    break-after: auto;
+  }
+  .support-frame .support-section > h3 {
+    font-size: 16px;
+  }
+  .support-frame .support-section > p {
+    font-size: 10px;
+    margin: 4px;
+  }
+  .support-frame .support-grid {
+    gap: 8px;
+    margin: 8px 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .support-frame .support-panel {
+    height: 60mm;
+  }
+  .support-frame .support-panel .chart-summary,
+  .support-frame .support-panel .panel-caption {
+    font-size: 8px;
+    margin: 4px 8px;
+  }
+  .support-frame .support-panel h3 {
+    font-size: 11px;
+  }
+  .support-frame .support-data-table {
+    display: none !important;
+  }
+  .support-frame .support-timeline {
+    overflow: hidden;
+    font-size: 8px;
+  }
+  .support-frame .support-timeline-item {
+    margin: 0;
+    padding: 2px 4px;
+  }
+  .support-frame .support-timeline-item time,
+  .support-frame .support-timeline-item small {
+    font-size: 7px;
+  }
+  .support-frame .support-meta .level,
+  .support-frame .support-meta .year-chip {
+    font-size: 7px;
+  }
+  .support-frame .mini-kpi strong {
+    font-size: 18px;
+  }
+  .support-frame .mini-kpi {
+    padding: 4px;
+  }
+}
+
+.support-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 8px 16px;
+  background: white;
+}
+#support-heading,
+#engagement-heading {
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+@media print {
+  .support-jumps {
+    display: none;
+  }
+}
+
+.support-print-timeline {
+  display: none;
+}
+@media print {
+  .support-frame .support-section {
+    height: auto;
+  }
+  .support-frame .support-section:last-child {
+    break-after: auto;
+  }
+  .support-frame .support-timeline {
+    display: none;
+  }
+  .support-frame .support-print-timeline {
+    display: block;
+    margin: 0 8px;
+  }
+  .support-frame .support-print-timeline p {
+    font-size: 8px;
+    margin: 0 0 2px;
+  }
+  .support-frame .support-print-timeline table {
+    min-width: 0;
+    width: 100%;
+    font-size: 8px;
+  }
+  .support-frame .support-print-timeline th,
+  .support-frame .support-print-timeline td {
+    padding: 1px 4px;
+  }
+  .support-frame .support-print-timeline .scroll {
+    overflow: visible;
+  }
+}
+
+.support-plot { overflow:auto; }
+.support-chart-surface { position:relative; min-width:0; }
+@media print { .support-plot { overflow:hidden; } .support-chart-surface { height:100%!important; } }

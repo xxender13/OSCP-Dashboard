@@ -47,6 +47,17 @@ def evidence(full,missing,requests):
     return {'school_cells':len(school_cells),'building_cells':len(building_cells),'school_withheld':withheld_schools,'building_withheld':withheld_buildings,'tracker':tracker,'absent_preliminary':absent,'map_building_rows':map_rows,'map_years':sorted({r['year'] for r in full['assessments']}),'growth_years':sorted({r['year'] for r in full['growth']}),'growth_eligible':{subject:sum(r['eligible'] for r in full['growth'] if r['subject']==subject) for subject in full['kpi_metrics']['growth']}}
 
 def option_labels(source,public,full,templates):
+    if source.startswith(('support.','engagement.')):
+        packet=read('support-data.json')
+        sponsor=packet['sponsorships']['rows'];engage=packet['engagement']['rows']
+        return {'support.fiscal_years':sorted({r['fiscal_year'] for r in sponsor if r['fiscal_year']}) or ['Not available'],
+                'support.organizations':sorted({r['organization'] for r in sponsor if r['organization']}),
+                'support.statuses':sorted({r['status'] for r in sponsor}),
+                'engagement.statuses':sorted({r['status'] for r in engage}),
+                'engagement.categories':sorted({r['category'] for r in engage}),
+                'engagement.types':sorted({r['participation_type'] for r in engage}),
+                'engagement.sizes':['All activities','Up to 1,000'],
+                'support.search':['Free-text search of both sections']}.get(source,['See selected report'])
     if source=='schools.names':return ['All schools']+[s['School'] for s in public['schools']]
     if source=='directory.cities':return ['All cities']+sorted({r['city'] for r in public['directory']})
     if source=='directory.names':return ['Free text: school or school building name']
@@ -66,6 +77,9 @@ def option_labels(source,public,full,templates):
 
 def readiness(dashboard,proof,public):
     topics=dashboard['data_topics']
+    if 'support' in topics:
+        support=read('support-data.json')
+        return ('Partly ready',f"{support['sponsorships']['summary']['unique_entries']} distinct workbook entries; decisions and fiscal years absent. {support['engagement']['summary']['activities']} provisional engagement activities; unique students and independent attendance not available.")
     if 'programs' in topics:
         count=sum(len(rows) for rows in public['programs'].values())
         return ('Ready' if count else 'Not ready',f'{count} confirmed items; '+KEY['input'])
@@ -135,7 +149,7 @@ def generate(output=None):
         document.add_heading('What is missing and why',2);document.add_paragraph(readiness(dashboard,proof,public)[1])
         if 'map' in dashboard['data_topics'] or 'growth' in dashboard['data_topics']:document.add_paragraph(KEY['not_supplied']+': earlier requested trend years are absent. The public Learning and Growth dashboards do not imply trends.')
         if 'programs' in dashboard['data_topics']:document.add_paragraph('; '.join(f'{area}: {len(rows)} input rows; {len(public["programs"].get(area,[]))} confirmed rows' for area,rows in templates.items() if area in public['programs']))
-        document.add_heading('Data we need',2);document.add_paragraph(f"Role: {ROLES['programs'] if 'programs' in dashboard['data_topics'] else ROLES['download']}. Priority: high for the gaps above; optional descriptive additions remain lower priority.")
+        document.add_heading('Data we need',2);document.add_paragraph(f"Role: {ROLES['programs'] if any(t in dashboard['data_topics'] for t in ('programs','support','engagement')) else ROLES['download']}. Priority: high for the gaps above; optional descriptive additions remain lower priority.")
     document.add_page_break();document.add_heading('Consolidated data-request list',1)
     requests_list=[('Raw preliminary school and school building enrollment files from DESE MCDS','download','High'),('MAP school, school building and Missouri data for earlier requested trend years','download','High'),('APR growth supporting data for earlier requested trend years','download','High'),('Headline K–12 or PK–12 definition and source of the unresolved OSCP overview total','leadership','High'),('Physical campus counts, separately defined from school buildings and addresses','leadership','Medium'),('Verify opened and joined years against the approved school list','leadership','Medium'),('Scholarship counts, amounts and the iSCORE per-award versus program-total question','programs','High'),('Event dates, attendance and approved photos','programs','High'),('Partnership reach with a documented overlap rule','programs','High'),('Support/compliance hours and team experience','leadership','Medium'),('Decision status and approved amounts for unique requests, only if funding will be shown','leadership','Medium'),('Public citation line and contact','leadership','Medium'),('Optional school descriptions','programs','Low'),('Optional grade-level enrollment','download','Low')]
     for text,role,priority in requests_list:document.add_paragraph(f'{text} · {ROLES[role]} · {priority}',style='List Number')

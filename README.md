@@ -10,7 +10,9 @@ Eight dashboards share one configuration: Home, Schools, Students, Learning, Gro
 
 Learning offers published student groups and grade/course choices. Unpublished choices remain visible and disabled. Pooled MAP percentages describe only the three reporting schools and display a computed coverage label. Demographic pooling requires complete compatible values from all six schools; IEP values remain school-specific. Missing values retain their labels and never become zero. Race compositions show published categories without normalizing or inferring missing shares.
 
-Each panel menu offers PNG, CSV and a table view. **Export this view** captures the dashboard with self-hosted html2canvas. **Presentation view** starts with Home and gives each dashboard one slide; arrows navigate and Escape exits. **Print / PDF** prints a dashboard on one landscape page. The footer print control prepares all eight dashboards. See [embedding instructions](EMBED.md).
+The **OSCP Sponsorships** tab now contains Sponsorships & Community Support and Community Engagement & Student Participation. Workbook requests remain separate from approvals/payments; 2026 activity counts are provisional participation instances, not unique students or enrollment. See [sponsorship definitions](docs/sponsorship-integration.md) and [engagement definitions](docs/community-engagement-data.md). Source rows, ranges, planned activities and program enrollment retain their distinctions.
+
+Each panel menu offers PNG, CSV and a table view. **Export this view** captures the dashboard with self-hosted html2canvas. **Presentation view** starts with Home and gives each dashboard one slide; arrows navigate and Escape exits. **Print / PDF** prints a dashboard in landscape (the expanded support dashboard has two summary pages). The footer print control prepares all eight dashboards. See [embedding instructions](EMBED.md).
 
 Build and check locally:
 

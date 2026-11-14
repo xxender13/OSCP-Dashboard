@@ -219,6 +219,7 @@ def build():
     qa_dir = ROOT / 'qa'
     qa_dir.mkdir(exist_ok=True)
     (qa_dir / 'workbook-inventory.json').write_text(json.dumps(inventory, ensure_ascii=False, indent=2), encoding='utf-8')
+    (qa_dir / 'sponsorship-source-rows.json').write_text(json.dumps(tables[GALA], ensure_ascii=False, indent=2, default=str), encoding='utf-8')
     (qa_dir / 'event-audit.json').write_text(json.dumps({'records': events, 'duplicates': duplicates}, ensure_ascii=False, indent=2, default=str), encoding='utf-8')
     (qa_dir / 'kpi-calculations.json').write_text(json.dumps(reporting_qa, ensure_ascii=False, indent=2), encoding='utf-8')
     (qa_dir / 'independent-calculations.json').write_text(json.dumps(independent_qa, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -229,7 +230,7 @@ def build():
         'Race/ethnicity categories are incomplete; separate category comparisons only. No inferred remainder.',
         'Historical records are displayed separately for 2007–2025. School coverage varies by year; preliminary 2025–26 enrollment is not appended to the historical series.',
         'Demographic extracts, state MAP and APR inputs are now used for separately defined KPI reporting. Original preliminary enrollment extracts remain absent; existing 3,953 total is traced to the reconciled cohort master.',
-        'No confirmed community events; blank approval fields do not establish approval. Requested amounts, private notes, and invite lists are excluded from public JSON.']
+        'Workbook entries and requested amounts are published separately from provisional staff-reported community activities. Blank decisions never establish approval or payment. Private notes, funding-source labels and invite lists remain internal.']
     report = ['# Data quality report', '', f"Generated: {payload['generated_at']}", '',
         f"PASS: {len(schools)} unique LEAs; {sum(s[ENROLL] for s in schools):,} preliminary K–12 enrollment; {map_checks} MAP records matched to raw DESE district/building sources.",
         f"Inspected {len(inventory)} worksheets across {len(tables)} workbooks. Every nonempty row read; column names in workbook-inventory.json.",
@@ -246,9 +247,11 @@ def build():
     (qa_dir / 'QA-report.md').write_text('\n'.join(report) + '\n', encoding='utf-8')
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
-    for name in ('index.html', 'styles.css', 'canvas.css', 'dashboard.css', 'app.js', 'analytics.js', 'dashboard.js'):
+    for name in ('index.html', 'styles.css', 'canvas.css', 'dashboard.css', 'app.js', 'analytics.js', 'dashboard.js', 'support.js', 'support.css'):
         shutil.copy2(ROOT / name, dist / name)
     package(payload,ROOT)
+    from support_data import package_support
+    package_support(events, ROOT)
     for path in [ROOT/'explorer.html']:
         shutil.copy2(path,dist/path.name)
     shutil.copytree(ROOT/'vendor',dist/'vendor',dirs_exist_ok=True)

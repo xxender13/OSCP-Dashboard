@@ -46,7 +46,12 @@
       "nav_label": "Home",
       "question": "What do the reported figures describe?",
       "goal": "Introduce the schools, students, reported results and available dashboards.",
-      "levels": ["missouri", "schools", "school-buildings", "oscp"],
+      "levels": [
+        "missouri",
+        "schools",
+        "school-buildings",
+        "oscp"
+      ],
       "kpis": [
         "enrollment",
         "school-communities",
@@ -55,56 +60,89 @@
         "map-pooled",
         "growth-target"
       ],
-      "panels": ["home-scorecard", "dashboard-directory"],
+      "panels": [
+        "home-scorecard",
+        "dashboard-directory"
+      ],
       "filters": [],
-      "data_topics": ["directory", "demographics", "map", "growth"]
+      "data_topics": [
+        "directory",
+        "demographics",
+        "map",
+        "growth"
+      ]
     },
     {
       "id": "schools",
       "nav_label": "Schools",
       "question": "Which schools does SLU sponsor, and where?",
       "goal": "Show which schools OSCP sponsors and where they are.",
-      "levels": ["schools", "school-buildings"],
+      "levels": [
+        "schools",
+        "school-buildings"
+      ],
       "kpis": [],
-      "panels": ["profiles", "cities", "directory"],
+      "panels": [
+        "profiles",
+        "cities",
+        "directory"
+      ],
       "filters": [
         {
           "id": "search",
           "label": "Search",
           "help": "Find a school or school building by name.",
           "options_source": "directory.names",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "city",
           "label": "City",
           "help": "Show schools and school buildings in one city.",
           "options_source": "directory.cities",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "school",
           "label": "School",
           "help": "Type a school name, with or without accents.",
           "options_source": "schools.names",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "level",
           "label": "Level",
           "help": "School buildings are part of the sponsored schools.",
           "options_source": "levels.education",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         }
       ],
-      "data_topics": ["directory"]
+      "data_topics": [
+        "directory"
+      ]
     },
     {
       "id": "students",
       "nav_label": "Students",
       "question": "Who attends, and how has that changed?",
       "goal": "Show who the students are and the populations used by each measure.",
-      "levels": ["missouri", "schools", "school-buildings"],
+      "levels": [
+        "missouri",
+        "schools",
+        "school-buildings"
+      ],
       "kpis": [
         "enrollment",
         "frl",
@@ -115,52 +153,78 @@
         "el",
         "iep"
       ],
-      "panels": ["groups", "needs-history", "composition", "bridge"],
+      "panels": [
+        "groups",
+        "needs-history",
+        "composition",
+        "bridge"
+      ],
       "filters": [
         {
           "id": "level",
           "label": "Level",
           "help": "Keep school and school building results separate.",
           "options_source": "levels.education",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "school",
           "label": "School",
           "help": "Choose a school; its school buildings stay together.",
           "options_source": "schools.names",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "year",
           "label": "Year",
           "help": "Select a reported year for the student snapshot and history.",
           "options_source": "history.years",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "measure",
           "label": "Measure",
           "help": "Choose a reported student group or enrollment measure.",
           "options_source": "history.measures",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "reference",
           "label": "Show Missouri",
           "help": "Show available statewide references without changing school values.",
           "options_source": "reference.toggle",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         }
       ],
-      "data_topics": ["demographics"]
+      "data_topics": [
+        "demographics"
+      ]
     },
     {
       "id": "learning",
       "nav_label": "Learning",
       "question": "How are students doing in reading and math?",
       "goal": "Describe published performance and compare the same grade and student group.",
-      "levels": ["missouri", "schools", "school-buildings"],
+      "levels": [
+        "missouri",
+        "schools",
+        "school-buildings"
+      ],
       "kpis": [
         "map-reading-pooled",
         "map-math-pooled",
@@ -169,59 +233,88 @@
         "published-schools",
         "reportable-tests"
       ],
-      "panels": ["reading", "math", "grade-comparison", "performance"],
+      "panels": [
+        "reading",
+        "math",
+        "grade-comparison",
+        "performance"
+      ],
       "filters": [
         {
           "id": "level",
           "label": "Level",
           "help": "Compare schools or their separately reported school buildings.",
           "options_source": "levels.education",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "school",
           "label": "School",
           "help": "Choose one school or all sponsored schools.",
           "options_source": "schools.names",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "measure",
           "label": "Subject",
           "help": "Choose reading, math or both; results are from the reported assessment year.",
           "options_source": "assessments.subjects",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "grade",
           "label": "Grade/course",
           "help": "Applies to the exact-grade comparison panel; other panels show all tested grades.",
           "options_source": "matched_map.grades",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "group",
           "label": "Student group",
           "help": "Use the same published student group in each comparison.",
           "options_source": "assessments.student_groups",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "reference",
           "label": "Show Missouri",
           "help": "Add a separate statewide reference for the same available population.",
           "options_source": "reference.toggle",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         }
       ],
-      "data_topics": ["map"]
+      "data_topics": [
+        "map"
+      ]
     },
     {
       "id": "growth",
       "nav_label": "Growth",
       "question": "Are school buildings meeting Missouri's growth target?",
       "goal": "Describe growth designations and eligible school building counts.",
-      "levels": ["missouri", "schools", "school-buildings"],
+      "levels": [
+        "missouri",
+        "schools",
+        "school-buildings"
+      ],
       "kpis": [
         "reading-target",
         "math-target",
@@ -230,160 +323,294 @@
         "eligible",
         "not-tested"
       ],
-      "panels": ["designations", "results", "points", "comparison"],
+      "panels": [
+        "designations",
+        "results",
+        "points",
+        "comparison"
+      ],
       "filters": [
         {
           "id": "school",
           "label": "School",
           "help": "Choose a school and its eligible school buildings.",
           "options_source": "schools.names",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "measure",
           "label": "Subject",
           "help": "Choose reading, math or both growth results.",
           "options_source": "growth.subjects",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "level",
           "label": "Level",
           "help": "Growth is measured at school building level, with school grouping available.",
           "options_source": "levels.education",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "reference",
           "label": "Show Missouri",
           "help": "Compare eligible school building Target shares with Missouri.",
           "options_source": "reference.toggle",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         }
       ],
-      "data_topics": ["growth"]
+      "data_topics": [
+        "growth"
+      ]
     },
     {
       "id": "sponsorships",
       "nav_label": "OSCP Sponsorships",
-      "question": "What does OSCP provide beyond sponsoring schools?",
-      "goal": "Show confirmed scholarships, events, partnerships and OSCP support.",
-      "levels": ["oscp", "schools"],
-      "kpis": [],
-      "panels": ["scholarships", "events", "reach", "support"],
+      "question": "What sponsorship requests and community participation have been reported?",
+      "goal": "Describe sponsorship requests and reported community participation without implying approvals or unique students.",
+      "levels": [
+        "oscp",
+        "schools"
+      ],
+      "kpis": [
+        "support-entries",
+        "support-requested",
+        "support-approvals",
+        "engagement-activities",
+        "engagement-numeric",
+        "engagement-instances",
+        "engagement-planned",
+        "engagement-programs"
+      ],
+      "panels": [
+        "support-organizations",
+        "support-status",
+        "support-details",
+        "engagement-timeline",
+        "engagement-participation",
+        "engagement-categories",
+        "engagement-details"
+      ],
       "filters": [
-        {
-          "id": "program",
-          "label": "Program type",
-          "help": "Choose one confirmed program area.",
-          "options_source": "programs.types",
-          "level_applicability": ["oscp"]
-        },
         {
           "id": "fiscal_year",
           "label": "Fiscal year",
-          "help": "Show an available confirmed reporting year.",
-          "options_source": "programs.years",
-          "level_applicability": ["oscp"]
+          "help": "Only an explicit source fiscal year; worksheet labels do not assign years.",
+          "options_source": "support.fiscal_years",
+          "level_applicability": [
+            "oscp"
+          ]
         },
         {
-          "id": "school",
-          "label": "School",
-          "help": "Show confirmed items for a named school when reported.",
-          "options_source": "schools.names",
-          "level_applicability": ["oscp", "schools"]
+          "id": "organization",
+          "label": "Organization",
+          "help": "Filter sponsorship entries by the named organization.",
+          "options_source": "support.organizations",
+          "level_applicability": [
+            "oscp"
+          ]
         },
         {
           "id": "status",
-          "label": "Status",
-          "help": "Only confirmed items can appear in this dashboard.",
-          "options_source": "programs.confirmed",
-          "level_applicability": ["oscp"]
+          "label": "Request status",
+          "help": "Unknown means no usable decision field; requested dollars are not payments.",
+          "options_source": "support.statuses",
+          "level_applicability": [
+            "oscp"
+          ]
+        },
+        {
+          "id": "engagement_status",
+          "label": "Activity status",
+          "help": "Reported does not mean independently verified; planned stays planned.",
+          "options_source": "engagement.statuses",
+          "level_applicability": [
+            "oscp"
+          ]
+        },
+        {
+          "id": "category",
+          "label": "Activity category",
+          "help": "Categories describe the activity name and notes, not verified impact.",
+          "options_source": "engagement.categories",
+          "level_applicability": [
+            "oscp"
+          ]
+        },
+        {
+          "id": "participation_type",
+          "label": "Count type",
+          "help": "Keep event instances, estimates, attendees, programs and plans distinct.",
+          "options_source": "engagement.types",
+          "level_applicability": [
+            "oscp"
+          ]
+        },
+        {
+          "id": "size",
+          "label": "Activity size",
+          "help": "Show all values or smaller activities up to 1,000 participants.",
+          "options_source": "engagement.sizes",
+          "level_applicability": [
+            "oscp"
+          ]
+        },
+        {
+          "id": "search",
+          "label": "Search",
+          "help": "Search names, organizations and public notes within both sections.",
+          "options_source": "support.search",
+          "level_applicability": [
+            "oscp"
+          ]
         }
       ],
-      "data_topics": ["programs"]
+      "data_topics": [
+        "support",
+        "engagement"
+      ],
+      "title": "Sponsorships & Community Support"
     },
     {
       "id": "explore",
       "nav_label": "Explore Data",
       "question": "Check the detail and download it.",
       "goal": "Make the detailed measures, populations and tables available for checking.",
-      "levels": ["missouri", "schools", "school-buildings"],
+      "levels": [
+        "missouri",
+        "schools",
+        "school-buildings"
+      ],
       "kpis": [],
-      "panels": ["history", "groups", "map", "grades", "growth", "directory"],
+      "panels": [
+        "history",
+        "groups",
+        "map",
+        "grades",
+        "growth",
+        "directory"
+      ],
       "filters": [
         {
           "id": "school",
           "label": "School",
           "help": "Filter the selected report to a school.",
           "options_source": "schools.names",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "level",
           "label": "Level",
           "help": "Keep reporting levels separate.",
           "options_source": "levels.education",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "metric",
           "label": "Historical measure",
           "help": "Choose a measure available in the selected report.",
           "options_source": "history.measures",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "year_range",
           "label": "Year range",
           "help": "Choose the years shown in the historical report.",
           "options_source": "history.years",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "subject",
           "label": "Subject",
           "help": "Choose an available assessment subject.",
           "options_source": "assessments.all_subjects",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "grade",
           "label": "Grade/course",
           "help": "Use the exact reported grade or course.",
           "options_source": "matched_map.grades",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "group",
           "label": "Student group",
           "help": "Select the same published population for comparisons.",
           "options_source": "assessments.student_groups",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         },
         {
           "id": "city",
           "label": "City",
           "help": "Limit the directory to one reported city.",
           "options_source": "directory.cities",
-          "level_applicability": ["school-buildings"]
+          "level_applicability": [
+            "school-buildings"
+          ]
         },
         {
           "id": "assessment_measure",
           "label": "Assessment measure",
           "help": "Choose a published achievement percentage or count.",
           "options_source": "assessments.measures",
-          "level_applicability": ["schools", "school-buildings"]
+          "level_applicability": [
+            "schools",
+            "school-buildings"
+          ]
         }
       ],
-      "data_topics": ["directory", "demographics", "map", "growth"]
+      "data_topics": [
+        "directory",
+        "demographics",
+        "map",
+        "growth"
+      ]
     },
     {
       "id": "about",
       "nav_label": "About",
       "question": "What the terms and data years mean.",
       "goal": "Explain definitions, sources, reporting years and descriptive limits.",
-      "levels": ["missouri", "schools", "school-buildings", "oscp"],
+      "levels": [
+        "missouri",
+        "schools",
+        "school-buildings",
+        "oscp"
+      ],
       "kpis": [],
       "panels": [
         "glossary",
@@ -394,7 +621,9 @@
         "cite"
       ],
       "filters": [],
-      "data_topics": ["definitions"]
+      "data_topics": [
+        "definitions"
+      ]
     }
   ],
   "assessment_measures": {

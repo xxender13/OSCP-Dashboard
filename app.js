@@ -984,6 +984,7 @@ async function route() {
       document.querySelector(".tabs").scrollIntoView({ block: "start" });
     return;
   }
+  if (topic === "sponsorships") await Support.load();
   Dashboard.simple(topic, filterParams);
   redraw();
   const panel = $("panel-" + topic);

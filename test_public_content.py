@@ -14,7 +14,7 @@ class PublicContentTests(unittest.TestCase):
                 self.assertIsNone(FORBIDDEN.search(p.read_text(encoding='utf-8')),str(p))
 
     def test_public_allowlist(self):
-        self.assertEqual({p.name for p in (ROOT/'dist').iterdir()}, {'index.html','explorer.html','app.js','analytics.js','dashboard.js','styles.css','canvas.css','dashboard.css','config','summary.json','explorer-core.json','explorer-demographics.json','explorer-map.json','canvas-overview.json','canvas-students.json','canvas-learning.json','vendor'})
+        self.assertEqual({p.name for p in (ROOT/'dist').iterdir()}, {'index.html','explorer.html','app.js','analytics.js','dashboard.js','styles.css','canvas.css','dashboard.css','support.js','support.css','support-data.json','config','summary.json','explorer-core.json','explorer-demographics.json','explorer-map.json','canvas-overview.json','canvas-students.json','canvas-learning.json','vendor'})
         self.assertLess((ROOT/'dist/summary.json').stat().st_size,400000)
         for name in ('index.html','explorer.html','app.js','styles.css','summary.json'):
             self.assertEqual((ROOT/name).read_bytes(),(ROOT/'dist'/name).read_bytes())
