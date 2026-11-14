@@ -23,6 +23,9 @@ class ThreeLevelsTests(unittest.TestCase):
             if r['level']=='Charter' and r['lea'] in ('048905','048925','115926') and r['category']=='MSIP Total' and r['subject'] in ('Eng. Language Arts','Mathematics','Science'):
                 self.assertIsNone(r['PA_PCT']);self.assertEqual(r['status'],'withheld')
         validate_nulls(d)
+        for r in d['demographics_explorer']['records']:
+            for m in r['metrics'].values():
+                if m['value'] is None and any(v.get('reason')=='suppressed_in_source' for v in m['missingness'].values()):self.assertEqual(m['statuses']['value'],'withheld')
     def test_empty_inputs_are_pending_not_zero(self):
         x=load_inputs(ROOT/'data/inputs')
         self.assertIsNone(x['scholarship_totals']['count']);self.assertIsNone(x['scholarship_totals']['dollars']);self.assertIsNone(x['total_reach']['value'])

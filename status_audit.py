@@ -56,6 +56,11 @@ def annotate(value):
             statuses=value.setdefault('statuses',{})
             for k in nulls:
                 reason=value.get('missingness',{}).get(k,{})
+                columns=value.get('source_columns',[])
+                if columns:
+                    source_field=columns[0] if k=='numerator' else columns[-1] if k=='published_pct' else columns[1] if k=='denominator' and len(columns)==3 else None
+                    if source_field:reason=value.get('missingness',{}).get(source_field,reason)
+                    if k=='value' and any(v.get('reason')=='suppressed_in_source' for v in value.get('missingness',{}).values()):reason={'reason':'suppressed_in_source'}
                 statuses.setdefault(k,'not_applicable' if k=='building' else value.get('status') if value.get('status') in ('not_applicable','pending') else 'pending' if value.get('display_status')=='pending' else 'withheld' if reason.get('reason')=='suppressed_in_source' or k=='PA_PCT' and value.get('status')=='withheld' else 'not_supplied')
                 assert statuses[k] in LABELS
         for k,v in list(value.items()):
