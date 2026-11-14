@@ -1,18 +1,23 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
     <meta
+      content="Students, schools and reported results at Saint Louis University’s six sponsored charter schools."
       name="description"
-      content="Students, schools and reported results at Saint Louis University&#8217;s six sponsored charter schools."
     />
     <title>
       Charter School Partnerships Dashboard | Saint Louis University
     </title>
-    <link rel="stylesheet" href="styles.css" />
-    <script defer src="vendor/chart.umd.min.js"></script>
-    <script defer src="app.js"></script>
+    <link href="styles.css" rel="stylesheet" />
+    <link href="canvas.css" rel="stylesheet" />
+    <script defer="" src="vendor/chart.umd.min.js"></script>
+    <script defer="" src="analytics.js"></script>
+    <script defer="True" src="dashboard.js"></script>
+    <script defer="" src="app.js"></script>
+    <link href="dashboard.css" rel="stylesheet" />
   </head>
   <body data-entry="explore">
     <a class="skip" href="#main">Skip to content</a>
@@ -30,53 +35,56 @@
         <div class="search-wrap">
           <label class="sr-only" for="search">Find a school or building</label
           ><input
+            aria-autocomplete="list"
+            aria-controls="matches"
+            aria-expanded="false"
+            autocomplete="off"
             id="search"
-            type="search"
             placeholder="Find a school or building"
             role="combobox"
-            aria-autocomplete="list"
-            aria-expanded="false"
-            aria-controls="matches"
-            autocomplete="off"
+            type="search"
           />
-          <ul id="matches" role="listbox" hidden></ul>
+          <ul hidden="" id="matches" role="listbox"></ul>
         </div>
-        <button id="presentationButton">Presentation view</button>
       </div>
     </header>
     <main id="main">
-      <section id="start" aria-label="At a glance">
-        <div id="objectiveKpis" class="kpi-grid" aria-busy="true">
-          <div class="skeleton" aria-hidden="true"></div>
-          <div class="skeleton" aria-hidden="true"></div>
-          <div class="skeleton" aria-hidden="true"></div>
-          <div class="skeleton" aria-hidden="true"></div>
-          <div class="skeleton" aria-hidden="true"></div>
-          <div class="skeleton" aria-hidden="true"></div>
+      <nav aria-label="Dashboard topics" class="tabs">
+        <div aria-label="Dashboard topics" id="tablist" role="tablist"></div>
+      </nav>
+      <section aria-label="At a glance" hidden="" id="start">
+        <div aria-busy="true" class="kpi-grid" id="objectiveKpis">
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
         </div>
         <p class="caption">
           Figures describe sponsored schools and their reported results; they do
           not show that SLU sponsorship caused them.
         </p>
         <p class="caption">
-          Enrollment: 2025&ndash;26 preliminary &middot; Student groups, MAP and
-          growth: 2025 &middot; School directory: June 2026
+          Enrollment: 2025–26 preliminary · Student groups, MAP and growth: 2025
+          · School directory: June 2026
         </p>
       </section>
-      <nav class="tabs" aria-label="Dashboard topics">
-        <div id="tablist" role="tablist" aria-label="Dashboard topics"></div>
-      </nav>
       <div id="loadStatus" role="status">Loading dashboard</div>
-      <div id="dashboard" hidden></div>
+      <div hidden="" id="dashboard"></div>
     </main>
     <footer>
-      Saint Louis University &middot; Office of School and Community
-      Partnerships <button id="printReport">Print / Save as PDF</button>
+      Saint Louis University · Office of School and Community Partnerships
+      <button id="printReport">Print / Save as PDF</button>
+      <button id="presentationButton">Presentation view</button
+      ><button data-canvas-export="explore" id="exportCurrent">
+        Export this view
+      </button>
     </footer>
-    <a class="back-top" href="#start">&uarr; Back to top / tabs</a>
-    <div id="slideControls" hidden>
+    <a class="back-top" href="#start">↑ Back to top / tabs</a>
+    <div hidden="" id="slideControls">
       <button id="previousSlide">Previous</button
-      ><span id="slideCounter" aria-live="polite"></span
+      ><span aria-live="polite" id="slideCounter"></span
       ><button id="nextSlide">Next</button
       ><button id="exitPresentation">Exit</button>
     </div>

@@ -42,8 +42,8 @@ class RedesignContractTests(unittest.TestCase):
         self.assertEqual(len(page.ids),len(set(page.ids)))
         self.assertEqual(page.headings.count(1),1)
         self.assertTrue(all(b<=a+1 for a,b in zip(page.headings,page.headings[1:])))
-        for section in ('overview','schools','students','learning','growth','programs','explore','about'):
-            self.assertIn('"'+section+'"',(ROOT/'app.js').read_text(encoding='utf-8'))
+        for section in ('home','schools','students','learning','growth','sponsorships','explore','about'):
+            self.assertIn('"'+section+'"',(ROOT/'config/dashboards.json').read_text(encoding='utf-8'))
         self.assertEqual((ROOT/'index.html').read_text().count('class="skeleton"'),6)
 
 if __name__=='__main__':unittest.main()

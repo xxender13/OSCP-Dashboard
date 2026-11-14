@@ -22,32 +22,33 @@ const missing = (v, s, suffix = "") =>
   valid(v)
     ? fmt(v) + suffix
     : s === "withheld"
-      ? "Withheld by DESE"
+      ? "Not published"
       : s === "not_applicable"
-        ? "Not applicable"
-        : "Not published";
-const topics = [
-    ["overview", "Overview"],
-    ["schools", "Schools"],
-    ["students", "Students"],
-    ["learning", "Learning"],
-    ["growth", "Growth"],
-    ["programs", "Programs"],
-    ["explore", "Explore Data"],
-    ["about", "About the data"],
-  ],
-  reports = [
-    ["history", "Enrollment history"],
-    ["groups", "Student groups"],
-    ["map", "Reading and math"],
-    ["grades", "Grade comparison"],
-    ["growth", "Growth"],
-    ["directory", "Directory"],
-  ];
+        ? "Not tested"
+        : "Not available";
+let dashboardConfig;
+let topics = [
+  ["overview", "Overview"],
+  ["schools", "Schools"],
+  ["students", "Students"],
+  ["learning", "Learning"],
+  ["growth", "Growth"],
+  ["programs", "Programs"],
+  ["explore", "Explore Data"],
+  ["about", "About the data"],
+];
+const reports = [
+  ["history", "Enrollment history"],
+  ["groups", "Student groups"],
+  ["map", "Reading and math"],
+  ["grades", "Grade comparison"],
+  ["growth", "Growth"],
+  ["directory", "Directory"],
+];
 let data,
   packets,
   packetPromise,
-  active = "overview",
+  active = "home",
   reportActive = "history",
   presenting = false,
   deck = [],
@@ -63,8 +64,7 @@ const levelName = (l) =>
         : "Schools",
   tag = (l) =>
     `<span class="level ${l === "Building" ? "teal" : l === "Missouri" ? "grey" : "blue"}">${l === "Building" ? "▦" : l === "Missouri" ? "◇" : "●"} ${levelName(l)}</span>`,
-  key =
-    '<p class="caption">Not published · Withheld by DESE · Not applicable</p>';
+  key = '<p class="caption">Not published · Not tested · Not available</p>';
 const school = (id) => data.schools.find((s) => s["DESE LEA"] === id),
   link = (id, name) =>
     `<a href="#schools/profile-${id}">${esc(name ?? school(id)?.School)}</a>`,
@@ -196,7 +196,7 @@ function overview() {
   rows.push([
     "Missouri",
     "Statewide",
-    "Not applicable",
+    "Not tested",
     fmt(856222),
     pct(data.benchmarks.frl.value),
     pct(stateMap("Eng. Language Arts")),
@@ -531,7 +531,7 @@ function growth() {
                   .filter((r) => r.subject === s)
                   .map((r) => ({
                     ...r,
-                    value: r.eligible ? r.designation : "Not applicable",
+                    value: r.eligible ? r.designation : "Not tested",
                   }))
               : data.schools.map((a) => {
                   const r = data.growth.filter(
@@ -582,7 +582,7 @@ function growth() {
 }
 function programs() {
   return shell(
-    "programs",
+    "sponsorships",
     "scholarships, events, partnership reach and OSCP support.",
     [
       ["scholarships", "Scholarships"],
@@ -594,7 +594,7 @@ function programs() {
       [
         ["scholarships", "Scholarships", "scholarships"],
         ["events", "Events", "events"],
-        ["reach", "Partnership reach", "partnership_reach"],
+        ["reach", "Partnerships", "partnership_reach"],
         ["support", "OSCP support", "oscp_operations"],
       ]
         .map(
@@ -619,7 +619,7 @@ function programs() {
                       ),
                     ]),
                   )
-                : `<p>${name}: details coming soon.</p>`
+                : `<p>${name}: Coming soon.</p>`
             }</article>`,
         )
         .join("") +
@@ -682,7 +682,7 @@ function explore() {
 }
 function renderAll() {
   const f = [
-    overview,
+    Dashboard.home,
     schools,
     students,
     learning,
@@ -694,10 +694,27 @@ function renderAll() {
   $("dashboard").innerHTML = f
     .map((f, i) => {
       active = topics[i][0];
-      return f();
+      if (Analytics.has(active)) {
+        return shell(
+          active,
+          "",
+          [],
+          '<div class="canvas-loading">Loading this view…</div>',
+        );
+      }
+      const markup = f();
+      if (active !== "home") return markup;
+      const holder = document.createElement("div");
+      holder.innerHTML = markup;
+      holder
+        .querySelectorAll(
+          "#panel-home>h2,#panel-home>.intro,#panel-home>.jump-chips,#panel-home>.breadcrumb",
+        )
+        .forEach((n) => n.remove());
+      return holder.innerHTML;
     })
     .join("");
-  active = "overview";
+  active = "home";
 }
 function drawChart(id, rows, field, reference = null, suffix = "%") {
   const canvas = $("chart-" + id);
@@ -741,7 +758,9 @@ function drawChart(id, rows, field, reference = null, suffix = "%") {
           {
             label: "Reported value",
             data: shown.map((r) => r[field]),
-            backgroundColor: shown[0]?.building ? "#007875" : "#003da5",
+            backgroundColor: shown.map((r) =>
+              Analytics.color(r.lea, r.building),
+            ),
             maxBarThickness: 22,
           },
         ],
@@ -855,9 +874,9 @@ function redraw() {
     );
 }
 const oldRoutes = {
-  scholarships: "programs/scholarships",
-  events: "programs/events",
-  requestsLog: "programs",
+  scholarships: "sponsorships/scholarships",
+  events: "sponsorships/events",
+  requestsLog: "sponsorships",
   demographicsWorkspace: "explore/groups",
   demographicsPanel: "explore/groups",
   frlPanel: "students/lunch",
@@ -869,11 +888,14 @@ const oldRoutes = {
   schoolListPanel: "explore/directory",
   growthPanel: "explore/growth",
   coveragePanel: "about",
+  overview: "home",
+  programs: "sponsorships",
+  Programs: "sponsorships",
   "academic-performance": "learning/reading",
   "student-demographics": "students/groups",
   "students-schools": "schools/profiles",
   "academic-growth": "growth/results",
-  community: "programs",
+  community: "sponsorships",
   "data-quality": "about",
   demographicsExplorer: "explore/groups",
   mapWorkspace: "explore/map",
@@ -884,15 +906,36 @@ const oldRoutes = {
   reach: "students/enrollment",
 };
 async function route() {
-  let hash = decodeURIComponent(location.hash.slice(1));
-  if (oldRoutes[hash]) {
-    hash = oldRoutes[hash];
+  const [rawPath, queryString = ""] = location.hash.slice(1).split("?");
+  let hash = decodeURIComponent(rawPath);
+  if (/^programs\//i.test(hash))
+    hash = hash.replace(/^programs\//i, "sponsorships/");
+  if (/^overview\//i.test(hash)) {
+    const section = hash.split("/")[1];
+    hash =
+      section === "cities"
+        ? "schools/cities"
+        : section === "scorecard"
+          ? "home/home-scorecard"
+          : "home";
     history.replaceState(null, "", "#" + hash);
   }
+  if (oldRoutes[hash] || oldRoutes[hash.toLowerCase()]) {
+    hash = oldRoutes[hash] ?? oldRoutes[hash.toLowerCase()];
+    history.replaceState(
+      null,
+      "",
+      "#" + hash + (queryString ? "?" + queryString : ""),
+    );
+  }
+  const filterParams = new URLSearchParams(queryString);
   let [topic, section] = hash.split("/");
   if (!topics.some((t) => t[0] === topic))
-    topic = document.body.dataset.entry === "explore" ? "explore" : "overview";
+    topic = document.body.dataset.entry === "explore" ? "explore" : "home";
   active = topic;
+  if ($("exportCurrent")) $("exportCurrent").dataset.canvasExport = topic;
+  document.body.classList.toggle("analytic-active", Analytics.has(topic));
+  $("start").hidden = true;
   document.querySelectorAll("#tablist [role=tab]").forEach((t) => {
     const on = t.dataset.tab === topic;
     t.setAttribute("aria-selected", String(on));
@@ -908,21 +951,57 @@ async function route() {
     await loadExplorer();
     if (active !== "explore") return;
     renderReport();
+    Analytics.decorateExplorer();
   }
+  if (Analytics.has(topic)) {
+    if (
+      topic === "students" &&
+      ["lunch", "english", "special"].includes(section)
+    )
+      filterParams.set(
+        "measure",
+        { lunch: "frl", english: "el", special: "iep" }[section],
+      );
+    await Analytics.mount(topic, filterParams);
+    if (active !== topic) return;
+    if (innerWidth < 900)
+      $("tab-" + topic).scrollIntoView({ inline: "center", block: "nearest" });
+    if (section && section !== "enrollment") {
+      const aliases = {
+        compare: "grade-comparison",
+        lunch: "groups",
+        english: "groups",
+        special: "groups",
+      };
+      const target = $(aliases[section] || section);
+      if (target) {
+        target.closest("details")?.setAttribute("open", "");
+        target.classList.add("highlight");
+        target.focus({ preventScroll: true });
+      }
+    }
+    if (location.hash && !presenting)
+      document.querySelector(".tabs").scrollIntoView({ block: "start" });
+    return;
+  }
+  Dashboard.simple(topic, filterParams);
   redraw();
   const panel = $("panel-" + topic);
-  panel.querySelector(".breadcrumb").textContent =
-    topics.find((t) => t[0] === topic)[1] +
-    (section
-      ? " › " +
-        ($(section)?.querySelector("h3")?.textContent ??
-          reports.find((r) => r[0] === section)?.[1] ??
-          section.replace(/-/g, " "))
-      : "");
+  if (panel.querySelector(".breadcrumb"))
+    panel.querySelector(".breadcrumb").textContent =
+      topics.find((t) => t[0] === topic)[1] +
+      (section
+        ? " › " +
+          ($(section)?.querySelector("h3")?.textContent ??
+            reports.find((r) => r[0] === section)?.[1] ??
+            section.replace(/-/g, " "))
+        : "");
   if (topic === "schools" && section?.startsWith("school-building-")) {
     const filters = $("directoryFilters");
-    filters.elements.query.value = "";
-    filters.elements.city.value = "all";
+    if (filters) {
+      filters.elements.query.value = "";
+      filters.elements.city.value = "all";
+    }
     $("directoryTable").innerHTML = table(
       ["School", "School building", "Grades", "Address"],
       directoryRows(),
@@ -1040,7 +1119,7 @@ async function loadExplorer() {
       });
   return packetPromise;
 }
-const assessmentMetrics = {
+let assessmentMetrics = {
   PA_PCT: "Proficient + Advanced (%)",
   PROFICIENT_PCT: "Proficient (%)",
   ADVANCED_PCT: "Advanced (%)",
@@ -1077,85 +1156,52 @@ function renderReport() {
     b.setAttribute("aria-selected", String(on));
     b.tabIndex = on ? 0 : -1;
   });
-  const demo = packets.demographics_explorer,
-    metrics = Object.keys(demo.records[0].metrics);
-  const form =
-    select("school", "School", [
-      ["all", "All schools"],
-      ...data.schools.map((s) => [s["DESE LEA"], s.School]),
-    ]) +
-    select("level", "Level", [
-      ["School", "Schools"],
-      ["Building", "School buildings"],
-    ]) +
-    (reportActive === "directory"
-      ? select("city", "City", [
-          ["all", "All cities"],
-          ["Kansas City", "Kansas City"],
-          ["St. Louis", "St. Louis"],
-        ])
-      : reportActive === "growth"
-        ? select("subject", "Subject", [
-            ["Eng. Language Arts", "Reading"],
-            ["Mathematics", "Math"],
-          ])
-        : ["map", "grades"].includes(reportActive)
-          ? select("subject", "Subject", [
-              ["Eng. Language Arts", "Reading"],
-              ["Mathematics", "Math"],
-              ["Science", "Science"],
-              ["Social Studies", "Social Studies"],
-            ]) +
-            select("group", "Student group", [
-              ["Total", "All students"],
-              ...Array.from(new Set(packets.assessments.map((r) => r.group)))
-                .filter((g) => g !== "Total")
-                .map((g) => [g, g]),
-            ]) +
-            (reportActive === "map"
-              ? select("measure", "Measure", Object.entries(assessmentMetrics))
-              : "") +
-            (reportActive === "grades"
-              ? select("grade", "Grade", [
-                  ["all", "All grades"],
-                  ...Array.from(
-                    new Set(
-                      packets.matched_map.grade_slices?.map((r) =>
-                        String(r.grade),
-                      ) ?? [],
-                    ),
-                  )
-                    .sort()
-                    .map((g) => [g, g]),
-                ])
-              : "")
-          : select("year", "Year", [
-              ["all", "All years"],
-              ...demo.years
-                .slice()
-                .reverse()
-                .map((y) => [y, y]),
-            ]) +
-            select(
-              "metric",
-              "Measure",
-              metrics.map((m) => [m, metricLabels[m] ?? m.replace(/_/g, " ")]),
-            ));
-  $("reportHost").innerHTML =
-    `<section id="report-${reportActive}" role="tabpanel" aria-labelledby="report-tab-${reportActive}"><form id="reportFilters">${form}<button type="reset">Reset filters</button></form><div id="reportOutput"></div></section>`;
-  const f = $("reportFilters");
-  if (reportActive === "groups")
-    f.elements.year.value = String(Math.max(...demo.years));
-  Object.entries(reportState[reportActive] ?? {}).forEach(([k, v]) => {
-    if (f.elements[k]) f.elements[k].value = v;
-  });
-  f.addEventListener("change", updateReport);
-  f.addEventListener("reset", () =>
-    setTimeout(() => {
-      reportState[reportActive] = {};
-      updateReport();
-    }, 0),
+  const demo = packets.demographics_explorer;
+  const params = Object.fromEntries(
+    new URLSearchParams(location.hash.split("?")[1] ?? ""),
   );
+  if (params.level === "schools") params.level = "School";
+  if (params.level === "school-buildings") params.level = "Building";
+  if (
+    params.school &&
+    params.school !== "all" &&
+    !data.schools.some((r) => r["DESE LEA"] === params.school)
+  )
+    params.school =
+      data.schools.find((r) =>
+        normalize(r.School).includes(normalize(params.school)),
+      )?.["DESE LEA"] ?? "all";
+  const values = {
+    school: "all",
+    level: "School",
+    subject: "Eng. Language Arts",
+    group: "Total",
+    metric: "enrollment",
+    measure: "PA_PCT",
+    grade: "all",
+    city: "all",
+    ...reportState[reportActive],
+    ...params,
+  };
+  const form = Dashboard.explorerControls(reportActive, values);
+  $("reportHost").innerHTML =
+    `<section id="report-${reportActive}" role="tabpanel" aria-labelledby="report-tab-${reportActive}"><form id="reportFilters">${form}</form><div id="reportOutput"></div></section>`;
+  const f = $("reportFilters");
+  Object.entries(values).forEach(([key, value]) => {
+    if (f.elements[key]) f.elements[key].value = value;
+  });
+  f.addEventListener("change", () => {
+    const state = Object.fromEntries(new FormData(f));
+    reportState[reportActive] = state;
+    location.hash =
+      "explore/" + reportActive + "?" + new URLSearchParams(state);
+  });
+  f.addEventListener("reset", (event) => {
+    event.preventDefault();
+    reportState[reportActive] = {};
+    location.hash = "explore/" + reportActive;
+    renderReport();
+  });
   updateReport();
 }
 function updateReport() {
@@ -1173,7 +1219,8 @@ function updateReport() {
       (r) =>
         chosen(r) &&
         r.level === (l === "Building" ? "Building" : "Network") &&
-        (s.year === "all" || String(r.year) === s.year),
+        r.year >= Number(s.year_start) &&
+        r.year <= Number(s.year_end),
     );
     headers = [
       levelName(l),
@@ -1219,7 +1266,7 @@ function updateReport() {
         ? r.map((r) => [
             unitLink(r),
             esc(r.subject),
-            r.eligible ? esc(r.designation) : "Not applicable",
+            r.eligible ? esc(r.designation) : "Not tested",
           ])
         : data.schools
             .filter((a) => s.school === "all" || a["DESE LEA"] === s.school)
@@ -1241,7 +1288,7 @@ function updateReport() {
           chosen(r) &&
           r.level === (l === "Building" ? "Building" : "Charter") &&
           r.subject === s.subject &&
-          r.group === s.group &&
+          Dashboard.matchesGroup(r, s.group) &&
           (!grade || s.grade === "all" || String(r.grade) === s.grade),
       );
     headers = [
@@ -1279,10 +1326,11 @@ function updateReport() {
   if (reportActive === "groups" && s.metric !== "enrollment") {
     reference = data.benchmarks[s.metric]?.value ?? null;
   }
-  const yr =
-    s.year === "all"
-      ? "2007–2025"
-      : (s.year ?? (reportActive === "directory" ? "June 2026" : "2025"));
+  const yr = s.year_start
+    ? s.year_start + "–" + s.year_end
+    : reportActive === "directory"
+      ? data.directory[0].as_of
+      : data.kpi_metrics.demographics.year;
   $("reportOutput").innerHTML = card(
     "detail-report",
     `${reports.find((r) => r[0] === reportActive)[1]} by ${l === "Building" ? "school building" : "school"}, ${yr}`,
@@ -1311,6 +1359,7 @@ function updateReport() {
           : "%",
       );
   }
+  Analytics.decorateExplorer();
 }
 function download(blob, name) {
   const a = document.createElement("a"),
@@ -1333,7 +1382,7 @@ function csv(el) {
     [...el.querySelectorAll("table tr")]
       .map((r) =>
         [...r.cells]
-          .map((c) => '"' + c.innerText.replace(/"/g, '""') + '"')
+          .map((c) => '"' + c.textContent.trim().replace(/"/g, '""') + '"')
           .join(","),
       )
       .join("\r\n")
@@ -1401,16 +1450,25 @@ function showSlide() {
   deck.forEach((n, i) => n.classList.toggle("deck-active", i === deckIndex));
   $("slideCounter").textContent = `${deckIndex + 1} / ${deck.length}`;
   deck[deckIndex].scrollTop = 0;
+  requestAnimationFrame(() =>
+    Analytics.chartMap.forEach((chart) => {
+      if (chart.canvas.closest(".deck-active")) chart.resize();
+    }),
+  );
 }
-function enterPresentation() {
+async function enterPresentation() {
+  await Analytics.preparePresentation();
   presenting = true;
-  deck = [
-    $("start"),
-    ...document.querySelectorAll("#dashboard [data-section]"),
-  ];
+  deck = topics
+    .map(([topic]) => document.getElementById("canvas-" + topic))
+    .filter(Boolean);
   deck.forEach((n) => {
     n.classList.add("deck-panel");
-    if (n.id !== "start" && !n.querySelector(".deck-legend"))
+    if (
+      !n.hasAttribute("data-canvas") &&
+      n.id !== "start" &&
+      !n.querySelector(".deck-legend")
+    )
       n.insertAdjacentHTML(
         "afterbegin",
         '<div class="deck-legend">' +
@@ -1439,12 +1497,22 @@ function exitPresentation() {
   $("presentationButton").focus();
 }
 function setup() {
+  document.querySelector(".back-top").addEventListener("click", (event) => {
+    event.preventDefault();
+    document.querySelector(".tabs").scrollIntoView({ block: "start" });
+  });
   $("tablist").innerHTML = topics
     .map(
       ([id, t], i) =>
         `<button role="tab" id="tab-${id}" data-tab="${id}" aria-controls="panel-${id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${t}</button>`,
     )
     .join("");
+  new ResizeObserver((entries) =>
+    document.documentElement.style.setProperty(
+      "--nav-h",
+      Math.ceil(entries[0].contentRect.height) + "px",
+    ),
+  ).observe(document.querySelector(".tabs"));
   document.addEventListener("keydown", (e) => {
     if (presenting) {
       if (e.key === "Escape") exitPresentation();
@@ -1499,8 +1567,8 @@ function setup() {
         directoryRows(f.elements.query.value, f.elements.city.value),
       );
     };
-  f.addEventListener("input", filter);
-  f.addEventListener("reset", () => setTimeout(filter, 0));
+  f?.addEventListener("input", filter);
+  f?.addEventListener("reset", () => setTimeout(filter, 0));
   addEventListener("hashchange", () => route().catch(showError));
   setupSearch();
   $("presentationButton").onclick = enterPresentation;
@@ -1513,13 +1581,18 @@ function setup() {
     deckIndex = Math.min(deck.length - 1, deckIndex + 1);
     showSlide();
   };
-  $("printReport").onclick = () => print();
+  $("printReport").onclick = async () => {
+    await Analytics.preparePresentation();
+    print();
+  };
   addEventListener("beforeprint", () => {
     const previous = active;
-    active = "students";
-    redraw();
-    active = "learning";
-    redraw();
+    Analytics.chartMap.forEach((chart) => {
+      chart.options.responsive = false;
+      chart.options.scales.x.ticks.font.size = 18;
+      chart.options.scales.y.ticks.font.size = 18;
+      chart.resize(640, 280);
+    });
     active = previous;
   });
   addEventListener("beforeprint", () =>
@@ -1532,6 +1605,14 @@ function setup() {
     document
       .querySelectorAll("details")
       .forEach((d) => (d.open = d.dataset.wasOpen === "true")),
+  );
+  addEventListener("afterprint", () =>
+    Analytics.chartMap.forEach((chart) => {
+      chart.options.responsive = true;
+      chart.options.scales.x.ticks.font.size = 12;
+      chart.options.scales.y.ticks.font.size = 12;
+      chart.resize();
+    }),
   );
   const params = new URLSearchParams(location.search);
   if (params.get("embed") === "1") {
@@ -1547,7 +1628,6 @@ function setup() {
         );
     }).observe(document.body);
   }
-  if (params.get("present") === "1") enterPresentation();
 }
 function showError(e) {
   $("loadStatus").hidden = false;
@@ -1555,15 +1635,23 @@ function showError(e) {
 }
 async function boot() {
   try {
-    const r = await fetch("summary.json");
+    const [r, c] = await Promise.all([
+      fetch("summary.json"),
+      fetch("config/dashboards.json"),
+    ]);
     if (!r.ok) throw Error("Could not load dashboard");
     data = await r.json();
-    tiles();
+    if(window.Chart){Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;Chart.defaults.font.size=12;}
+    dashboardConfig = await c.json();
+    assessmentMetrics = dashboardConfig.assessment_measures;
+    topics = dashboardConfig.dashboards.map((d) => [d.id, d.nav_label]);
     renderAll();
     $("dashboard").hidden = false;
     $("loadStatus").hidden = true;
     setup();
     await route();
+    if (new URLSearchParams(location.search).get("present") === "1")
+      await enterPresentation();
   } catch (e) {
     showError(e);
   }
@@ -1585,10 +1673,10 @@ function drawHistory(rows, metric) {
     return {
       label: r[0].name.replace(/ · \d{4}$/, ""),
       data: years.map((y) => r.find((r) => r.year === y)?.value ?? null),
-      borderColor: colors[i % colors.length],
-      backgroundColor: colors[i % colors.length],
+      borderColor: Analytics.color(r[0].lea, r[0].building),
+      backgroundColor: Analytics.color(r[0].lea, r[0].building),
       borderDash: i >= 6 ? [6, 4] : [],
-      pointStyle: ["circle", "rect", "triangle"][i % 3],
+      pointStyle: Analytics.schoolMarker(r[0].lea),
       pointRadius: 3,
       borderWidth: 2,
       spanGaps: false,

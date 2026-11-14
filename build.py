@@ -246,14 +246,22 @@ def build():
     (qa_dir / 'QA-report.md').write_text('\n'.join(report) + '\n', encoding='utf-8')
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
-    for name in ('index.html', 'styles.css', 'app.js'):
+    for name in ('index.html', 'styles.css', 'canvas.css', 'dashboard.css', 'app.js', 'analytics.js', 'dashboard.js'):
         shutil.copy2(ROOT / name, dist / name)
     package(payload,ROOT)
     for path in [ROOT/'explorer.html']:
         shutil.copy2(path,dist/path.name)
     shutil.copytree(ROOT/'vendor',dist/'vendor',dirs_exist_ok=True)
+    shutil.copytree(ROOT/'config',dist/'config',dirs_exist_ok=True)
     print(f'Build passed: {len(schools)} schools, {sum(s[ENROLL] for s in schools):,} preliminary students; public files in dist/; audit in qa/.')
 
 
 if __name__ == '__main__':
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--report',action='store_true',help='Write the local internal dashboard report.')
+    args=parser.parse_args()
     build()
+    if args.report:
+        from tools.make_internal_report import generate
+        generate()

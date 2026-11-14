@@ -28,3 +28,5 @@ window.addEventListener('message', event => {
 ```
 
 Add a section bookmark after the query, for example `?embed=1#students/lunch`. Keep a direct dashboard link alongside the frame for opening or printing separately.
+
+Analytic filters can also be shared in the bookmark, for example `?embed=1#students?level=school-buildings&school=frontier-schools&measure=frl`. The first question mark configures the embedded page; the question mark after the hash stores the dashboard filters. The same height listener adapts as filters, panels and tables change.

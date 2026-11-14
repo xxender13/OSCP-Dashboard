@@ -5,7 +5,7 @@ import re
 import unittest
 
 ROOT=Path(__file__).resolve().parent
-FORBIDDEN=re.compile(r'candi|ryan|harshil|abigail|owner|todo|awaiting|pending|confirmed_by|gala|tracker|audit|\bqa\b|supplied source|missing-data|open item|needs clarification|4,081',re.I)
+FORBIDDEN=re.compile(r'candi|ryan|harshil|abigail|owner|todo|awaiting|pending|confirmed_by|gala|tracker|audit|qa|supplied source|missing-data|open item|needs clarification|4,081',re.I)
 
 class PublicContentTests(unittest.TestCase):
     def test_public_files_contain_no_internal_material(self):
@@ -14,7 +14,7 @@ class PublicContentTests(unittest.TestCase):
                 self.assertIsNone(FORBIDDEN.search(p.read_text(encoding='utf-8')),str(p))
 
     def test_public_allowlist(self):
-        self.assertEqual({p.name for p in (ROOT/'dist').iterdir()}, {'index.html','explorer.html','app.js','styles.css','summary.json','explorer-core.json','explorer-demographics.json','explorer-map.json','vendor'})
+        self.assertEqual({p.name for p in (ROOT/'dist').iterdir()}, {'index.html','explorer.html','app.js','analytics.js','dashboard.js','styles.css','canvas.css','dashboard.css','config','summary.json','explorer-core.json','explorer-demographics.json','explorer-map.json','canvas-overview.json','canvas-students.json','canvas-learning.json','vendor'})
         self.assertLess((ROOT/'dist/summary.json').stat().st_size,400000)
         for name in ('index.html','explorer.html','app.js','styles.css','summary.json'):
             self.assertEqual((ROOT/name).read_bytes(),(ROOT/'dist'/name).read_bytes())
