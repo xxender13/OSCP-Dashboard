@@ -429,13 +429,24 @@ function students() {
         `Student groups by ${l === "School" ? "school" : "school building"}, 2025`,
         `<p>Black enrollment: ${fmt(d.numerator)} of ${fmt(d.denominator)} (${pct(d.value)}), across the six schools.</p>` +
           table(
-            [levelName(l), "Reported race and ethnicity categories"],
+            [
+              levelName(l),
+              "Reported race and ethnicity categories",
+              "Missouri comparison",
+            ],
             demo.map((r) => [
               unitLink(r),
               r.race
                 .map(
                   (c) => `${esc(c.label)}: ${missing(c.value, c.status, "%")}`,
                 )
+                .join("<br>"),
+              r.race
+                .map((c) => {
+                  const comparison =
+                    data.benchmarks[c.label.toLowerCase().replace(/ /g, "_")];
+                  return `${esc(c.label)}: ${pct(comparison?.value)}${valid(comparison?.value) ? " (" + esc(comparison.year) + ")" : ""}`;
+                })
                 .join("<br>"),
             ]),
           ) +
@@ -666,7 +677,7 @@ function explore() {
     "explore",
     "one detailed report at a time, with filters and exports.",
     reports,
-    `<div role="tablist" aria-label="Detailed reports" class="subtabs">${reports.map(([id, t]) => `<button role="tab" id="report-tab-${id}" aria-controls="report-${id}" aria-selected="false" tabindex="-1" data-report="${id}">${t}</button>`).join("")}</div><div id="reportHost" role="status">Choose a report to load its data.</div>`,
+    `<article class="card deck-only" id="explore-intro" data-section tabindex="-1"><h3>Explore Data</h3><p>Detailed reports available in the dashboard:</p><ul>${reports.map(([, title]) => `<li>${title}</li>`).join("")}</ul><p class="caption">${tag("School")} ${tag("Building")} · 2007–2025 / June 2026 · Source: Missouri DESE</p></article><div role="tablist" aria-label="Detailed reports" class="subtabs">${reports.map(([id, t]) => `<button role="tab" id="report-tab-${id}" aria-controls="report-${id}" aria-selected="false" tabindex="-1" data-report="${id}">${t}</button>`).join("")}</div><div id="reportHost" role="status">Choose a report to load its data.</div>`,
   );
 }
 function renderAll() {
@@ -1249,6 +1260,9 @@ function updateReport() {
         ? stateMap(s.subject)
         : null;
   }
+  if (reportActive === "groups" && s.metric !== "enrollment") {
+    reference = data.benchmarks[s.metric]?.value ?? null;
+  }
   const yr =
     s.year === "all"
       ? "2007–2025"
@@ -1261,7 +1275,7 @@ function updateReport() {
       : "") +
       (rows.length ? table(headers, rows) : "<p>Not published</p>") +
       (valid(reference)
-        ? `<p class="state-reference">${tag("Missouri")} Reference: ${pct(reference)}</p>`
+        ? `<p class="state-reference">${tag("Missouri")} Reference${reportActive === "groups" ? " (" + esc(data.benchmarks[s.metric].year) + ")" : " (2025)"}: ${pct(reference)}</p>`
         : "") +
       key,
     l,

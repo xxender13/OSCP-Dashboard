@@ -120,6 +120,7 @@ def run():
                     js(f"document.querySelector('#panel-{topic} [data-level=School]').click()")
                 js('scrollTo(0,document.getElementById("panel-'+topic+'").offsetTop-80)');screenshot(topic)
                 visible=js("document.getElementById('panel-'+active).innerText")
+                assert js("[...document.querySelectorAll('#panel-'+active+' canvas')].every(c=>{let text=c.closest('.card').querySelector('.caption:last-of-type')?.textContent;return /20\\d{2}/.test(text)&&/Schools|School buildings|Missouri/.test(text)})")
                 import re
                 assert not re.search(r'\b(network|LEA|district|record)\b|campus count',visible,re.I),visible[:300]
             for report in ['history','groups','map','grades','growth','directory']:
@@ -173,6 +174,9 @@ def run():
             assert not js('presenting')
             viewport(1440,900);navigate('?embed=1')
             assert js("getComputedStyle(document.querySelector('header')).display")=='none'
+            height_message=js("new Promise(resolve=>{var f=document.createElement('iframe');f.id='embed-test';window.addEventListener('message',function receive(e){if(e.source===f.contentWindow){window.removeEventListener('message',receive);resolve(e.data)} });f.src=location.origin+location.pathname+'?embed=1';document.body.appendChild(f);setTimeout(()=>resolve(null),5000)})")
+            assert height_message and height_message['type']=='oscp-dashboard-height' and height_message['height']>0
+            js("document.getElementById('embed-test').remove()")
             cdp('Emulation.setEmulatedMedia',{'media':'print'})
             assert js("[...document.querySelectorAll('#dashboard>[role=tabpanel]')].every(n=>getComputedStyle(n).display!=='none')")
             cdp('Emulation.setEmulatedMedia',{'media':'screen'})

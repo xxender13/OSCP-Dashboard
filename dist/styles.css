@@ -748,6 +748,12 @@ footer {
 .deck-legend {
   display: none;
 }
+.deck-only {
+  display: none;
+}
+.present .deck-only.deck-active {
+  display: block;
+}
 .present .deck-legend {
   display: block;
   margin-bottom: 24px;
