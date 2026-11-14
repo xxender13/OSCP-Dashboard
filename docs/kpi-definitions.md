@@ -1,87 +1,54 @@
-# Current independently verified reporting
+# Current KPI definitions and reporting levels
 
-See [independent data audit](independent-data-audit.md) for current official statewide context, June 30, 2026 directory verification, grade-specific MAP comparisons and limitations. The original numerical cohort KPI calculations below remain valid; older unavailable/state-subset statements are historical and superseded by that audit.
+School means one of the six sponsored charter Schools; Building means one of 14 DESE identifiers. Missouri is a reference only. The data layer retains `lea` and original source field names. See the page glossary for School (charter network / DESE district).
 
-# Candi feedback: definitions and validation
-
-Dashboard edition: 2026–2027. Enrollment remains 2025–26 preliminary; demographics, MAP and APR use 2025 source data. Directory reporting year is not stated.
-
-| KPI | Definition / value | Year | Denominator and limitations |
+| Measure | Exact calculation | Level | Period and coverage |
 | --- | --- | --- | --- |
-| Students served | 3,953 preliminary K–12 students | 2025–26 preliminary | Six unique charter networks; preschool and unverified partnerships excluded |
-| Student demographics | 1,255 / 3,913 = 32.072579% identifying as Black | 2025 | Sum ENROLLMENT_BLACK / ENROLLMENT_GRADES_K_12; all six unique charter records |
-| FRL | 2,330 / 3,816 = 61.058700% | 2025 | LUNCH_COUNT_FREE_REDUCED / JANUARY_MEMBERSHIP; all six networks, independently reproduces source rates to 0.051 percentage point |
-| Sponsored schools | 14 directory building identifiers across six charter networks | Undated | No 2026 release confirmation, no physical-campus claim |
-| MAP Eng. Language Arts | 823 / 1753 = 46.948089% P+A | 2025 | 3/6 reportable charter networks; no grade-matched above-state classification |
-| MAP Mathematics | 877 / 1765 = 49.688385% P+A | 2025 | 3/6 reportable charter networks; no grade-matched above-state classification |
-| APR growth Eng. Language Arts | 7 / 13 = 53.846154% designated Target | 2025 | Eligible building ALL growth measures only; not a student growth percentage |
-| APR growth Mathematics | 5 / 13 = 38.461538% designated Target | 2025 | Eligible building ALL growth measures only; not a student growth percentage |
+| Students enrolled in sponsored schools | Sum unique School preliminary K-12 = 3,953 | School | 2025-26 preliminary; all six Schools; PK excluded |
+| Buildings | 14 unique LEA/Building identifier pairs | Building | Directory June 30, 2026; 12 street addresses, two sharing pairs; physical campus count awaiting Candi |
+| Black enrollment, composition panel | 1,255 / 3,913 x 100 = 32.072579% | School | 2025 K-12 population; all six School rows |
+| Free/reduced lunch | 2,330 / 3,816 x 100 = 61.058700% | School | January 2025 membership; not preliminary enrollment |
+| Pooled MAP English language arts | 823 / 1,753 x 100 = 46.948089% | School | Three reportable Schools; 1,753 / 2,002 = 87.56% of tested students |
+| Pooled MAP mathematics | 877 / 1,765 x 100 = 49.688385% | School | Three reportable Schools; 1,765 / 2,014 = 87.64% of tested students |
+| APR ELA growth Target | 7 / 13 = 53.846154% | Building | 2025 eligible Buildings; one ECEC row not applicable |
+| APR math growth Target | 5 / 13 = 38.461538% | Building | Same eligibility definition; one ECEC row not applicable |
 
-Source sheet for every raw extract: Sheet1, except directory School Building List (headers row 4). Demographic files supply YEAR, COUNTY_DISTRICT_CODE, counts and corresponding denominators; no school percentages are averaged.
+The Black figure remains inside composition and exports, not a primary KPI tile. Pooled MAP figures are secondary to individual School/Building views. Growth leads with eligible Building counts, not student percentages. All original numeric source values remain unchanged; see the original-hash regression in `test_ui.py`.
+
+## Enrollment populations
+
+The reported PK counts are 18 + 93 + 58 + 15 + 13 = 197. The Biome PK is Not in supplied source. Adding reported PK to 3,953 gives 4,150 PK-12 **as reported**, not a complete verified PK-12 census. All School PK-12 master totals are blank; the bridge is an explicitly labelled addition, not a recovered source total. The headline stays K-12 pending Candi's decision.
+
+Raw preliminary district/charter and Building workbooks are absent. The build warns and traces enrollment to the reconciled Cohort Master. Once both raw files are supplied, the strict header/identifier/value validator in `three_levels.py` must reproduce the master values or fail. Harshil owns these files.
+
+## Raw-source status rules
+
+- **Reported:** supplied numeric values, including a genuine zero.
+- **Withheld by DESE:** the raw extract supplies *. The cause is not inferred.
+- **Not applicable:** City Garden ECEC has no tested-grade MAP row and blank APR growth fields.
+- **Not in supplied source:** missing source files or unreported source fields, including The Biome PK.
+- **Awaiting confirmation:** internal program/operations/campus figures without complete confirmed input provenance.
+
+The raw demographic audit checks all 42 School measure cells (five withheld) and 98 Building cells (ten withheld), matching exact identifier/measure fixtures. The Biome, Genesis and Hope have withheld MAP Proficient and Advanced components. Combined P+A is never recovered from Below Basic, Basic or Reportable counts. Actual component counts remain accessible in the Explorer.
 
 ## Missouri reference values
-- MAP Eng. Language Arts: (198659) / 451477 × 100 = 44.002020%; dese_map_2025_state_content_area.xlsx, Sheet1 row 46, columns PROFICIENT, ADVANCED, REPORTABLE. Independently checked against sum of all four published achievement counts = REPORTABLE. No missing component is derived.
-- MAP Mathematics: (193897) / 454818 × 100 = 42.631778%; dese_map_2025_state_content_area.xlsx, Sheet1 row 47, columns PROFICIENT, ADVANCED, REPORTABLE. Independently checked against sum of all four published achievement counts = REPORTABLE. No missing component is derived.
-- MAP Science: (78294) / 195818 × 100 = 39.983045%; dese_map_2025_state_content_area.xlsx, Sheet1 row 48, columns PROFICIENT, ADVANCED, REPORTABLE. Independently checked against sum of all four published achievement counts = REPORTABLE. No missing component is derived.
-- MAP Social Studies: (27239) / 66470 × 100 = 40.979389%; dese_map_2025_state_content_area.xlsx, Sheet1 row 49, columns PROFICIENT, ADVANCED, REPORTABLE. Independently checked against sum of all four published achievement counts = REPORTABLE. No missing component is derived.
-- Demographic Black: 130504 / 772194 × 100 = 16.900416%; 295/564 paired reportable district records. This is a reportable-district subset, not a complete statewide rate.
-- Demographic FRL: 379352.2 / 803686.09 × 100 = 47.201539%; 536/564 paired reportable district records. This is a reportable-district subset, not a complete statewide rate.
-- FRL reference exclusions: 10 missing/nonpositive pairs and 18 records with count greater than membership (including source precision differences). These raw values are not corrected, clamped or added to the reference. Exact source codes/counts are in kpi-calculations.json.
-- APR Eng. Language Arts: 498 / 1993 × 100 = 24.987456% Target; 146 of 2139 building records excluded as ineligible/unreported; dese_apr_2025_building_supporting.xlsx, Sheet1, columns ELA_ALL_GROWTH_POINTS_POSSIBLE, ELA_ALL_GROWTH_POINTS_EARNED, ELA_ALL_GROWTH_PERFORMANCE_DESIGNATION. District APR rows are not added.
-- APR Mathematics: 492 / 1994 × 100 = 24.674022% Target; 145 of 2139 building records excluded as ineligible/unreported; dese_apr_2025_building_supporting.xlsx, Sheet1, columns MATH_ALL_GROWTH_POINTS_POSSIBLE, MATH_ALL_GROWTH_POINTS_EARNED, MATH_ALL_GROWTH_PERFORMANCE_DESIGNATION. District APR rows are not added.
 
-Missingness: raw * is documented as suppressed without inferring small cell size. Blank master/history cells do not prove a suppression cause. No suppressed value is reconstructed.
-Unresolved: directory reporting year, matched-grade MAP state records, official school-specific MAP targets, complete unsuppressed statewide demographic counts, verified scholarships/events, other-partnership deduplication and current 2026–27 enrollment.
+Official rounded demographic context: Black 15.3%, FRL 49.3%, EL 5.0%, IEP incidence 13.93%; publication periods and populations are retained beside the figure. No missing underlying counts or percentage-point differences are inferred. Older incomplete district-subset rates remain provenance in the full legacy JSON, not current statewide benchmarks.
 
-## Exact workbook paths
+State MAP Total P+A: ELA 198,659 / 451,477 = 44.002020%; math 193,897 / 454,818 = 42.631778%; science 78,294 / 195,818 = 39.983045%; social studies 27,239 / 66,470 = 40.979389%. These all-tested-grade aggregates are context, not individual School goals. Grade-matched comparisons remain in the Explorer with exact year/subject/grade/subgroup matching and suppression safeguards.
 
-- Network demographic and FRL counts: `data/enrollment_demographics/dese_district_demographics_1991_2025.xlsx`, Sheet1; only YEAR=2025, one row per COUNTY_DISTRICT_CODE.
-- Building demographic and FRL detail: `data/enrollment_demographics/dese_building_demographics_2006_2025.xlsx`, Sheet1; YEAR=2025, unique county/district + building keys.
-- Preliminary enrollment and existing longitudinal reports: `data/master/oscp_dese_cohort_master_2025_2026.xlsx`; Cohort Master, Building Cohort and Historical Demographics.
-- Directory: `data/enrollment_demographics/dese_school_building_directory_undated.xlsx`; School Building List, actual headers row 4. Only school names, identifier pairs, grade spans and source row are exported; contact/personnel fields are excluded.
-- State MAP: `data/assessments/dese_map_2025_state_content_area.xlsx`, Sheet1. State Total ELA row 46, Math row 47, Science row 48, Social Studies row 49.
-- Charter MAP: `data/assessments/dese_map_2025_district_content_area.xlsx`, Sheet1. Only six cohort LEAs feed network MAP aggregates; building rows are never added.
-- Building MAP: `data/assessments/dese_map_2025_school_content_area.xlsx`, Sheet1. Existing reports retain suppression and use only cohort building keys.
-- APR: `data/accountability/dese_apr_2025_building_supporting.xlsx`, Sheet1. Cohort shared totals are checked against the building summary. District supporting rows are read but never added to building growth denominators.
+State APR: ELA 498 / 1,993 = 24.987456%; math 492 / 1,994 = 24.674022% eligible Buildings designated Target. Eligibility requires positive possible points, reported earned points and designation. Participation remains eligible. On-Track is not Target. District rows are not added to Building rows.
 
-## Comparison interpretation
+## Exact source files
 
-- No arithmetic average of school percentages is used for a KPI or state reference.
-- The MAP card reports P+A across the same three reportable charter networks, not all six. ELA and Math retain separate tested denominators. No grade-matched above-state percentage or official school-specific goal is invented.
-- State all-tested-grades MAP is displayed separately as context, with subject and student group matched. No difference/above-state classification is calculated without grade-specific state data.
-- State demographic values are reportable-district subset summaries. For Black enrollment, 269 records lack usable paired values. For FRL, 10 lack usable pairs and 18 have a reported count greater than membership, sometimes because of source precision differences. No count is clamped or imputed.
-- APR Target means the exact source designation. Eligibility requires positive points possible plus reported earned points and designation; Participation is included and On-Track is not Target. The statewide denominator counts unique building records only. The optional grade-span filter restricts both the selected cohort and state reference to the same source grade span.
-- Small-group suppression is not inferred. * is suppression with unspecified cause in these extracts; blank/NULL/NA is not reported. Numeric fields remain null with separate missingness metadata. Unavailable* labels and footnotes explain the display.
+- `data/master/oscp_dese_cohort_master_2025_2026.xlsx`: Cohort Master, Building Cohort, Historical Demographics, source register and reconciliation.
+- `data/enrollment_demographics/dese_district_demographics_1991_2025.xlsx`: Sheet1, 2025 School counts and historical rows; FRL denominator JANUARY_MEMBERSHIP, race/EL denominator ENROLLMENT_GRADES_K_12.
+- `data/enrollment_demographics/dese_building_demographics_2006_2025.xlsx`: Sheet1, same fields at Building level.
+- `data/assessments/dese_map_2025_{state,district,school}_content_area.xlsx`: Sheet1, MSIP Total / Total; published Proficient, Advanced and Reportable only.
+- `data/accountability/dese_apr_2025_building_supporting.xlsx`: Sheet1, subject ALL_GROWTH_POINTS_POSSIBLE / EARNED / PERFORMANCE_DESIGNATION; summary cross-check retained.
+- Dated directory and grade-specific public references: exact URLs/hashes in the tracked independent reference snapshot and [independent audit](independent-data-audit.md).
+- `data/inputs/*.csv`: confirmed-only programs, operations and physical campus inputs; [schema/owners](../data/inputs/README.md).
 
-## Verification and refresh
+The Gala tracker is a separate request log: 26 distinct records / 65 source rows, zero decision statuses and zero approved amounts. Those are completeness counts, never confirmed events or funded sponsorships. No private tracker notes or invitations are published.
 
-Run `python build.py`, `python -m unittest test_data.py test_reporting.py`, `node --check app.js`, `python test_dashboard.py`, then `python scripts/write_kpi_report.py`. Source byte preservation can be verified with `python scripts/audit_excel_sources.py verify`.
-
-- Before feedback: build, 8 data tests, JavaScript syntax and existing Chrome QA passed.
-- After feedback: build, 16 data/calculation tests and JavaScript syntax passed. Independent tests reopen the source demographic, State MAP and APR workbooks and recalculate the denominators.
-- Browser executed: True; Chart.js CDN loaded: True; viewport widths: [320, 768, 1440].
-- Browser: repository-subpath loading
-- Browser: independent filters
-- Browser: six school and two reporting level filters
-- Browser: all demographic and MAP measure filters
-- Browser: student group and subject filters
-- Browser: historical year range
-- Browser: filtered CSV content
-- Browser: search
-- Browser: reset
-- Browser: missing metric exclusion
-- Browser: MAP suppression coverage
-- Browser: six keyboard card anchors
-- Browser: 1/2/3 column card layouts
-- Browser: growth and FRL filters
-- Browser: ineligible growth missing values
-- Browser: missingness footnotes
-- Browser: state reference limitations
-- Browser: keyboard filter focus
-- Browser: no page overflow
-- Browser: CDN failure tables
-- Browser: no browser exceptions
-
-Historical source-cleanup evidence remains in docs/source-files.md and ignored qa/source-reorganization/. Subsequent reporting extensions intentionally add new fields; the current regression tests preserve old numerical records rather than asserting the entire earlier schema is frozen.
-
-GitHub deployment is verified separately after push: remote main must equal local HEAD, Pages workflow must succeed, and live JSON/HTML must match the local public bundle. Never use push success alone as proof of deployment.
+Current missingness audit: [missing-data-audit.md](missing-data-audit.md). Relabelled figures, branch publication constraints and QA: [CHANGELOG.md](CHANGELOG.md). The 11 original workbooks / 21 worksheets are unchanged; no one-time migration is rerun.
