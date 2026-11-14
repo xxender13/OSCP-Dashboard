@@ -1,0 +1,92 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Students, schools and reported results at Saint Louis University’s six sponsored charter schools."
+      name="description"
+    />
+    <title>
+      Charter School Partnerships Dashboard | Saint Louis University
+    </title>
+    <link href="styles.css" rel="stylesheet" />
+    <link href="canvas.css" rel="stylesheet" />
+    <script defer="" src="vendor/chart.umd.min.js"></script>
+    <script defer="" src="analytics.js"></script>
+    <script defer="True" src="dashboard.js"></script>
+    <script defer="" src="app.js"></script>
+    <link href="dashboard.css" rel="stylesheet" />
+  </head>
+  <body data-entry="explore">
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <div class="header-inner">
+        <a class="brand" href="#overview"
+          ><span class="brand-mark">SLU</span
+          ><span
+            >Saint Louis University<small
+              >Office of School and Community Partnerships</small
+            ></span
+          ></a
+        >
+        <h1>Charter School Partnerships Dashboard</h1>
+        <div class="search-wrap">
+          <label class="sr-only" for="search">Find a school or building</label
+          ><input
+            aria-autocomplete="list"
+            aria-controls="matches"
+            aria-expanded="false"
+            autocomplete="off"
+            id="search"
+            placeholder="Find a school or building"
+            role="combobox"
+            type="search"
+          />
+          <ul hidden="" id="matches" role="listbox"></ul>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <nav aria-label="Dashboard topics" class="tabs">
+        <div aria-label="Dashboard topics" id="tablist" role="tablist"></div>
+      </nav>
+      <section aria-label="At a glance" hidden="" id="start">
+        <div aria-busy="true" class="kpi-grid" id="objectiveKpis">
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+          <div aria-hidden="true" class="skeleton"></div>
+        </div>
+        <p class="caption">
+          Figures describe sponsored schools and their reported results; they do
+          not show that SLU sponsorship caused them.
+        </p>
+        <p class="caption">
+          Enrollment: 2025–26 preliminary · Student groups, MAP and growth: 2025
+          · School directory: June 2026
+        </p>
+      </section>
+      <div id="loadStatus" role="status">Loading dashboard</div>
+      <div hidden="" id="dashboard"></div>
+    </main>
+    <footer>
+      Saint Louis University · Office of School and Community Partnerships
+      <button id="printReport">Print / Save as PDF</button>
+      <button id="presentationButton">Presentation view</button
+      ><button data-canvas-export="explore" id="exportCurrent">
+        Export this view
+      </button>
+    </footer>
+    <a class="back-top" href="#start">↑ Back to top / tabs</a>
+    <div hidden="" id="slideControls">
+      <button id="previousSlide">Previous</button
+      ><span aria-live="polite" id="slideCounter"></span
+      ><button id="nextSlide">Next</button
+      ><button id="exitPresentation">Exit</button>
+    </div>
+  </body>
+</html>

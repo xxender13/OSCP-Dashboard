@@ -1,0 +1,46 @@
+name: Review public bundle
+on:
+  pull_request:
+  push:
+    branches: [redesign-three-levels]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check dist/app.js
+      - run: node --check dist/analytics.js
+      - run: node --check dist/dashboard.js
+      - run: node --check dist/vendor/chart.umd.min.js
+      - run: node --check dist/vendor/html2canvas.min.js
+      - name: Check public content and headline regressions
+        run: python -m unittest test_public_content test_ui test_dashboard_config
+      - name: Validate confirmed-input rules without private workbooks
+        run: >-
+          python -m unittest
+          test_three_levels.ThreeLevelsTests.test_empty_inputs_are_pending_not_zero
+          test_three_levels.ThreeLevelsTests.test_confirmations_and_overlap
+          test_three_levels.ThreeLevelsTests.test_scholarship_confirmations_and_duplicates
+          test_three_levels.ThreeLevelsTests.test_confirmed_attendance_does_not_require_or_imply_funding
+      - name: Validate public data and assets
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from status_audit import validate_nulls
+          p=Path('dist')
+          assert (p/'summary.json').stat().st_size < 400000
+          for f in p.glob('*.json'): validate_nulls(json.loads(f.read_text()))
+          for name in ('index.html','explorer.html','app.js','styles.css','vendor/chart.umd.min.js'):
+              assert (p/name).is_file(),name
+          assert 'https://cdn.jsdelivr.net' not in (p/'index.html').read_text()
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: three-levels-review-bundle
+          path: dist/

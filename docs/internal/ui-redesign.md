@@ -1,3 +1,5 @@
+> Historical design note for the November 7 release. The three-level restructure, current terms, input workflows and separate Explorer are documented in [CHANGELOG.md](CHANGELOG.md); this note preserves the earlier design history.
+
 # OSCP impact dashboard: UI redesign
 
 Baseline: verified commit `8473a2c`. This release changes presentation and interaction, not the data pipeline, original workbooks, calculations or public dataset schema. The existing static GitHub Pages architecture and four-file deployment remain.

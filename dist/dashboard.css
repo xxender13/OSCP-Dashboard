@@ -1,0 +1,1223 @@
+:root {
+  --nav-h: 60px;
+  --panel-h: 360px;
+  --z-nav: 40;
+  --z-filter: 30;
+  --z-dropdown: 50;
+  --z-tooltip: 60;
+}
+main,
+.analytic-active main {
+  max-width: 1240px;
+  padding: 24px;
+  margin: auto;
+}
+*:is(
+    .analytic-grid,
+    .profile-grid,
+    .dashboard-directory,
+    .home-kpis,
+    .canvas-filters,
+    .kpi-strip,
+    .four-level-key
+  )
+  > * {
+  min-width: 0;
+}
+.tabs,
+.analytic-active .tabs {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  margin: 0 0 24px;
+  padding: 0;
+  background: #f5f6f8;
+}
+section,
+article,
+[data-panel],
+.dashboard-frame,
+.analytic-canvas {
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+a[id] {
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+.analytic-panel[data-panel] {
+  scroll-margin-top: calc(var(--nav-h) + var(--filter-h, 0px) + 16px);
+}
+.header-inner {
+  max-width: 1240px;
+  gap: 16px;
+  padding: 8px 24px;
+}
+.header-inner h1 {
+  max-width: 320px;
+}
+header {
+  position: relative;
+  z-index: var(--z-dropdown);
+}
+#matches {
+  z-index: var(--z-dropdown);
+}
+#panel-home {
+  padding: 0;
+}
+.home-intro {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+.home-guide h2,
+.home-scorecard h2,
+#dashboard-directory h2 {
+  font-size: 24px;
+  line-height: 1.25;
+}
+.four-level-key {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fff;
+  border-bottom: 1px solid #dce1e7;
+}
+.four-level-key > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.four-level-key .level {
+  font-size: 12px;
+  white-space: normal;
+}
+.home-level-key {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  margin: 0 0 16px;
+}
+.home-level-key > div {
+  display: block;
+}
+.home-level-key .level {
+  font-size: 16px;
+}
+.home-level-key p {
+  font-size: 16px;
+  margin: 8px 0 0;
+}
+.gold {
+  background: #f4ecd8;
+  color: #70500a;
+}
+.gap-mini-key,
+.home-guide > p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.home-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+.home-kpi {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #dce1e7;
+  border-radius: 12px;
+  padding: 24px;
+  background: #fff;
+  text-decoration: none;
+  color: #243448;
+}
+.home-kpi:first-child {
+  background: #003da5;
+  color: #fff;
+}
+.home-kpi:first-child:hover {
+  background: #002e7f;
+}
+.home-kpi:first-child .year-chip {
+  color: white;
+  border-color: #b9cdf6;
+}
+#dashboard > [role="tabpanel"] {
+  padding-top: 0;
+}
+.year-range {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.year-range legend {
+  font-size: 16px;
+  padding: 0;
+  margin-bottom: 8px;
+}
+.year-range > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.year-range > div label {
+  font-size: 14px;
+}
+.filter-reset {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.home-kpi strong {
+  font-size: clamp(24px, 3vw, 40px);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.home-kpi > span {
+  font-size: 16px;
+  line-height: 1.35;
+}
+.home-kpi > span:last-child {
+  margin-top: auto;
+}
+.home-kpi .level,
+.home-kpi .year-chip {
+  font-size: 12px;
+}
+.home-kpi .pair-value {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  justify-content: space-between;
+}
+.home-kpi .pair-value > span {
+  font-size: clamp(20px, 2vw, 28px);
+  white-space: nowrap;
+}
+.pair-value small {
+  display: block;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 500;
+  white-space: normal;
+}
+.map-coverage {
+  font-size: 14px !important;
+  line-height: 1.4;
+  color: #485768;
+}
+.home-kpi:first-child .map-coverage {
+  color: #fff;
+}
+.home-scorecard {
+  margin: 24px 0;
+  background: white;
+  border: 1px solid #dce1e7;
+  border-radius: 12px;
+  padding: 16px;
+}
+.section-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.section-heading h2 {
+  margin: 0;
+}
+.table-context {
+  font-size: 14px;
+  color: #526071;
+  margin: 8px 0;
+}
+.scroll-hint {
+  font-size: 14px;
+  color: #526071;
+  margin: 8px 0;
+}
+.dashboard-directory {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.dashboard-directory article {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #dce1e7;
+  border-radius: 12px;
+  background: #fff;
+}
+.dashboard-directory h3 {
+  font-size: 20px;
+  margin: 0;
+}
+.dashboard-directory p {
+  font-size: 16px;
+  margin: 0;
+}
+.dashboard-directory .level {
+  font-size: 12px;
+  margin: 2px;
+}
+.dashboard-directory .directory-filters {
+  font-size: 14px;
+}
+.dashboard-directory a {
+  margin-top: auto;
+}
+.home-caption {
+  margin: 24px 0 0;
+}
+.analytic-tab {
+  padding: 0;
+}
+.analytic-canvas {
+  overflow: visible;
+}
+.canvas-title {
+  border-radius: 12px 12px 0 0;
+  padding: 16px 24px;
+}
+.canvas-title h2 {
+  font-size: 28px;
+  line-height: 1.2;
+}
+.canvas-title p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.filter-dock {
+  background: white;
+}
+.grid-in-view > .filter-dock {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: var(--z-filter);
+  border-bottom: 1px solid #c9d1dc;
+}
+.canvas-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 16px;
+  background: white;
+  align-items: end;
+}
+.canvas-filters > .filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  width: auto;
+  font-size: 16px;
+}
+.canvas-filters input,
+.canvas-filters select,
+.canvas-filters label input,
+.canvas-filters label select {
+  width: 100%;
+  max-width: 100%;
+  font-size: 16px;
+  min-height: 40px;
+}
+.canvas-filters .segmented {
+  margin: 0;
+  gap: 0;
+  display: flex;
+}
+.canvas-filters .segmented button {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+  font-size: 16px;
+  line-height: 1.2;
+  min-height: 40px;
+}
+.reference-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+.canvas-filters .reference-control input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+}
+.filter-reset {
+  display: flex;
+  align-items: end;
+  min-height: 40px;
+}
+.filter-reset button {
+  min-height: 40px;
+  font-size: 16px;
+}
+.active-filters {
+  padding: 0 16px 8px;
+}
+.active-filters:empty {
+  display: none;
+  padding: 0;
+}
+.active-level {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 16px;
+  background: #f4f6f9;
+}
+.active-level .level {
+  font-size: 14px;
+}
+.analytic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 16px 16px;
+  align-items: stretch;
+}
+.analytic-panel[data-panel] {
+  height: var(--panel-h);
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+.panel-title {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-rows: auto;
+  align-items: start;
+  gap: 4px 8px;
+  padding: 8px 12px;
+  flex-shrink: 0;
+  min-height: 0;
+}
+.panel-title h3 {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.panel-title > span {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 180px;
+}
+.panel-title > .panel-menu {
+  grid-column: 3;
+  grid-row: 1;
+}
+.panel-menu {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+}
+.panel-menu[open] {
+  z-index: var(--z-dropdown);
+}
+.panel-menu > div {
+  z-index: var(--z-dropdown);
+}
+.chart-summary {
+  font-size: 16px;
+  line-height: 1.3;
+  margin: 8px 12px 0;
+  min-height: 0;
+  flex-shrink: 0;
+}
+.analytic-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+  padding: 8px 12px;
+}
+.analytic-plot canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.empty-panel {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+.analytic-panel .panel-caption {
+  font-size: 12px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.analytic-panel .reference-note {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.heat-table {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  overflow: auto;
+}
+.heat-table .scroll {
+  overflow-x: auto;
+}
+.panel-control,
+#bridge > button {
+  position: static;
+  inset: auto;
+  align-self: start;
+  margin: 4px 12px;
+  font-size: 14px;
+}
+.panel-table {
+  min-height: 0;
+  overflow: auto;
+}
+.panel-table[open] {
+  flex: 1;
+  min-height: 0;
+}
+.table-mode > .analytic-plot,
+.table-mode > .heat-table,
+.table-mode > .empty-panel,
+.table-mode > .unpublished-categories {
+  display: none !important;
+}
+.static-panel.table-mode > dl {
+  display: none;
+}
+.static-panel .panel-table[open] {
+  max-height: 360px;
+}
+.panel-table .scroll {
+  max-height: none;
+  overflow: auto;
+}
+.panel-table table {
+  font-size: 14px;
+}
+.kpi-strip {
+  grid-auto-rows: 1fr;
+  padding: 16px;
+}
+.mini-kpi strong {
+  font-size: clamp(18px, 2vw, 26px);
+  white-space: nowrap;
+}
+.mini-kpi > span {
+  font-size: 16px;
+}
+.mini-kpi small {
+  font-size: 16px;
+}
+.mini-kpi strong.paired-count{display:flex;flex-direction:column;gap:4px;font-size:clamp(16px,1.8vw,24px);}
+.paired-count>span{white-space:nowrap;}
+.paired-count small{font-size:12px;}
+.table-context,.directory-filters,.scroll-hint{font-size:16px;}
+.home-kpi .map-coverage{font-size:16px!important;}
+.level.grey{border-bottom:1px dashed #596370;}
+.definitions-band {
+  padding: 16px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.dashboard-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px;
+  border-top: 1px solid #dce1e7;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+}
+.dashboard-actions .export-status {
+  font-size: 16px;
+}
+.standard-frame .simple-content {
+  padding: 16px;
+  min-width: 0;
+}
+.standard-frame .card {
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 8px;
+}
+.standard-frame .card .panel-title {
+  margin: -16px -16px 16px;
+}
+.standard-frame .card .scroll {
+  overflow: auto;
+  max-width: 100%;
+}
+.standard-frame .profile-grid {
+  gap: 16px;
+}
+.standard-frame .card .caption {
+  font-size: 14px;
+}
+.standard-frame .card .exports {
+  display: none;
+}
+.standard-frame .card.static-panel .panel-menu .exports {
+  display: flex;
+}
+.standard-frame .profile-grid .card {
+  margin: 0;
+}
+.standard-frame .program-grid {
+  gap: 16px;
+}
+.standard-frame .simple-content > h2,
+.standard-frame .simple-content > .intro,
+.standard-frame .simple-content > .jump-chips,
+.standard-frame .simple-content > .breadcrumb {
+  display: none;
+}
+.standard-frame .subtabs {
+  margin-bottom: 16px;
+}
+.standard-frame #reportFilters {
+  padding: 0;
+  background: transparent;
+}
+.standard-frame #reportOutput .analytic-panel {
+  height: var(--panel-h);
+  display: flex;
+  flex-direction: column;
+}
+.standard-frame #reportOutput .plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
+}
+.standard-frame #reportOutput .caption {
+  flex-shrink: 0;
+}
+.standard-frame #reportOutput .panel-table {
+  flex: 1;
+  min-height: 0;
+}
+.standard-frame #reportOutput .panel-table:not([open]) {
+  flex: 0;
+}
+.panel-menu:focus-within,
+.search-wrap:focus-within {
+  z-index: var(--z-dropdown);
+}
+.present .home-page.deck-active,
+.present .standard-frame.deck-active {
+  display: block !important;
+  position: fixed;
+  inset: 0 0 64px;
+  padding: 16px;
+  overflow: auto;
+  background: #f5f6f8;
+}
+.present .home-page h2,
+.present .standard-frame h2 {
+  display: block !important;
+}
+.present .home-page .home-intro {
+  font-size: 20px;
+}
+.present .home-page .home-guide p,
+.present .home-page p,
+.present .standard-frame p {
+  font-size: 16px;
+}
+.present .home-page .home-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.present .dashboard-frame.deck-active .card {
+  display: block !important;
+}
+.present .standard-frame .filter-dock,
+.present .standard-frame .dashboard-actions {
+  display: none;
+}
+.present .analytic-canvas.deck-active .analytic-panel {
+  height: auto;
+}
+.present .analytic-canvas.deck-active .four-level-key {
+  padding: 4px 16px;
+}
+.present .analytic-canvas.deck-active .active-level {
+  display: none;
+}
+.present .analytic-canvas.deck-active .dashboard-actions {
+  display: none;
+}
+.present .home-page .home-caption {
+  font-size: 16px;
+}
+.present #canvas-schools .simple-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.present #canvas-schools .profile-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 0;
+}
+.present #canvas-schools .profile-grid .card {
+  padding: 8px;
+  margin: 0;
+}
+.present #canvas-schools .card h3 {
+  font-size: 18px;
+}
+.present #canvas-schools .card dt,
+.present #canvas-schools .card dd {
+  font-size: 14px;
+  line-height: 1.3;
+}
+.present #canvas-schools .card dl {
+  gap: 4px;
+}
+.present #canvas-schools .card th,
+.present #canvas-schools .card td,
+.present #canvas-schools .card p,
+.present #canvas-schools .card .caption {
+  font-size: 12px;
+  padding: 2px;
+}
+.present #canvas-schools .card .level,
+.present #canvas-schools .card .year-chip {
+  font-size: 11px;
+}
+.present #canvas-about .simple-content {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.present #canvas-about .card h3 {
+  font-size: 20px;
+}
+.present #canvas-about .card dt,
+.present #canvas-about .card dd,
+.present #canvas-about .card p {
+  font-size: 16px;
+  line-height: 1.3;
+}
+.present .home-page .home-guide h2 {
+  font-size: 18px;
+  margin: 4px 0;
+}
+.present .home-page .home-guide > p,
+.present .home-page .home-level-key p {
+  display: none;
+}
+.present .home-page .home-kpis {
+  margin: 8px 0;
+  gap: 8px;
+}
+.present .home-page .home-kpi {
+  padding: 12px;
+  gap: 4px;
+}
+.present .home-page .home-kpi strong {
+  font-size: 32px;
+}
+.present .home-page .home-kpi > span {
+  font-size: 14px;
+}
+.present .home-page .open-dashboard {
+  display: none;
+}
+.present .home-page .home-scorecard {
+  margin: 8px 0;
+  padding: 8px;
+}
+.present .home-page .home-scorecard th,
+.present .home-page .home-scorecard td {
+  font-size: 12px;
+  padding: 4px;
+}
+.present .home-page .home-scorecard h2,
+.present .home-page #dashboard-directory h2 {
+  font-size: 20px;
+  margin: 4px 0;
+}
+.present .home-page .dashboard-directory {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.present .home-page .dashboard-directory article {
+  padding: 8px;
+  gap: 4px;
+}
+.present .home-page .dashboard-directory h3 {
+  font-size: 16px;
+}
+.present .home-page .dashboard-directory p {
+  font-size: 12px;
+  line-height: 1.3;
+}
+.present .home-page .dashboard-directory .level {
+  font-size: 10px;
+}
+.present .home-page .dashboard-directory a {
+  display: none;
+}
+@media (max-width: 1099px) {
+  :root {
+    --panel-h: 320px;
+  }
+  .home-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-directory {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .four-level-key {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .header-inner {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 899px) {
+  .analytic-grid {
+    grid-template-columns: 1fr;
+  }
+  .four-level-key {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .home-level-key > div {
+    display: block;
+  }
+}
+@media (max-width: 599px) {
+  :root {
+    --panel-h: 300px;
+  }
+  main,
+  .analytic-active main {
+    padding: 16px;
+  }
+  .header-inner {
+    padding: 16px;
+  }
+  .tabs,
+  .analytic-active .tabs {
+    margin: 0 -16px 16px;
+    padding: 4px 16px;
+  }
+  .grid-in-view > .filter-dock {
+    position: static;
+  }
+  .home-kpis,
+  .dashboard-directory {
+    grid-template-columns: 1fr;
+  }
+  .home-kpi {
+    padding: 16px;
+  }
+  .home-kpi strong {
+    font-size: clamp(28px, 8vw, 40px);
+  }
+  .home-kpi .pair-value > span {
+    font-size: 28px;
+  }
+  .home-kpis {
+    grid-auto-rows: auto;
+  }
+  .four-level-key {
+    padding: 8px;
+  }
+  .home-level-key {
+    grid-template-columns: 1fr;
+  }
+  .canvas-title {
+    padding: 16px;
+  }
+  .canvas-title h2 {
+    font-size: 24px;
+  }
+  .canvas-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+    padding: 16px;
+    gap: 16px;
+  }
+  .canvas-filters > .filter-field,
+  .canvas-filters > .filter-field:not(.check) {
+    width: auto;
+  }
+  .canvas-filters .level-filter {
+    width: auto;
+  }
+  .analytic-grid {
+    padding: 0 16px 16px;
+    gap: 16px;
+  }
+  .kpi-strip,
+  #canvas-students .kpi-strip {
+    padding: 16px;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mini-kpi strong {
+    font-size: 22px;
+  }
+  .mini-kpi .level {
+    white-space: normal;
+  }
+  .standard-frame .simple-content {
+    padding: 16px;
+  }
+  .standard-frame .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .static-panel .panel-title {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .four-level-key .level {
+    font-size: 12px;
+  }
+  .section-heading > span {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+@media print {
+  main,
+  .analytic-active main {
+    max-width: none;
+    padding: 0;
+  }
+  #dashboard > [role="tabpanel"] {
+    padding: 0 !important;
+  }
+  .home-page,
+  .analytic-canvas {
+    height: 190mm !important;
+    max-height: 190mm;
+    break-after: page;
+    page-break-after: always;
+    overflow: hidden !important;
+  }
+  .home-page {
+    line-height: 1.2;
+    font-size: 10px;
+  }
+  .home-intro {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+  .home-guide h2,
+  .home-scorecard h2,
+  #dashboard-directory h2 {
+    font-size: 14px;
+    margin: 4px 0;
+  }
+  .home-level-key {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    gap: 4px;
+  }
+  .home-level-key .level {
+    font-size: 9px;
+  }
+  .home-level-key p,
+  .home-guide > p,
+  .gap-mini-key {
+    font-size: 8px;
+    margin: 2px 0;
+  }
+  .home-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin: 4px 0;
+    grid-auto-rows: 1fr;
+  }
+  .home-kpi {
+    padding: 4px;
+    gap: 2px;
+    border-radius: 4px;
+  }
+  .home-kpi strong,
+  .home-kpi .pair-value > span {
+    font-size: 18px;
+  }
+  .home-kpi > span,
+  .pair-value small {
+    font-size: 8px;
+  }
+  .home-kpi .level,
+  .home-kpi .year-chip,
+  .home-kpi .map-coverage {
+    font-size: 7px !important;
+  }
+  .home-kpi .open-dashboard {
+    display: none;
+  }
+  .home-scorecard {
+    margin: 4px 0;
+    padding: 4px;
+  }
+  .home-scorecard table {
+    font-size: 8px;
+  }
+  .home-scorecard td,
+  .home-scorecard th {
+    padding: 2px;
+    min-width: 0;
+  }
+  .home-scorecard .map-coverage,
+  .table-context {
+    font-size: 7px !important;
+    margin: 2px;
+  }
+  .section-heading .level,
+  .section-heading .year-chip {
+    font-size: 8px;
+  }
+  .dashboard-directory {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .dashboard-directory article {
+    padding: 4px;
+    gap: 2px;
+  }
+  .dashboard-directory h3 {
+    font-size: 10px;
+  }
+  .dashboard-directory p,
+  .dashboard-directory .directory-filters,
+  .dashboard-directory .level {
+    font-size: 7px;
+    line-height: 1.2;
+  }
+  .dashboard-directory a {
+    display: none;
+  }
+  .home-caption {
+    font-size: 8px;
+    margin: 4px 0;
+  }
+  .four-level-key {
+    padding: 4px 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .four-level-key .level {
+    font-size: 8px;
+  }
+  .filter-dock,
+  .active-level,
+  .dashboard-actions,
+  .scroll-hint {
+    display: none !important;
+  }
+  .canvas-title {
+    padding: 4px 8px;
+  }
+  .canvas-title h2 {
+    font-size: 18px;
+  }
+  .canvas-title p {
+    font-size: 10px;
+  }
+  .kpi-strip {
+    padding: 4px 8px;
+  }
+  .analytic-grid {
+    padding: 0 8px 8px;
+    gap: 8px;
+  }
+  .analytic-panel[data-panel] {
+    height: auto;
+  }
+  .analytic-panel .reference-note {
+    font-size: 7px;
+  }
+  .analytic-panel .panel-caption {
+    font-size: 8px;
+  }
+  .definitions-band {
+    font-size: 9px;
+    padding: 4px 8px;
+  }
+  .analytic-plot canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+  }
+  .analytic-panel .chart-summary {
+    font-size: 10px;
+  }
+  .analytic-panel .panel-title h3 {
+    font-size: 12px;
+  }
+  .standard-frame .simple-content {
+    padding: 4px 8px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+  }
+  .standard-frame .profile-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0 0 4px;
+  }
+  .standard-frame .profile-grid .card {
+    padding: 4px;
+  }
+  .standard-frame .card {
+    break-after: auto !important;
+    break-inside: avoid;
+    margin: 0 0 4px;
+    padding: 4px;
+  }
+  .standard-frame .card .panel-title {
+    margin: -4px -4px 4px;
+    padding: 4px;
+  }
+  .standard-frame .card h3 {
+    font-size: 11px;
+  }
+  .standard-frame .card p,
+  .standard-frame .card li,
+  .standard-frame .card dt,
+  .standard-frame .card dd,
+  .standard-frame .card a,
+  .standard-frame .card th,
+  .standard-frame .card td {
+    font-size: 8px;
+    line-height: 1.2;
+  }
+  .standard-frame .card dl {
+    margin: 0;
+    gap: 2px;
+    grid-template-columns: 1fr 1.5fr;
+  }
+  .standard-frame .card .caption,
+  .standard-frame .card .level,
+  .standard-frame .card .year-chip {
+    font-size: 7px;
+  }
+  .standard-frame .card td,
+  .standard-frame .card th {
+    padding: 2px;
+    min-width: 0;
+  }
+  .standard-frame .card .panel-menu,
+  .standard-frame .details-link {
+    display: none !important;
+  }
+  .standard-frame .card .scroll {
+    overflow: visible;
+  }
+  .standard-frame .card details {
+    display: none;
+  }
+  .standard-frame .simple-content .program-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+  .standard-frame #reportOutput .analytic-panel {
+    height: 125mm;
+  }
+  .standard-frame #reportOutput .plot {
+    height: auto !important;
+    flex: 1;
+  }
+  .standard-frame #reportOutput article:not(:has(canvas)) .panel-table {
+    display: block !important;
+    overflow: visible;
+  }
+  .standard-frame #reportOutput .plot canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+  }
+  #canvas-about .simple-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .home-page .home-scorecard .scroll {
+    overflow: visible;
+  }
+  .present .home-page.deck-active,
+  .present .standard-frame.deck-active {
+    position: static !important;
+    inset: auto !important;
+    height: 190mm !important;
+    padding: 0;
+  }
+  body[data-print-canvas] #dashboard > [role="tabpanel"] {
+    display: none !important;
+  }
+  body[data-print-canvas="home"] #dashboard > #panel-home,
+  body[data-print-canvas="schools"] #dashboard > #panel-schools,
+  body[data-print-canvas="students"] #dashboard > #panel-students,
+  body[data-print-canvas="learning"] #dashboard > #panel-learning,
+  body[data-print-canvas="growth"] #dashboard > #panel-growth,
+  body[data-print-canvas="sponsorships"] #dashboard > #panel-sponsorships,
+  body[data-print-canvas="explore"] #dashboard > #panel-explore,
+  body[data-print-canvas="about"] #dashboard > #panel-about {
+    display: block !important;
+  }
+  .static-panel.table-mode > dl {
+    display: grid !important;
+  }
+}
+@media (max-width: 599px) {
+  .panel-title,
+  .static-panel .panel-title {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+  }
+  .panel-title h3 {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .panel-title > span {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+    max-width: none;
+  }
+  .panel-title > .panel-menu {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media print {
+  .mini-kpi small { font-size: 9px !important; line-height: 1.2; }
+  .mini-kpi > span { font-size: 10px !important; }
+  .mini-kpi .level, .mini-kpi .year-chip { font-size: 8px !important; }
+}
+
+@media print {
+  .standard-frame .card p { margin: 2px 0; }
+  .standard-frame .card .caption { margin: 2px 0; }
+  .standard-frame .card .panel-title { min-height: 20px; }
+}

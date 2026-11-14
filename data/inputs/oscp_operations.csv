@@ -1,0 +1,4 @@
+measure,value,unit,as_of,source,confirmed_by,confirmed_date,status,notes
+support_visit_hours,,hours,,,,,pending,
+compliance_visit_hours,,hours,,,,,pending,
+team_combined_years_experience,,years,,,,,pending,

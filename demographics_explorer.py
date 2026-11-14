@@ -10,6 +10,9 @@ METRICS = {
     'frl': ('Free/reduced-price lunch', 'LUNCH_COUNT_FREE_REDUCED', 'JANUARY_MEMBERSHIP', 'LUNCH_COUNT_FREE_REDUCED_PCT', 'FRL count / January membership; not fall enrollment'),
     'el': ('English learners', 'ELL_LEP_STUDENTS_ENROLLED_K_12', 'ENROLLMENT_GRADES_K_12', 'ELL_LEP_STUDENTS_ENROLLED_K_12_PCT', 'English learners enrolled K-12 / K-12 enrollment'),
     'iep': ('IEP incidence', 'IEP_SCHOOLAGE_CHILDCOUNT', None, 'IEP_INCIDENCE_RATE', 'Published school-age IEP incidence; exact aggregation denominator is not verified'),
+    'asian': ('Asian enrollment','ENROLLMENT_ASIAN','ENROLLMENT_GRADES_K_12','ENROLLMENT_ASIAN_PCT','Asian enrollment / K-12 enrollment'),
+    'american_indian': ('American Indian enrollment','ENROLLMENT_INDIAN','ENROLLMENT_GRADES_K_12','ENROLLMENT_INDIAN_PCT','American Indian enrollment / K-12 enrollment'),
+    'pacific_islander': ('Pacific Islander enrollment','ENROLLMENT_PACIFIC_ISLANDER','ENROLLMENT_GRADES_K_12','ENROLLMENT_PACIFIC_ISLANDER_PCT','Pacific Islander enrollment / K-12 enrollment'),
 }
 
 

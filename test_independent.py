@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parent
 class IndependentAuditTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = json.loads((ROOT/'dashboard-data.json').read_text(encoding='utf-8'))
+        cls.data = json.loads((ROOT/'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         cls.source = json.loads((ROOT/'reference-data/dese-2025-independent.json').read_text(encoding='utf-8'))
 
     def test_official_rates_do_not_invent_counts(self):

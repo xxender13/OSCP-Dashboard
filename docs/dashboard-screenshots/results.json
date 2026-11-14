@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "widths": [
+    320,
+    375,
+    390,
+    768,
+    1024,
+    1440,
+    1920
+  ],
+  "presentation": [
+    1920,
+    1080
+  ],
+  "checks": [
+    "configured eight dashboards",
+    "Home content and links",
+    "config filter/panel parity",
+    "MAP coverage labels",
+    "student group and course choices",
+    "source suppression",
+    "shared URL filters",
+    "school search and legacy routes",
+    "geometry and chart containment",
+    "dropdowns and anchors",
+    "CSV/PNG exports",
+    "one-dashboard presentation",
+    "one-dashboard PDF",
+    "embed height",
+    "self-hosted fallback"
+  ]
+}

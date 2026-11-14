@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / 'qa' / 'source-reorganization' / 'before.json'
-CATALOG = ROOT / 'docs' / 'source-files.json'
+CATALOG = ROOT / 'docs' / 'internal' / 'source-files.json'
 PLAN = [
     ('data/OSCP_DESE_Cohort_Master_2025_2026.xlsx', 'data/master/oscp_dese_cohort_master_2025_2026.xlsx', 'Curated OSCP cohort master; 7 worksheets', '2025 outcomes; 2025–26 preliminary enrollment; history 2007–2025', True),
     ('data2/District Demographic Data (2).xlsx', 'data/enrollment_demographics/dese_district_demographics_1991_2025.xlsx', 'District/charter annual demographics', '1991–2025', False),

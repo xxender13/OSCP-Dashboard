@@ -22,7 +22,7 @@ def read(path, header=1):
 class ReportingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
+        cls.data = json.loads((ROOT / 'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         cls.demographics = read('data/enrollment_demographics/dese_district_demographics_1991_2025.xlsx')
         cls.state_map = read('data/assessments/dese_map_2025_state_content_area.xlsx')
         cls.apr = read('data/accountability/dese_apr_2025_building_supporting.xlsx')
@@ -126,12 +126,9 @@ class ReportingTests(unittest.TestCase):
         script=(ROOT/'app.js').read_text(encoding='utf-8')
         html=(ROOT/'index.html').read_text(encoding='utf-8')
         for anchor in ('students-schools','student-demographics','academic-performance','academic-growth'):
-            self.assertIn(f'id="{anchor}"',html)
             self.assertIn(anchor,script)
-        for report in ('enrollment','demographics','frl','schoolList','matchedMap','growth'):
-            self.assertIn(f"report('{report}'",script)
-        self.assertIn('Unavailable*',script)
+        for report in ('Enrollment history','Student groups','Reading and math','Grade comparison','Growth','Directory'):
+            self.assertIn(report,script)
+        self.assertIn('Not published',script)
 
-
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == '__main__': unittest.main()

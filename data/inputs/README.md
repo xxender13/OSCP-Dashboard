@@ -1,0 +1,13 @@
+# Confirmed-input files
+
+Candi owns scholarships, operations and physical campus verification. Ryan Wilson owns partnership reach; Ryan and Candi own events. Harshil supplies the missing DESE preliminary workbooks. Abigail clarifies the ambiguous “Missing from Biome, Hope Leadership” note.
+
+Fill the existing CSV headers; do not rename columns. Blank numeric fields mean pending, never zero. `source`, `confirmed_by` and ISO `confirmed_date` are mandatory before a row can be public. Public statuses are confirmed, awarded, approved or completed (events allow only requested, approved, completed, declined, unknown). Partial confirmations remain in the pending table and outside every total. Zero is accepted only when explicitly supplied and confirmed.
+
+- **scholarships.csv:** `program` and `award_year` identify a row; `awards_count` is an integer; `amount_per_award_usd` and `total_amount_usd` are separately confirmed dollar amounts. Do not infer a total from an ambiguous amount. `notes` holds proposed totals and unresolved questions. No $2,500 numeric seed is provided.
+- **events.csv:** unique `event_id`; name, allowed category, fiscal year, ISO date, city, host, OSCP role, requested and approved dollars, funding source; attendance, participating students and represented Schools are nonnegative integers. These counts and requested dollars are not funding approvals. `photo_path` must be under `assets/events/`; missing images are simply omitted. `source` and confirmation fields record provenance.
+- **partnership_reach.csv:** unique program ID, program/partner, reporting period, integer students served, explicit unduplicated method, `overlaps_sponsored_schools` (yes/no/unknown), `counted_in_total` (yes/no), provenance and status. Confirm comparable periods and cross-program deduplication. Unknown overlap on a counted confirmed row produces bounds, never a single total. No rows are seeded.
+- **oscp_operations.csv:** unique measure, nonnegative value, unit, ISO as-of date, provenance and status. Keep support hours, compliance hours and combined team experience distinct.
+- **campus_counts.csv:** School name, nonnegative integer physical campuses and confirmation provenance. Directory addresses do not establish these counts.
+
+Run `python build.py` after changes. Invalid headers, IDs, dates, numbers or vocabularies fail the build with the file and line. Valid incomplete rows are retained as Awaiting confirmation. Only fully confirmed rows feed public totals. Notes are internal working text; the public summary exports only explicitly selected fields and confirmed source references.

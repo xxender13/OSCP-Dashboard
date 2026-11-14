@@ -1,0 +1,4 @@
+event_id,event_name,category,fiscal_year,event_date,city,host_org,oscp_role,amount_requested_usd,amount_approved_usd,funding_source,status,attendance,students_participating,schools_represented,photo_path,source,confirmed_by,confirmed_date,notes
+pending-1,Spelling Bee,Spelling Bee,,,,,,,,,unknown,,,,,,,,Named in OSCP notes; not present in the Gala tracker; details from Ryan/Candi.
+pending-2,Summer Learning Institute,Summer Learning Institute,,,,,,,,,unknown,,,,,,,,Named in OSCP notes; not present in the Gala tracker; details from Ryan/Candi.
+pending-3,GAINS,GAINS,,,,,,,,,unknown,,,,,,,,Named in OSCP notes; not present in the Gala tracker; details from Ryan/Candi.

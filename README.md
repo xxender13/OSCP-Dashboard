@@ -1,94 +1,33 @@
-# OSCP Impact Dashboard | 2026–2027
+# Charter School Partnerships Dashboard
 
-Static, responsive reporting for Saint Louis University's Office of School and Community Partnerships. The edition is **2026–2027**. Enrollment is **2025–26 preliminary K–12**; demographics, MAP and APR are **2025**. Historical records span **2007–2025**, with variable coverage. The directory is **undated**.
+Saint Louis University - Office of School and Community Partnerships
 
-Live site: https://xxender13.github.io/OSCP-Dashboard/
+Explore six sponsored charter schools, their 14 school buildings at 12 street addresses, and reported student results. Missouri is a separate comparison. These descriptive figures do not establish an effect of SLU sponsorship.
 
-## Six linked KPI cards
+Eight dashboards share one configuration: Home, Schools, Students, Learning, Growth, OSCP Sponsorships, Explore Data and About. Home contains the introduction, six headline tiles, school scorecard and dashboard directory. Students, Learning and Growth use four-panel analytical views. Every dashboard uses level and year labels, shared filters and export controls. `explorer.html` opens the detailed reporting workspace directly.
 
-Each card opens and focuses its detailed report, works with Enter on a keyboard, and respects reduced-motion preferences. Cards use three desktop columns, two tablet columns and one mobile column. They describe the full portfolio independently of each report's filters.
+`config/dashboards.json` supplies navigation, titles, questions, panels, filter definitions and directory cards. Filter selections remain in the URL hash. Search accepts accented and unaccented names; `/` focuses it. Old Overview and Programs links redirect to Home and OSCP Sponsorships.
 
-| Card | Display and formula | Source year / denominator |
-| --- | --- | --- |
-| Students Served | **3,953**; sum unique charter-network K–12 preliminary enrollment | 2025–26 preliminary; six networks; excludes preschool and unverified partnerships |
-| Student Demographics | **32.07% identifying as Black** = 1,255 / 3,913 × 100 | 2025 district demographic counts; all six networks; not an unweighted percentage average |
-| Free/Reduced Lunch Students Served | **2,330; 61.06%** = 2,330 / 3,816 × 100 | 2025 reported FRL count / January membership; never divided by 3,953 preliminary enrollment |
-| Sponsored Schools | **14** distinct `(CTYDIST, SCHNUM)` pairs across six networks | Supplied directory, reporting year unavailable; not verified 2026 records or 14 unique physical campuses |
-| MAP Scores | **ELA 46.95%** = 823 / 1,753 × 100; **Math 49.69%** = 877 / 1,765 × 100 | 2025 Charter Total P+A; same three reportable networks per subject; suppressed networks excluded |
-| Growth | **ELA 53.85%** = 7 / 13 × 100; **Math 38.46%** = 5 / 13 × 100 | 2025 APR building ALL growth measures: eligible buildings with designation Target; not percentage of students growing |
+Learning offers published student groups and grade/course choices. Unpublished choices remain visible and disabled. Pooled MAP percentages describe only the three reporting schools and display a computed coverage label. Demographic pooling requires complete compatible values from all six schools; IEP values remain school-specific. Missing values retain their labels and never become zero. Race compositions show published categories without normalizing or inferring missing shares.
 
-Exact workbook paths, source columns, independent checks, state references and limitations are in [KPI definitions and QA](docs/kpi-definitions.md). The full private trace is generated at `qa/kpi-calculations.json`.
+Each panel menu offers PNG, CSV and a table view. **Export this view** captures the dashboard with self-hosted html2canvas. **Presentation view** starts with Home and gives each dashboard one slide; arrows navigate and Escape exits. **Print / PDF** prints a dashboard on one landscape page. The footer print control prepares all eight dashboards. See [embedding instructions](EMBED.md).
 
-## Missouri comparisons
+Build and check locally:
 
-- State Total MAP P+A uses `(PROFICIENT + ADVANCED) / REPORTABLE × 100`: ELA **44.00%** (198,659 / 451,477), Math **42.63%** (193,897 / 454,818), Science **39.98%** (78,294 / 195,818), Social Studies **40.98%** (27,239 / 66,470). All four total rows are independently checked against their four fully published achievement-count sums. Rounded source percentages are not added or averaged.
-- State MAP files contain all-tested-grades aggregates, not matched grade spans. State references appear as separate context. A grade-matched percentage of schools exceeding Missouri is **Unavailable***, and no school-specific official proficiency goal is invented.
-- Black enrollment reference: **16.90%** = 130,504 / 772,194 × 100 over **295/564 paired reportable district records**. This is not a complete statewide population rate.
-- FRL reference: **47.20%** = 379,352.2 / 803,686.09 × 100 over **536/564 usable district records**. Excludes 10 missing/nonpositive pairs and 18 count/membership inconsistencies, including precision differences. Raw values are never clamped, imputed or changed. Source membership counts may be fractional.
-- APR reference: ELA **24.99%** (498 / 1,993), Math **24.67%** (492 / 1,994) eligible buildings designated Target. The building supporting file contains 2,139 unique source buildings. Positive growth points possible plus reported earned points and designation define eligibility; Participation stays in the denominator. On-Track is not Target. Optional source-grade-span filtering restricts both cohort and state denominators.
-- No state benchmark is invented for IEP incidence or another measure without a verified compatible denominator. District and building populations are never added together.
-
-## Interactive reports and missingness
-
-Existing demographic, milestone, MAP, history, coverage, directory and enrollment reports remain. New reports show FRL counts/January membership, the 14 directory identifiers, and APR growth. Filters are independent, with Reset chart, Reset all reports, accessible data tables, matching legends, source captions, and CSV exports of filtered values/context. CSV exports include a missing-data explanation.
-
-`Unavailable*` means the numerical field remains null, with a separate `missingness` object explaining the source. A raw `*` is suppression; the supplied extracts do not state why, so small group size is not inferred. Blank, NULL or NA is not reported/unavailable. Missing records are shown in relevant tables, excluded from numeric charts/calculations, and included in coverage explanations. Historical gaps stay disconnected and do not imply a causal sponsorship effect.
-
-No confirmed scholarship awards, approved community-event totals or unduplicated additional partnership reach are supplied. Those sections remain explanatory and contain no invented outcome totals. Private tracker notes, invite lists, directory contacts and personnel fields are not published.
-
-## Source layout and build
-
-All **11 unchanged workbooks / 21 worksheets** are under `data/`, organized by master, enrollment_demographics, assessments, accountability, and sponsorships. See the [original-to-canonical catalog](docs/source-files.md) and checksum manifest [source-files.json](docs/source-files.json). `build.py` explicitly registers these inputs in `SOURCE_PATHS`. The completed earlier cleanup audit is historical evidence; current feature reporting intentionally adds new datasets and schema fields while preserving existing numerical records.
-
-```powershell
+```text
 python -m pip install -r requirements.txt
-python build.py
+python build.py --report
+python -m unittest discover
+node --check app.js
+node --check analytics.js
+node --check dashboard.js
+python scripts/audit_excel_sources.py verify
+python test_dashboard.py
 python -m http.server 8000 --directory dist
 ```
 
-Open http://localhost:8000. Python extracts, validates and transforms data at build time; Pages requires no backend. Rebuild after changes to inputs or web assets. `dist/` contains only `index.html`, `styles.css`, `app.js`, and aggregate `dashboard-data.json`. Asset paths are relative for repository-subpath hosting.
+The optional `--report` flag generates `docs/internal/OSCP_Dashboard_Report.docx` from the configuration, full local data, input templates and verification outputs. That directory is ignored; the report is neither committed nor copied into the website. Existing tracked internal files are retained for review rather than deleted. Browser checks require Chrome and the packages in `requirements-audit.txt`.
 
-## Checks and refresh
+Host only `dist/`. It contains the public application, initial summary, data slices loaded on demand, and self-hosted Chart.js and html2canvas. Original workbooks, local reports and verification outputs stay outside the site. The numerical baseline and source-workbook hashes remain checked.
 
-```powershell
-python build.py
-python -m unittest test_data.py test_reporting.py
-node --check app.js
-python scripts/audit_excel_sources.py verify
-```
-
-Optional browser QA requires installed Chrome on Windows and test-only dependencies `requests` and `websocket-client`:
-
-```powershell
-python -m pip install requests websocket-client
-python test_dashboard.py
-python scripts/write_kpi_report.py
-```
-
-The 16 tests include independently reopened State MAP, district demographics and building APR sources; exact numerators/denominators; six network / 14 identifier checks; source byte hashes; suppression; original metric preservation; and asset references. Chrome tests exercise all six keyboard card anchors, responsive 3/2/1-column layouts, existing and new filters, grade-span/eligibility cases, search, CSV, resets, missingness footnotes and blocked-CDN table fallback. Results and screenshots go to ignored `qa/`. The test stops its own browser and temporary server.
-
-Generated local QA includes `QA-report.md`, `kpi-calculations.json`, `workbook-inventory.json`, `event-audit.json`, and `browser-results.json`. Original cleanup evidence remains in `qa/source-reorganization/`. `scripts/audit_excel_sources.py verify` checks original bytes without requiring a later feature release to match the old dashboard design/schema. Do not rerun the one-time migration script.
-
-## GitHub Pages
-
-The existing `.github/workflows/pages.yml` publishes only `dist/` on applicable pushes to `main`. GitHub Pages uses GitHub Actions. Commit intended source files, documentation, tests and regenerated public artifacts. Raw `data/`, local `qa/` and caches stay ignored; source workbooks are not needed in the deployment job.
-
-After a push, confirm remote `main` equals local HEAD, check the Pages workflow's terminal result, and verify live HTML/JSON against the local public bundle. A successful push alone does not establish deployment success. No force push or repository-secret change is required.
-
-## Remaining data limitations
-
-Directory reporting year and unique campus counts; current 2026–27 enrollment; complete unsuppressed statewide demographic counts; grade-matched state MAP results and official school-specific proficiency targets; confirmed scholarship/event records; other-partnership counts and deduplication rules; and a verified statewide IEP-incidence denominator remain unavailable.
-
-## Independent DESE audit
-
-See [independent data audit](docs/independent-data-audit.md) for current statewide context, the dated 14-building directory and exact-grade MAP comparisons. All six original numerical KPIs are retained. Offline builds use the tracked aggregate reference snapshot; public-source refresh and browser-test dependencies are in `requirements-audit.txt`. Run `python -m unittest test_data.py test_reporting.py test_independent.py` and `python test_dashboard.py` after building.
-
-## Public impact experience
-
-The dashboard now leads with a six-measure impact overview, a searchable school directory, plain-language demographics, grade-matched MAP comparisons and denominator-first growth visuals. All analytical tools remain under **Explore Data** with independent filters, expandable tables and CSV downloads. See [UI redesign documentation](docs/ui-redesign.md) for design decisions, accessibility, screenshots and limitations.
-
-Run `python -m unittest discover` after `python build.py`; `test_ui.py` also verifies that the entire validated baseline payload remains unchanged apart from its build timestamp. Browser checks cover 320, 375, 768, 1024 and 1440px.
-
-## Student Demographics Explorer
-
-Open **Explore Student Demographics** inside the existing Student Demographics section. The opt-in workspace coordinates network/building/year/measure filters, eight KPIs, race-category bars, student-needs history, enrollment trends, school comparisons and official Missouri context. Detailed data, source-row tooltips and filtered CSV remain available when Chart.js fails. See [demographics explorer documentation](docs/demographics-explorer.md) for periods, aggregation safeguards, cross-filter behavior and limitations. Historical cohort data spans 2007-2025 with varying coverage; preliminary enrollment remains separate.
+[Change history](docs/CHANGELOG.md) - [Dashboard screenshots](docs/dashboard-screenshots/)
