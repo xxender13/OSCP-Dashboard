@@ -42,3 +42,7 @@ Build passed with the expected raw-preliminary-source warning. All 33 Python tes
 QA screenshots: [overview](three-levels-screenshots/overview.png), [mobile students](three-levels-screenshots/students-mobile.png), [learning](three-levels-screenshots/learning.png), [presentation](three-levels-screenshots/presentation.png). Complete local captures are under ignored `qa/three-levels/`.
 
 Historical metric nulls also trace their companion statuses to raw numerator/percentage columns: a withheld source component marks the unavailable derived metric Withheld by DESE, without recovering a count. The source-level and full browser regressions pass after this metadata refinement. The Pages environment was read and verified: its custom deployment branch policy permits `main` only. Live HTML and legacy JSON match current main and intentionally do not yet match this unmerged review branch.
+
+Input edge cases are explicit: confirmed rows marked not counted contribute no partnership addition (a genuine zero addition, not missing data); a completed event with confirmed attendance can be public without implying an approved funding amount. Empty templates still produce no totals.
+
+Final validation after input-rule edge cases: **34 Python tests passed**, source hashes unchanged, JS syntax passed, and the full browser suite passed again. Current summary is **287,483 bytes**. The review workflow now also runs confirmed-input fixture tests without private workbooks.

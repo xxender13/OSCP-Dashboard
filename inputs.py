@@ -44,7 +44,8 @@ def load_inputs(folder,sponsored=3953,assets=None):
                 if name=='partnership_reach':
                     if row['overlaps_sponsored_schools'] not in {'yes','no','unknown'} or row['counted_in_total'] not in {'yes','no'}:raise ValueError(f'{name}:{line}: invalid overlap/count flag')
                     if row['counted_in_total']=='yes' and not row['unduplicated_method']:raise ValueError(f'{name}:{line}: counted reach needs an unduplicated method')
-                row['public']=row['status'] in PUBLIC and all(row.get(k) for k in ('source','confirmed_by','confirmed_date')) and row[REQUIRED_NUM[name]] is not None
+                numeric_present=any(row.get(k) is not None for k in ('amount_approved_usd','attendance','students_participating','schools_represented')) if name=='events' else row[REQUIRED_NUM[name]] is not None
+                row['public']=row['status'] in PUBLIC and all(row.get(k) for k in ('source','confirmed_by','confirmed_date')) and numeric_present
                 row['display_status']='reported' if row['public'] else 'pending';row['owner']=OWNERS[name]
                 if name=='events':
                     photo=row['photo_path'];row['photo_available']=False
@@ -57,6 +58,7 @@ def load_inputs(folder,sponsored=3953,assets=None):
     reach=[r for r in result['partnership_reach']['confirmed'] if r['counted_in_total']=='yes']
     unknown=any(r['overlaps_sponsored_schools']=='unknown' for r in reach)
     included=[r for r in reach if r['overlaps_sponsored_schools']=='no']
-    result['total_reach']={'value':None if not reach or unknown else sponsored+sum(r['students_served'] for r in included), 'status':'pending' if not reach or unknown else 'reported','label':'Total reach awaiting overlap check' if unknown else 'Awaiting confirmation' if not reach else 'Confirmed total reach','lower_bound':sponsored if unknown else None,'upper_bound':sponsored+sum(r['students_served'] for r in result['partnership_reach']['confirmed']) if unknown else None,'included':included,'formula':'Sponsored-school K–12 enrollment + confirmed partnership students marked counted=yes and overlap=no; verify periods and cross-program deduplication.'}
+    confirmed_reach=bool(result['partnership_reach']['confirmed'])
+    result['total_reach']={'value':None if not confirmed_reach or unknown else sponsored+sum(r['students_served'] for r in included), 'status':'pending' if not confirmed_reach or unknown else 'reported','label':'Total reach awaiting overlap check' if unknown else 'Awaiting confirmation' if not confirmed_reach else 'Confirmed total reach','lower_bound':sponsored if unknown else None,'upper_bound':sponsored+sum(r['students_served'] for r in result['partnership_reach']['confirmed']) if unknown else None,'included':included,'formula':'Sponsored-school K–12 enrollment + confirmed partnership students marked counted=yes and overlap=no; verify periods and cross-program deduplication.'}
     result['scholarship_totals']={'count':sum(r['awards_count'] for r in result['scholarships']['confirmed']) if result['scholarships']['confirmed'] else None,'dollars':sum(r['total_amount_usd'] for r in result['scholarships']['confirmed']) if result['scholarships']['confirmed'] and all(r['total_amount_usd'] is not None for r in result['scholarships']['confirmed']) else None}
     return result

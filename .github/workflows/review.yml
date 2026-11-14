@@ -14,6 +14,14 @@ jobs:
         with:
           node-version: '22'
       - run: node --check dist/app.js
+      - run: node --check dist/vendor/chart.umd.min.js
+      - name: Validate confirmed-input rules without private workbooks
+        run: >-
+          python -m unittest
+          test_three_levels.ThreeLevelsTests.test_empty_inputs_are_pending_not_zero
+          test_three_levels.ThreeLevelsTests.test_confirmations_and_overlap
+          test_three_levels.ThreeLevelsTests.test_scholarship_confirmations_and_duplicates
+          test_three_levels.ThreeLevelsTests.test_confirmed_attendance_does_not_require_or_imply_funding
       - name: Validate public data and assets
         run: |
           python - <<'PY'

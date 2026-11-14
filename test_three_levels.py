@@ -27,10 +27,12 @@ class ThreeLevelsTests(unittest.TestCase):
             for m in r['metrics'].values():
                 if m['value'] is None and any(v.get('reason')=='suppressed_in_source' for v in m['missingness'].values()):self.assertEqual(m['statuses']['value'],'withheld')
     def test_empty_inputs_are_pending_not_zero(self):
-        x=load_inputs(ROOT/'data/inputs')
-        self.assertIsNone(x['scholarship_totals']['count']);self.assertIsNone(x['scholarship_totals']['dollars']);self.assertIsNone(x['total_reach']['value'])
-        self.assertEqual(len(x['scholarships']['pending']),5);self.assertEqual(len(x['events']['pending']),3)
-        self.assertEqual(x['partnership_reach']['confirmed'],[])
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            for name in SCHEMAS:self.write(folder,name,[])
+            x=load_inputs(folder)
+            self.assertIsNone(x['scholarship_totals']['count']);self.assertIsNone(x['scholarship_totals']['dollars']);self.assertIsNone(x['total_reach']['value'])
+            self.assertEqual(x['partnership_reach']['confirmed'],[])
     def write(self,folder,name,rows):
         with (folder/(name+'.csv')).open('w',newline='',encoding='utf-8') as f:
             w=csv.DictWriter(f,fieldnames=SCHEMAS[name].split(','));w.writeheader();w.writerows(rows)
@@ -42,12 +44,15 @@ class ThreeLevelsTests(unittest.TestCase):
             self.write(folder,'partnership_reach',[base]);x=load_inputs(folder)
             self.assertIsNone(x['total_reach']['value']);self.assertEqual((x['total_reach']['lower_bound'],x['total_reach']['upper_bound']),(3953,4053))
             base['overlaps_sponsored_schools']='no';self.write(folder,'partnership_reach',[base]);self.assertEqual(load_inputs(folder)['total_reach']['value'],4053)
+            base['counted_in_total']='no';self.write(folder,'partnership_reach',[base]);self.assertEqual(load_inputs(folder)['total_reach']['value'],3953)
+            base['counted_in_total']='yes'
             base['confirmed_by']='';self.write(folder,'partnership_reach',[base]);self.assertIsNone(load_inputs(folder)['total_reach']['value'])
             base['students_served']='invalid';self.write(folder,'partnership_reach',[base]);self.assertRaises(ValueError,load_inputs,folder)
     def test_gala_is_request_log_only(self):
         d=json.loads((ROOT/'summary.json').read_text(encoding='utf-8'))['three_levels']
         self.assertEqual(d['tracker_summary']['distinct_records'],26);self.assertEqual(d['tracker_summary']['raw_rows'],65)
-        self.assertEqual(d['inputs']['events']['confirmed'],[])
+        confirmed_inputs=load_inputs(ROOT/'data/inputs')['events']['confirmed']
+        self.assertEqual({r['event_id'] for r in d['inputs']['events']['confirmed']},{r['event_id'] for r in confirmed_inputs})
     def test_scholarship_confirmations_and_duplicates(self):
         with tempfile.TemporaryDirectory() as temp:
             folder=Path(temp)
@@ -56,4 +61,11 @@ class ThreeLevelsTests(unittest.TestCase):
             self.write(folder,'scholarships',[row]);x=load_inputs(folder);self.assertEqual(x['scholarship_totals'],{'count':2,'dollars':100})
             row['source']='';self.write(folder,'scholarships',[row]);self.assertIsNone(load_inputs(folder)['scholarship_totals']['count'])
             self.write(folder,'scholarships',[row,row]);self.assertRaises(ValueError,load_inputs,folder)
+    def test_confirmed_attendance_does_not_require_or_imply_funding(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            for name in SCHEMAS:self.write(folder,name,[])
+            self.write(folder,'events',[dict(event_id='e1',event_name='Test event',category='Other',event_date='2026-11-14',status='completed',attendance=100,source='Attendance register',confirmed_by='Ryan',confirmed_date='2026-11-14')])
+            row=load_inputs(folder)['events']['confirmed'][0]
+            self.assertEqual(row['attendance'],100);self.assertIsNone(row['amount_approved_usd'])
 if __name__=='__main__':unittest.main()
