@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const valid = v => typeof v === 'number' && Number.isFinite(v);
-const fmt = v => valid(v) ? v.toLocaleString('en-US',{maximumFractionDigits:2}) : 'Unavailable*';
+const fmt = v => valid(v) ? v.toLocaleString('en-US',{maximumFractionDigits:2}) : 'Not in supplied source';
 const colors = ['#003DA5','#687887','#007875','#764e9b','#ad463e','#85651d'];
 const shapes = ['circle','rect','triangle','rectRot','crossRot','star'];
 const charts = {}, exportsByReport = {};
@@ -32,10 +32,10 @@ function report(id,mount,title,description,controls,source) {
   $(id+'Disclosure')?.addEventListener('toggle',()=>{if($(id+'Disclosure').open)renderers[id]();});
 }
 function table(id,caption,headers,rows) {
-  $(id).innerHTML=`<table><caption>${esc(caption)}</caption><thead><tr>${headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>i?`<td>${esc(valid(v)?(/year|since/i.test(headers[i])?String(v):fmt(v)):v??'Unavailable*')}</td>`:`<th scope="row">${esc(v)}</th>`).join('')}</tr>`).join('')}</tbody></table>`;
+  $(id).innerHTML=`<table><caption>${esc(caption)}</caption><thead><tr>${headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>i?`<td>${esc(valid(v)?(/year|since/i.test(headers[i])?String(v):fmt(v)):v??tableMissing(id,headers,r,i))}</td>`:`<th scope="row">${esc(v)}</th>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 function storeTable(id,caption,headers,rows) {
-  exportsByReport[id]={headers,rows};table(id+'Data',caption,headers,rows);
+  exportsByReport[id]={headers,rows};table(id+'Data',caption,headers,rows);updateReportMetadata(id);
   const advanced=$(id+'Filters').querySelector('.advanced-filters');
   if(advanced){const selections=[...advanced.querySelectorAll('select')].map(s=>s.selectedOptions[0]?.textContent).filter(Boolean);advanced.querySelector('summary').textContent='Advanced filters'+(selections.length?' · '+selections.join(' / '):'');}
 }
@@ -176,9 +176,9 @@ function renderDirectory() {
 }
 
 function download(id) {
-  const {headers,rows}=exportsByReport[id];
-  const cell=v=>{let s=String(v??'Unavailable*');if(typeof v==='string'&&/^[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
-  const metadata=[['Report',$(id+'Title').textContent],['Filter context',$(id+'Context').textContent],['Generated UTC',data.generated_at],['Missing data',data.missing_data_note]];
+  const source=exportsByReport[id],el=$(id+'Panel'),headers=['Level','Year',...source.headers],rows=source.rows.map(r=>[el.dataset.level,el.dataset.year,...r]);
+  const cell=v=>{let s=visitorText(v??'Not in supplied source');if(typeof v==='string'&&/^[=+@-]/.test(s))s="'"+s;return '"'+visitorText(s).replace(/"/g,'""')+'"';};
+  const metadata=[['Report',$(id+'Title').textContent],['Filter context',$(id+'Context').textContent],['Generated UTC',data.generated_at],['Level',el.dataset.level],['Year',el.dataset.year],['Missing data',data.missing_data_note]];
   const blob=new Blob(['\uFEFF'+[...metadata,[],headers,...rows].map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=`oscp-${id}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
@@ -312,7 +312,7 @@ function setupStoryNavigation() {
   if(location.hash&&document.querySelector(location.hash))revealTarget(location.hash,false);
 }
 const renderers={demographics:renderDemographics,enrollment:renderEnrollment,assessment:renderAssessment,history:renderHistory,timeline:renderTimeline,coverage:renderCoverage,directory:renderDirectory,frl:renderFrl,growth:renderGrowth,schoolList:renderSchoolList,matchedMap:renderMatchedMap};
-function initialize() {
+function initializeLegacy() {
   const metric=control('demoMetric','Student measure',Object.entries(names));
   report('demographics','demographicsMount','Who our schools enroll · 2025','Compare one student characteristic at a time. Percentages describe the source school or building, not a combined average.',schoolControl('demoSchool')+levelControl('demoLevel')+metric+sortControl('demoSort'),'Source: OSCP DESE Cohort Master · Cohort Master / Building Cohort · 2025 demographics.');
   report('timeline','timelineMount','Partnership milestones','See when each school opened and when its SLU sponsorship began.',schoolControl('timelineSchool')+control('timelineEvent','Milestones',[['both','Opening & sponsorship'],['opened','School opening'],['sponsor','SLU sponsorship start']]),'Source: OSCP DESE Cohort Master · Opened school year / SLU sponsor since.');
@@ -326,7 +326,7 @@ function initialize() {
   report('matchedMap','matchedMapMount','Matched-grade MAP comparison · 2025','Compare published school/network results to Missouri for exactly the same subject, group and grade or course.',schoolControl('matchedSchool')+levelControl('matchedLevel')+control('matchedSubject','Subject',[['Eng. Language Arts','English Language Arts'],['Mathematics','Mathematics'],['Science','Science'],['Social Studies','Social Studies']])+control('matchedGroup','Source student group',[])+control('matchedGrade','Grade / course',[]),'Source: official 2025 State, District and School Content Area and Grade All and Disag exports, Sheet1. URLs and file hashes are retained in the independent audit; table rows retain exact file and row identifiers.');
   $('matchedLevel').value='Building';
   report('growth','growthMount','APR academic growth · 2025','Share of eligible buildings with the exact APR Target designation, reported separately for ELA and Math.',schoolControl('growthSchool')+control('growthSubject','Subject',[['Eng. Language Arts','ELA'],['Mathematics','Math']])+control('growthGrades','Source grade span',[]),'Source: dese_apr_2025_building_supporting.xlsx, Sheet1; subject ALL_GROWTH_POINTS_POSSIBLE, ALL_GROWTH_POINTS_EARNED and ALL_GROWTH_PERFORMANCE_DESIGNATION. Building totals cross-checked against the APR summary.');
-  renderKpis();
+  if($('kpis'))renderKpis();
   Object.entries(renderers).forEach(([id,render])=>{const form=$(id+'Filters');form.addEventListener('submit',e=>e.preventDefault());form.addEventListener('change',render);form.addEventListener('reset',()=>setTimeout(()=>{
     const defaults={demoMetric:'FRL %',enrollMetric:'2025–26 K–12',mapGroup:JSON.stringify(['MSIP Total','Total']),mapMetric:'PA_PCT',mapSubject:'all',historyMetric:'K–12 enrollment',matchedLevel:'Building',matchedGrade:'3',matchedGroup:JSON.stringify(['Total','Total'])};
     Object.entries(defaults).forEach(([key,value])=>{if(form.contains($(key))&&[...$(key).options].some(o=>o.value===value))$(key).value=value;});
@@ -347,7 +347,7 @@ function initialize() {
   $('dashboard').hidden=false;$('loadStatus').hidden=true;$('chartFallback').hidden=Boolean(window.Chart);
   Object.values(renderers).forEach(render=>render());
   if(!window.Chart)document.querySelectorAll('.data-disclosure').forEach(d=>d.open=true);
-  renderPublicStory();setupStoryNavigation();DemographicsExplorer.initialize();
+  if(document.body.dataset.page==='explorer'){setupExplorerShell();DemographicsExplorer.initialize();}else{renderPublicStory();setupStoryNavigation();DemographicsExplorer.initialize();}
 }
 const DemographicsExplorer=(()=>{
   const defaults=()=>({network:'048914',building:'all',year:2025,measure:'black',sort:'desc',peerLevel:'auto',series:['frl','el','iep'],compare:[]});
@@ -430,7 +430,7 @@ const DemographicsExplorer=(()=>{
   function kpiHtml(key){
     const m=summary(selectedUnits(),state.year,key),count=key==='enrollment';
     const source=m.value===null?m.reason:m.denominator!==null?`${fmt(m.numerator)} / ${fmt(m.denominator)} · ${m.population}`:m.population;
-    return `<article class="dx-kpi" data-dx-kpi="${key}"><span>${esc(definition(key).label)}</span><strong>${valid(m.value)?fmt(m.value)+(count?'':'%'):'Unavailable*'}</strong><small>${state.year??'No reportable year'} · ${esc(source)}</small></article>`;
+    return `<article class="dx-kpi" data-dx-kpi="${key}">${chips(state.building==='all'?'School':'Building',state.year??'Year unavailable')}<span>${esc(definition(key).label)}</span><strong>${valid(m.value)?fmt(m.value)+(count?'':'%'):Object.values(m.missingness??{}).some(v=>v.reason==='suppressed_in_source')?'Withheld by DESE':'Not in supplied source'}</strong><small>${state.year??'No reportable year'} · ${esc(source)}</small></article>`;
   }
   function render(notice=''){
     if(!mounted)return;
@@ -465,7 +465,7 @@ const DemographicsExplorer=(()=>{
     drawChart('dxSchools','bar',reportable.map(r=>r.unit.name),[{label:definition(state.measure).label+' (%)',color:'#003da5',values:reportable.map(r=>r.m.value),details:reportable.map(r=>`${r.m.population}; ${state.year}; ${record(r.unit,state.year).source_file}, row ${record(r.unit,state.year).source_row}`)}],true,i=>selectPeer(reportable[i].unit));
     $('dxPeerButtons').innerHTML=ranked.map((r,i)=>`<button type="button" data-peer="${i}" ${state.building===unitKey(r.unit)?'aria-pressed="true"':'aria-pressed="false"'}>${esc(r.unit.name)} <span>${valid(r.m.value)?fmt(r.m.value)+'%':'Unavailable*'}</span></button>`).join('');
     $('dxPeerButtons').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>selectPeer(ranked[Number(b.dataset.peer)].unit)));
-    renderState(units);renderData();
+    renderState(units);renderData();installDXExports();
     if(!window.Chart){$('dxDetails').open=true;$('dxNotice').hidden=false;$('dxNotice').textContent=(notice?notice+' ':'')+'Chart library unavailable. Chart alternatives and the detailed data remain available; filters and CSV still work.';}
   }
   function selectPeer(unit){apply(unit.building?{network:unit.lea,building:unitKey(unit)}:{network:unit.lea,building:'all'},`${unit.name} selected from the peer comparison. All applicable panels updated.`);}
@@ -485,7 +485,7 @@ const DemographicsExplorer=(()=>{
     table('dxData',`Filtered records through ${state.year??'unavailable year'} · levels and populations stay separate`,['Name','Level','Year',...keys.map(k=>definition(k).label+(k==='enrollment'?'':' (%)')),'Source file','Source row','Used in'],rows.map(r=>[r.name,r.level,String(r.year),...keys.map(k=>r.metrics[k].value),r.source_file,r.source_row,r.used_in]));
   }
   function exportCsv(){
-    const rows=exportRows(),keys=Object.keys(data.demographics_explorer.metrics),cell=v=>{let s=String(v??'Unavailable*');if(typeof v==='string'&&/^[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
+    const rows=exportRows(),keys=Object.keys(data.demographics_explorer.metrics),cell=v=>{let s=visitorText(v??'Not in supplied source');if(typeof v==='string'&&/^[=+@-]/.test(s))s="'"+s;return '"'+visitorText(s).replace(/"/g,'""')+'"';};
     const metadata=[['Student Demographics Explorer'],['Shared filters',JSON.stringify(state)],['Data rules',data.demographics_explorer.rules.aggregate],['History scope','Through selected year; current-year peers and optional enrollment comparison histories are separately labelled.'],[]];
     const header=['Name','Source-era name','Level','Year','Network ID','Building ID','Metric','Value','Numerator','Denominator','Published percentage','Method','Population','Missingness / limitation','Source file','Source sheet','Source row','Used in'];
     const values=rows.flatMap(r=>keys.map(k=>{const m=r.metrics[k];return [r.name,r.source_name,r.level,r.year,r.lea,r.building??'Network',definition(k).label,m.value,m.numerator,m.denominator,m.published_pct,m.method,m.population,[m.reason,...Object.values(m.missingness).map(v=>`${v.reason}: ${v.detail}`)].filter(Boolean).join(' '),r.source_file,r.source_sheet,r.source_row,r.used_in];}));
@@ -498,4 +498,175 @@ const DemographicsExplorer=(()=>{
   }
   return {initialize,apply,summary,selectedUnits,exportRows,get state(){return structuredClone(state);},get chartObjects(){return chartObjects;}};
 })();
-fetch('./dashboard-data.json').then(r=>{if(!r.ok)throw Error('Data file could not be retrieved');return r.json();}).then(payload=>{data=payload;initialize();}).catch(error=>{$('loadStatus').hidden=false;$('loadStatus').textContent=`Dashboard could not load: ${error.message}. Please reload or try again later.`;});
+const DISPLAY_STATUS={reported:'Reported',withheld:'Withheld by DESE',not_applicable:'Not applicable',not_supplied:'Not in supplied source',pending:'Awaiting confirmation'};
+if(window.Chart)Chart.register({id:'sluJoinMarkers',afterDraw(chart){
+  if(chart.config.type!=='line'||!data?.schools)return;
+  const years=chart.data.labels.map(Number),ctx=chart.ctx,shown=new Set();
+  chart.data.datasets.forEach((series,i)=>{
+    const building=data.directory?.find(b=>b.name===series.label),school=data.schools.find(s=>s.School===series.label||building?.lea===s['DESE LEA']);
+    const year=school?.['SLU sponsor since'],index=years.indexOf(year);if(index<0||shown.has(year))return;shown.add(year);
+    const x=chart.scales.x.getPixelForValue(index);ctx.save();ctx.strokeStyle='#85651d';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,chart.chartArea.top);ctx.lineTo(x,chart.chartArea.bottom);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#674c16';ctx.font='11px sans-serif';ctx.fillText('SLU joined '+year,Math.min(x+4,chart.chartArea.right-100),chart.chartArea.top+14+i*14);ctx.restore();
+  });
+}});
+function tableMissing(id,headers,row,i){
+  const name=String(row[0]??''),all=[...(data?.schools??[]),...(data?.buildings??[])];
+  const unit=all.find(s=>name.startsWith(s.School)&&!s['Building name']||s['Building name']&&name.startsWith(s['Building name']));
+  if(id.startsWith('assessment')){const group=$('mapGroup')?.value,level=$('mapLevel')?.value;const match=data.assessments?.find(a=>a.name===name&&a.subject===row[1]&&a.level===level&&JSON.stringify([a.category,a.group])===group);if(match?.status==='withheld'||Object.values(match?.missingness??{}).some(v=>v.reason==='suppressed_in_source'))return DISPLAY_STATUS.withheld;}
+  if(id.startsWith('growth')&&name.includes('Ecec'))return DISPLAY_STATUS.not_applicable;
+  const label=headers[i],field=Object.keys(names).find(k=>label.includes(names[k]));return DISPLAY_STATUS[unit?.statuses?.[field]??'not_supplied'];
+}
+function updateReportMetadata(id){
+  const el=$(id+'Panel');if(!el)return;
+  const levelControl=el.querySelector('select[id$=Level]');el.dataset.level=levelControl?(levelControl.value==='Building'?'Building':'School'):['growth','schoolList'].includes(id)?'Building':'School';
+  el.dataset.year=id==='history'?`${$('historyStart').value}–${$('historyEnd').value}`:id==='enrollment'?($('enrollMetric').value.includes('26')?'2025–26 prelim':'2025'):id==='schoolList'?'Directory Jun 2026':id==='timeline'?'Source milestone years':'2025';
+  const measures={demographics:$('demoMetric')?.selectedOptions[0]?.textContent,frl:'Free or reduced-price lunch',assessment:'MAP outcomes',enrollment:'Students enrolled',history:'Historical enrollment and demographics',timeline:'Opening dates and SLU join years',schoolList:'Directory',directory:'School profiles',growth:'APR growth Target',coverage:'Source coverage',matchedMap:`${$('matchedGrade')?.selectedOptions[0]?.textContent??''} ${$('matchedSubject')?.selectedOptions[0]?.textContent??''} proficiency`};
+  if($(id+'Title'))$(id+'Title').textContent=`${visitorText(measures[id]??'Measure')} by ${el.dataset.level}, ${el.dataset.year}`;
+  const cap=el.querySelector('.caption');if(cap)cap.innerHTML=caption(el.dataset.level,el.dataset.year,el.querySelector('.source')?.textContent??'Source rows in table',$(id+'Context')?.textContent??'Selected records');
+}
+let globalLevel='School';
+function chips(level,year){return `<span class="level-chip" data-level-chip="${esc(level)}">${esc(level.toUpperCase())}</span> <span class="year-chip" data-year="${esc(year)}">${esc(year)}</span>`;}
+function caption(level,year,source,coverage){return `${chips(level,year)} · Source: ${esc(source)} · Coverage: ${esc(coverage)}`;}
+function cellValue(value,status='not_supplied',suffix=''){return valid(value)?fmt(value)+suffix:DISPLAY_STATUS[status]??DISPLAY_STATUS.not_supplied;}
+function visual(id,title,body,level,year,source,coverage){return `<article id="${id}" class="research-visual" data-visual data-level="${level}" data-year="${year}"><div class="chart-heading"><h3>${esc(title)}</h3><div class="export-controls"><button data-visual-csv="${id}">Download CSV</button><button data-visual-png="${id}">Download PNG</button></div></div>${body}<p class="caption">${caption(level,year,source,coverage)}</p></article>`;}
+function plainTable(headers,rows){return `<div class="scroll"><table><thead><tr>${headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>`<${i?'td':'th scope="row"'}>${v??DISPLAY_STATUS.not_supplied}</${i?'td':'th'}>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
+function tile(title,value,detail,level,year){return `<article class="kpi kpi-link">${chips(level,year)}<span class="card-label">${esc(title)}</span><strong>${esc(value)}</strong><small>${esc(detail)}</small></article>`;}
+function measureLabel(value){return String(value??'').replace(/_/g,' ');}
+function renderMain(){
+  const d=data.three_levels,k=data.kpi_metrics;
+  $('fiveThings').innerHTML=visual('fiveFacts','Five things to know',`<ol class="facts"><li>${chips('School','2025–26 prelim')} ${fmt(k.students.value)} students are enrolled in six sponsored Schools.</li><li>${chips('Building','Directory Jun 2026')} ${data.directory_summary.building_identifiers} Buildings use ${data.directory_summary.distinct_normalized_street_addresses} street addresses (two address-sharing pairs).</li><li>${chips('School','2025')} ${fmt(k.frl.numerator)} of ${fmt(k.frl.denominator)} students on the January roster were eligible for free/reduced-price lunch (${fmt(k.frl.value)}%).</li><li>${chips('School','2025')} Three of six Schools have reportable combined Missouri Assessment Program (MAP) proficiency counts.</li><li>${chips('Building','2025')} ${k.growth['Eng. Language Arts'].numerator} of 13 eligible Buildings met the English language arts (ELA) growth Target; ${k.growth.Mathematics.numerator} of 13 met the math Target.</li></ol>`,'School','2025 / 2025–26 prelim','Cohort master; DESE demographics, MAP and APR','six Schools / 14 Buildings');
+  const groups=[['Schools',[tile('Sponsored Schools','6','Six sponsored charter Schools','School','Directory Jun 2026'),tile('Buildings','14','14 Buildings at 12 street addresses; physical campus confirmation pending','Building','Directory Jun 2026')]],['Students',[tile('Students enrolled in sponsored schools',fmt(k.students.value),'K–12; six Schools; excludes reported PK','School','2025–26 prelim'),tile('Free/reduced lunch',fmt(k.frl.numerator),`${fmt(k.frl.numerator)} of ${fmt(k.frl.denominator)} students on the January 2025 roster (${fmt(k.frl.value)}%)`,'School',2025)]],['Learning',[tile('MAP English language arts',fmt(k.map['Eng. Language Arts'].value)+'%',`823 of 1,753 reportable tests; three Schools`,'School',2025),tile('MAP mathematics',fmt(k.map.Mathematics.value)+'%','877 of 1,765 reportable tests; three Schools','School',2025)]],['OSCP programs',[tile('Scholarships',d.inputs.scholarship_totals.count===null?'Awaiting confirmation':fmt(d.inputs.scholarship_totals.count),'Candi · 20 proposed, not yet confirmed','School','2026–27 proposed'),tile('Total reach',d.inputs.total_reach.value===null?d.inputs.total_reach.label:fmt(d.inputs.total_reach.value),'Ryan · separate from students enrolled','School','Reporting period pending')]]];
+  $('objectiveKpis').innerHTML=groups.map(([name,tiles],i)=>visual('objective'+i,name,`<div class="two-up">${tiles.join('')}</div>`,'School',i===3?'Awaiting confirmation':'2025 / 2025–26 prelim','DESE source files / confirmed inputs',i===3?'Confirmation pending':'Denominators shown per tile')).join('');
+  $('overviewCaption').innerHTML=caption('School','2025 / 2025–26 prelim','Master and raw DESE records','6 Schools; measures have separate populations');
+  $('schoolsTakeaway').textContent=`Six Schools use ${data.directory_summary.building_identifiers} Buildings at ${data.directory_summary.distinct_normalized_street_addresses} street addresses (two address-sharing pairs). Physical campus count awaiting Candi.`;
+  $('schoolProfiles').innerHTML=data.schools.map(s=>{const p=d.profiles.find(p=>p.lea===s['DESE LEA']),campus=d.inputs.campus_counts.confirmed.find(r=>r.school===s.School);return visual('profile'+p.lea,s.School,`<dl class="profile-facts"><dt>City</dt><dd>${esc(p.city)}</dd><dt>Opened</dt><dd>${esc(s['Opened school year'])}</dd><dt>Joined SLU</dt><dd>${p.joined}; ${p.years_with_slu_as_of_2025} years as of 2025 data</dd><dt>Grades served</dt><dd>${esc(p.grades.join(', '))}</dd><dt>Buildings</dt><dd>${p.building_count}</dd><dt>Students enrolled, K–12 prelim</dt><dd>${fmt(s['2025–26 K–12'])}</dd><dt>Free/reduced lunch, 2025</dt><dd>${cellValue(s['FRL %'],s.statuses['FRL %'],'%')}</dd><dt>Physical campuses</dt><dd>${campus?fmt(campus.physical_campuses)+' (confirmed '+esc(campus.confirmed_date)+')':'Awaiting confirmation; Candi'}</dd><dt>MAP availability</dt><dd>${DISPLAY_STATUS[s.statuses['MAP ELA P+A %']]}</dd></dl>`,'School','2025 / 2025–26 prelim','Cohort Master; dated directory','1 of 6 Schools');}).join('');
+  $('citySplit').innerHTML=visual('cities','School and Building locations, 2025–26 preliminary',plainTable(['City','Schools','Buildings','K–12 enrolled'],d.cities.map(c=>[esc(c.city),c.schools,c.buildings,fmt(c.enrollment)])),'School','2025–26 prelim','Cohort Master and directory','6 Schools / 14 Buildings');
+  $('buildingDirectory').innerHTML=plainTable(['School','Building','Grades','Address','Shared address','Level / year'],data.directory.map(b=>[esc(data.schools.find(s=>s['DESE LEA']===b.lea).School),esc(b.name),esc(b.grades),esc(b.street+', '+b.city),b.shared_address_with.length?'Shared-address pair':'No cohort address sharing',chips('Building','Directory Jun 2026')]));
+  $('schoolsCaption').innerHTML=caption('Building','Directory Jun 2026','2026 Missouri School Statistics and Directory','14 verified identifiers; physical campus count pending');
+  const bridge=d.bridge;
+  $('studentsTakeaway').textContent=`${fmt(bridge.k12)} students enrolled, K–12, 2025–26 preliminary. Adding ${bridge.reported_pk} reported PK gives ${fmt(bridge.pk12_as_reported)} PK–12 as reported; The Biome PK is not in the supplied source.`;
+  $('enrollmentBridge').innerHTML=visual('bridge','Enrollment populations by School, 2025–26 preliminary',plainTable(['Population','Count','Used for'],[['K–12 preliminary',fmt(bridge.k12),'Enrollment headline'],['Plus reported preschool (PK)',fmt(bridge.reported_pk),'18 + 93 + 58 + 15 + 13; Biome not supplied'],['PK–12 as reported',fmt(bridge.pk12_as_reported),'Not a complete verified PK–12 census'],['K–12, 2025',fmt(bridge.race_population),'Race percentages'],['January membership, 2025',fmt(bridge.january_membership),'Lunch percentages']]),'School','2025 / 2025–26 prelim','Cohort Master; district demographics','Raw preliminary enrollment files missing; Harshil');
+  $('compositionSchool').innerHTML='<option value="all">All six Schools</option>'+data.schools.map(s=>`<option value="${s['DESE LEA']}">${esc(s.School)}</option>`).join('');
+  $('compositionSchool').addEventListener('change',renderComparisons);
+  document.querySelectorAll('[data-level]').forEach(b=>{if(b.tagName==='BUTTON')b.addEventListener('click',()=>{globalLevel=b.dataset.level;document.querySelectorAll('#globalLevel button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));renderComparisons();});});
+  $('studentsCaption').innerHTML=caption('School','2025 / 2025–26 prelim','Raw district and Building demographics; Cohort Master','Withheld markers remain nonnumeric');
+  renderComparisons();renderPrograms();renderQuality();
+  $('generatedAt').textContent='Build '+data.generated_at+' · Source periods appear with each visual.';
+  $('loadStatus').hidden=true;$('dashboard').hidden=false;
+  setupMainNavigation();
+}
+function renderComparisons(){
+  const d=data.three_levels,level=globalLevel==='Missouri'?'School':globalLevel,lea=$('compositionSchool').value;
+  const demo=d.demographics.filter(r=>r.level===level&&(lea==='all'||r.lea===lea));
+  const rows=globalLevel==='Missouri'?[]:demo;
+  $('compositionView').innerHTML=visual('composition','Student composition by '+level+', 2025',`<p>School total Black enrollment remains ${fmt(data.kpi_metrics.demographics.value)}%: ${fmt(data.kpi_metrics.demographics.numerator)} of ${fmt(data.kpi_metrics.demographics.denominator)} students, 2025.</p>`+plainTable(['School or Building','Independent reported race categories','FRL / EL / IEP','Missouri reference'],rows.map(r=>{const s=level==='School'?data.schools.find(s=>s['DESE LEA']===r.lea):data.buildings.find(b=>b['DESE LEA']===r.lea&&b['Building code']===r.building);return [esc(r.name),r.race.map(c=>`<div class="category-line">${esc(c.label)}: ${cellValue(c.value,c.status,'%')}${valid(c.value)?`<span class="mini-track"><i style="width:${c.value}%"></i></span>`:''}</div>`).join(''),['FRL %','EL %','IEP incidence %'].map(k=>`${esc(names[k])}: ${cellValue(s[k],s.statuses[k],'%')}`).join('<br>'),'Black: 15.3% (2024–25)<br>FRL: 49.3% (2024–25)<br>Context only; no difference calculated'];}))+`<p class="reference">${chips('Missouri','2024–25 / 2025')} Official published Black 15.3%, FRL 49.3%, EL 5.0%, IEP 13.93%. Different populations; rounded underlying counts are not reconstructed.</p>`,globalLevel,2025,'Raw DESE demographic files; official Missouri publications',`${rows.length} ${level} rows selected; five School / ten Building source cells withheld`);
+  const units=level==='School'?data.schools.map(s=>({lea:s['DESE LEA'],building:null,name:s.School})):data.directory;
+  $('mapMain').innerHTML=['Eng. Language Arts','Mathematics'].map(subject=>{
+    const found=units.map(u=>{const row=d.map_rows.find(r=>r.lea===u.lea&&r.building===u.building&&r.subject===subject);return {...u,row,value:row?.PA_PCT??null,status:row?.status??(u.lea==='115911'&&u.building==='6955'?'not_applicable':'not_supplied')};});
+    const state=data.state_map.find(r=>r.subject===subject&&r.group==='Total'),coverage=d.map_coverage[subject],pool=data.kpi_metrics.map[subject];
+    const body=globalLevel==='Missouri'?'':plainTable([level,'Proficient + Advanced','Coverage','Joined SLU','Missouri, all tested grades'],found.map(r=>[esc(r.name),valid(r.value)?publicBar('',r.value):DISPLAY_STATUS[r.status],DISPLAY_STATUS[r.status],String(d.profiles.find(p=>p.lea===r.lea).joined),fmt(state.value)+'%']));
+    return visual(subject==='Mathematics'?'mapMath':'mapELA',`${subject} proficiency by ${level}, 2025`,body+`<p>${chips('Missouri',2025)} Reference line: ${fmt(state.value)}%, all tested grades; contextual, not grade-matched.</p><p>Pooled across the 3 Schools DESE reports: ${fmt(pool.value)}% (${pool.numerator}/${pool.denominator}); ${fmt(coverage.share)}% of tested students (${coverage.reported_tested}/${coverage.all_tested}).</p>`,globalLevel,2025,'DESE district/Building MAP content-area files',`${found.filter(r=>valid(r.value)).length} of ${found.length} ${level==='School'?'Schools':'Buildings'} reported`);
+  }).join('');
+  const spread=['Eng. Language Arts','Mathematics'].map(subject=>{const rows=d.map_rows.filter(r=>(level==='School'?r.level==='Charter':r.level==='Building')&&r.PA_PCT!==null&&r.subject===subject).sort((a,b)=>b.PA_PCT-a.PA_PCT);return `${subject}: ${fmt(rows.at(-1).PA_PCT)}% at ${rows.at(-1).name} to ${fmt(rows[0].PA_PCT)}% at ${rows[0].name} among ${rows.length} reported ${level==='School'?'Schools':'Buildings'}.`;});
+  $('learningTakeaway').textContent=globalLevel==='Missouri'?'Missouri all-tested-grade proficiency is a reference population, not a matched School or Building target.':spread.join(' ')+' Other combined values remain withheld or not applicable.';
+  $('mapCaption').innerHTML=caption(globalLevel,2025,'Raw MAP files','School totals cover 1,753/2,002 ELA and 1,765/2,014 math reportable tests');
+  $('growthTakeaway').textContent="In 2025, 7 of 13 eligible Buildings met Missouri's growth Target in English language arts, and 5 of 13 in math. Missouri: 24.99% and 24.67% of eligible Buildings.";
+  const growthRows=level==='Building'?data.growth: data.schools.flatMap(s=>['Eng. Language Arts','Mathematics'].map(subject=>{const r=data.growth.filter(r=>r.lea===s['DESE LEA']&&r.subject===subject),eligible=r.filter(r=>r.eligible);return {name:s.School,lea:s['DESE LEA'],subject,designation:eligible.filter(r=>r.designation==='Target').length+' of '+eligible.length+' eligible Buildings',status:'reported'};}));
+  $('growthMain').innerHTML=visual('growthVisual',`APR growth by ${level}, 2025`,plainTable([level,'Subject','Target designation / coverage','Joined SLU','Missouri reference'],(globalLevel==='Missouri'?[]:growthRows).map(r=>[esc(r.name),esc(r.subject),r.status==='not_applicable'?DISPLAY_STATUS.not_applicable:esc(r.designation),String(d.profiles.find(p=>p.lea===r.lea).joined),fmt(data.benchmarks.growth[r.subject].value)+'%']))+`<p>${chips('Missouri',2025)} English language arts: 498 / 1,993 (${fmt(data.benchmarks.growth['Eng. Language Arts'].value)}%); math: 492 / 1,994 (${fmt(data.benchmarks.growth.Mathematics.value)}%).</p>`,globalLevel,2025,'DESE APR Building supporting','13 eligible of 14 Buildings; table grouped at the selected level');
+  $('growthCaption').innerHTML=caption('Building',2025,'APR Building ALL growth','7/13 ELA; 5/13 math; ECEC not applicable');
+  installVisualExports();
+}
+function renderPrograms(){
+  const inputs=data.three_levels.inputs,names={scholarships:'Scholarships',events:'Community events',partnership_reach:'Partnership reach and total students reached',oscp_operations:'OSCP support'};
+  $('communityTakeaway').textContent='Only fully confirmed input rows contribute to program totals. The Gala tracker is a separate requests log and contributes no confirmed events or funding.';
+  $('programPanels').innerHTML=Object.entries(names).map(([key,title])=>{
+    const group=inputs[key];let body=group.confirmed.length?plainTable(['Confirmed item','Value','Source','Level / year'],group.confirmed.map(r=>[esc(measureLabel(r.program??r.event_name??r.program_name??r.measure)),r.awards_count!==undefined?cellValue(r.awards_count,'pending')+' awards':r.amount_approved_usd!==undefined?'$'+cellValue(r.amount_approved_usd,'pending'):r.students_served!==undefined?cellValue(r.students_served,'pending')+' students served':cellValue(r.value,'pending')+' '+esc(r.unit??''),esc(r.source),chips('School',r.award_year||r.reporting_period||r.as_of||r.fiscal_year||'Reporting period awaiting confirmation')])):'<p><strong>Awaiting confirmation</strong> · Owner: '+esc(group.owner)+'</p>';
+    if(key==='events')body+=group.confirmed.filter(r=>r.photo_available).map(r=>`<img class="event-photo" src="${esc(r.photo_path)}" alt="${esc(r.event_name)} event photograph">`).join('');
+    if(key==='scholarships')body+=group.confirmed.length?`<p>Confirmed awards: ${fmt(inputs.scholarship_totals.count)}. Confirmed total dollars: ${cellValue(inputs.scholarship_totals.dollars,'pending')}. Source: fully confirmed input rows only.</p>`:'<p>20 proposed, not yet confirmed. iSCORE $2,500: per award or program total? Candi to clarify.</p>';
+    if(key==='partnership_reach'){const r=inputs.total_reach;body+=`<p>${esc(r.label)}${r.value!==null?': '+fmt(r.value):''}</p>${r.lower_bound!==null?`<p>Schools-only bound: ${fmt(r.lower_bound)}; Schools plus all confirmed partnership rows: ${fmt(r.upper_bound)}.</p>`:''}<details><summary>Total reach formula and included rows</summary><p>${esc(r.formula)}</p>${plainTable(['Included program','Students'],r.included.map(r=>[esc(r.program_name),fmt(r.students_served)]))}</details>`;}
+    body+=plainTable(['Pending item','Status','Owner','Level / year'],(group.pending.length?group.pending:[{}]).map(r=>[esc(measureLabel(r.program??r.event_name??r.program_name??r.measure??title)),'Awaiting confirmation',esc(group.owner),chips('School',r.award_year??'Period awaiting confirmation')]));
+    return visual('program-'+key,title,body,'School',key==='scholarships'?'2026–27 proposed':'Period awaiting confirmation','data/inputs/'+key+'.csv',group.confirmed.length?`${group.confirmed.length} fully confirmed rows; pending rows excluded`:'Awaiting confirmation; pending rows excluded');
+  }).join('');
+}
+const GLOSSARY={MAP:'Missouri Assessment Program: statewide achievement assessments.',MSIP:'Missouri School Improvement Program: reporting and accountability framework.',DESE:'Missouri Department of Elementary and Secondary Education.',APR:'Annual Performance Report.',FRL:'Free or reduced-price lunch eligibility, using January membership.',IEP:'Individualized Education Program; incidence follows the published source definition.',EL:'English learner.', 'P+A':'Proficient plus Advanced achievement counts. Both published components are required.',LEA:'Local education agency: the DESE district identifier (lea in data).','K–12':'Kindergarten through grade 12.','PK':'Preschool; kept separate from K–12.','Target':'Exact APR growth designation with full growth points; On-Track is not Target.','Withheld':'DESE supplies an asterisk instead of a value; the extracts do not state why.','School':'School (charter network / DESE district)','Building':'One of 14 DESE Building identifiers; not necessarily a unique campus.'};
+function renderQuality(){
+  const cells=data.three_levels.coverage,metrics=['Demographics','MAP','Growth','Preliminary enrollment','Physical campuses','OSCP programs'];
+  $('qualityMatrix').innerHTML=visual('quality','Coverage by reporting level, 2025 and current inputs',plainTable(['Measure','Missouri','School','Building'],metrics.map((name,i)=>[name,i<3?'Reported; context only':i===3?'Not applicable':'Awaiting confirmation',i===0?'Reported / Withheld by DESE (5 of 42)':i===1?'Reported / Withheld by DESE':i===2?'Building measure, aggregated by School':i===3?'Master reported; raw files Not in supplied source':'Awaiting confirmation',i===0?'Reported / Withheld by DESE (10 of 98)':i===1?'Reported / Withheld by DESE / Not applicable':i===2?'Reported / Not applicable':i===3?'Master reported; raw files Not in supplied source':'Awaiting confirmation'])),'School','2025 / inputs pending','Raw-source missing-data audit','11 workbooks / 21 worksheets');
+  const t=data.three_levels.tracker_summary;$('requestLogSummary').innerHTML=`<h3>Sponsorship requests log</h3><p>${t.distinct_records} distinct records after deduplication from ${t.raw_rows} rows. ${t.with_decision} with a decision status; ${t.with_approved_amount} with an approved amount. These are request-log completeness counts, not approved events or funding.</p>${chips('School','Period not supplied')} <a href="explorer.html#requestsLog">Open requests and recorded request amounts</a>`;
+  $('glossary').innerHTML='<dl>'+Object.entries(GLOSSARY).map(([term,definition])=>`<dt>${esc(term)}</dt><dd>${esc(definition)}</dd>`).join('')+'</dl>';
+  $('sourceRegister').innerHTML=sourceRegisterHtml(data.public_sources);
+  $('ownerQuestions').innerHTML=plainTable(['Question','Owner','Status'],[['Source of OSCP overview 4,081; not a matching DESE series','Candi','Awaiting confirmation'],['Headline K–12 versus PK–12','Candi','Awaiting confirmation'],['iSCORE amount and split of 20 proposed awards','Candi','Awaiting confirmation'],['Physical campus definition and counts','Candi','Awaiting confirmation'],['Partnership counts and overlap rules','Ryan','Awaiting confirmation'],['Event list, dates, attendance and photos','Ryan and Candi','Awaiting confirmation'],['Raw preliminary enrollment files','Harshil','Not in supplied source'],['Meaning of “Missing from Biome, Hope Leadership”','Abigail','Awaiting confirmation']]);
+}
+function visitorText(s){return (s==='Charter'?'School':String(s)).replace(/\bcharter networks\b/gi,'Schools').replace(/\bnetwork(s)?\b/gi,(_,s)=>s?'Schools':'School').replace(/charter-level/gi,'School-level').replace(/charter schools/gi,'Schools').replace(/DESE-listed individual schools \/ buildings/gi,'Building directory').replace(/individual school\/building records/gi,'Buildings').replace(/Unavailable\*/g,'Not in supplied source');}
+function installLabels(){
+  let busy=false;const normalize=()=>{if(busy)return;busy=true;const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){if(['SCRIPT','STYLE'].includes(n.parentElement.tagName)||n.parentElement.closest('#glossary'))continue;const t=visitorText(n.textContent);if(t!==n.textContent)n.textContent=t;}document.querySelectorAll('select option').forEach(n=>n.textContent=visitorText(n.textContent));busy=false;};
+  normalize();document.querySelectorAll('[aria-label],[title],[placeholder],[alt]').forEach(n=>['aria-label','title','placeholder','alt'].forEach(a=>{if(n.hasAttribute(a))n.setAttribute(a,visitorText(n.getAttribute(a)));}));const observer=new MutationObserver(()=>{observer.disconnect();normalize();observer.observe(document.body,{childList:true,subtree:true});});observer.observe(document.body,{childList:true,subtree:true});
+}
+function setupMainNavigation(){
+  $('menuToggle').addEventListener('click',()=>{const open=$('menuToggle').getAttribute('aria-expanded')!=='true';$('menuToggle').setAttribute('aria-expanded',String(open));$('navLinks').classList.toggle('is-open',open);});
+  document.querySelectorAll('#navLinks a[href^="#"]').forEach(a=>a.addEventListener('click',()=>{$('navLinks').classList.remove('is-open');$('menuToggle').setAttribute('aria-expanded','false');}));
+  $('printReport').addEventListener('click',()=>window.print());
+  const links=[...document.querySelectorAll('#navLinks a[href^="#"]')];addEventListener('scroll',()=>{let active=links[0];links.forEach(a=>{if(document.querySelector(a.hash)?.getBoundingClientRect().top<150)active=a;});links.forEach(a=>a.toggleAttribute('aria-current',a===active));},{passive:true});
+}
+function setupExplorerShell(){
+  $('printReport').onclick=()=>window.print();$('menuToggle').onclick=()=>{$('navLinks').classList.toggle('is-open');$('menuToggle').setAttribute('aria-expanded',String($('navLinks').classList.contains('is-open')));};
+  const tracker=data.requests;$('requestLog').innerHTML=visual('requestsVisual','Sponsorship requests log by School / request organization',plainTable(['Organization','Classification','Requested amount recorded','Decision','Approved amount','Level / year'],tracker.records.map(r=>[esc(r.organization),esc(r.category),cellValue(r.requested,'not_supplied'),cellValue(r.decision,'not_supplied'),cellValue(r.approved,'not_supplied'),chips('School',r.year)])),'School','Period not supplied','oscp_gala_sponsorship_tracker.xlsx',`${tracker.distinct_records} distinct records / ${tracker.raw_rows} rows; 0 decisions; 0 approved amounts`);
+  $('sourceList').innerHTML=sourceRegisterHtml(data.public_sources)+'<p>Raw preliminary enrollment source files are missing; the enrollment total currently traces to the master. Owner: Harshil.</p>';
+  document.querySelectorAll('.report').forEach(el=>{const id=el.id.replace('Panel',''),year=['enrollment'].includes(id)?'2025–26 prelim':id==='schoolList'?'Directory Jun 2026':'2025',level=['schoolList','growth','matchedMap'].includes(id)?'Building':'School';el.dataset.level=level;el.dataset.year=year;el.setAttribute('data-visual','');const cap=document.createElement('p');cap.className='caption';cap.innerHTML=caption(level,year,'See source file and source rows below','Selected report coverage shown above');el.append(cap);const png=document.createElement('button');png.textContent='Download PNG';png.dataset.visualPng=el.id;el.querySelector('.chart-heading').append(png);});
+  document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const t=document.querySelector(a.hash);if(t){e.preventDefault();t.closest('details')?.setAttribute('open','');t.scrollIntoView();}}));
+  if(location.hash){const target=document.querySelector(location.hash);target?.closest('details')?.setAttribute('open','');target?.scrollIntoView();}
+  installVisualExports();
+  document.querySelectorAll('.report').forEach(el=>updateReportMetadata(el.id.replace('Panel','')));
+  for(const id of ['mapWorkspace','growthWorkspace']){
+    const p=document.createElement('p');p.className='outcome-limit';p.textContent='These figures describe results at sponsored schools. They do not show that SLU sponsorship caused them. Schools joined SLU in different years. '+data.schools.map(s=>s.School+': joined SLU '+s['SLU sponsor since']).join('; ');$(id).insertBefore(p,$(id).children[1]);
+  }
+}
+function sourceRegisterHtml(sources){return '<ul>'+sources.map(s=>{const file=s.local_path.split('/').pop(),period=file.includes('directory')?'Directory Jun 2026':file.includes('2024_2025')?'2024–25':file.includes('2025')?'2025':file.includes('renewal_2026')?'2025 demographics / 2026 renewal':file.includes('2022')?'2022':'Mixed source periods; see publication';return `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(file)}</a> · ${period} · retrieved ${esc(s.retrieved_at)}</li>`;}).join('')+'</ul>';}
+function visualCsv(el){
+  const title=visitorText(el.querySelector('h3,h4')?.textContent??'Report'),meta=[['Title',title],['Level',el.dataset.level],['Year',el.dataset.year],['Caption',el.querySelector('.caption')?.textContent??'']],rows=[...el.querySelectorAll('tr')].map(tr=>[el.dataset.level,el.dataset.year,...[...tr.children].map(c=>visitorText(c.textContent))]);
+  if(!rows.length)rows.push([el.dataset.level,el.dataset.year,visitorText(el.innerText)]);
+  const context=[...el.querySelectorAll('p:not(.caption)')].map(p=>visitorText(p.textContent)).join(' ');if(context)rows.push([el.dataset.level,el.dataset.year,'Interpretation / additional figures',context]);
+  return [...meta,[],...rows].map(r=>r.map(v=>'"'+String(v??'Not in supplied source').replace(/^[=+@-]/,"'$&").replace(/"/g,'""')+'"').join(',')).join('\r\n');
+}
+function saveBlob(blob,name){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function pngVisual(el){
+  const candidate=el.querySelector('canvas'),chart=candidate&&!candidate.parentElement.hidden?candidate:null,title=visitorText(el.querySelector('h3,h4')?.textContent??'Report'),cap=visitorText(el.querySelector('.caption')?.textContent??'');
+  const tableLines=[...el.querySelectorAll('tr')].map(r=>visitorText(r.innerText)),bodyLines=tableLines.length?tableLines:el.innerText.split('\n').filter(t=>t.trim()&&!/Download (PNG|CSV)/.test(t)).map(visitorText),lines=[title,cap,...(!chart?bodyLines:[])];
+  const canvas=document.createElement('canvas');canvas.width=1600;const ctx=canvas.getContext('2d');ctx.font='24px sans-serif';const wrapped=[];
+  lines.forEach(line=>{let text='';for(const word of line.split(/\s+/)){if(ctx.measureText(text+' '+word).width>1500){wrapped.push(text);text=word;}else text+=' '+word;}wrapped.push(text);});const scale=chart?Math.min(2,1500/chart.width):1;canvas.height=Math.max(500,wrapped.length*36+80+(chart?chart.height*scale:0));ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#102c45';ctx.font='24px sans-serif';wrapped.forEach((line,i)=>ctx.fillText(line,35,40+i*36));if(chart)ctx.drawImage(chart,35,wrapped.length*36+60,chart.width*scale,chart.height*scale);canvas.toBlob(b=>saveBlob(b,'oscp-'+el.id+'.png'));
+}
+function installVisualExports(){document.querySelectorAll('[data-visual-csv]').forEach(b=>b.onclick=()=>saveBlob(new Blob(['\uFEFF'+visualCsv($(b.dataset.visualCsv))],{type:'text/csv;charset=utf-8'}),'oscp-'+b.dataset.visualCsv+'.csv'));document.querySelectorAll('[data-visual-png]').forEach(b=>b.onclick=()=>pngVisual($(b.dataset.visualPng)));}
+function installDXExports(){
+  const state=DemographicsExplorer.state;
+  document.querySelectorAll('.dx-panel').forEach((el,i)=>{
+    if(!el.id)el.id='dxVisual'+i;el.dataset.level=state.building==='all'?'School':'Building';el.dataset.year=i===1||i===2?'History through '+state.year:String(state.year);el.setAttribute('data-visual','');
+    let cap=el.querySelector('.caption');if(!cap){cap=document.createElement('p');cap.className='caption';el.append(cap);}cap.innerHTML=caption(el.dataset.level,el.dataset.year,'DESE district / Building demographics','Source missingness and selected population shown above');
+    if(!el.querySelector('[data-visual-png]')){const controls=document.createElement('div');controls.className='export-controls';controls.innerHTML=`<button data-visual-csv="${el.id}">Download CSV</button><button data-visual-png="${el.id}">Download PNG</button>`;el.append(controls);}
+  });
+  document.querySelectorAll('.dx-panel [data-visual-csv]').forEach(b=>b.onclick=()=>document.getElementById('dxExport').click());installVisualExports();
+  // A coordinated export includes full source precision and level/year on every row.
+  document.querySelectorAll('.dx-panel [data-visual-csv]').forEach(b=>b.onclick=()=>document.getElementById('dxExport').click());
+}
+function installModes(){
+  const params=new URLSearchParams(location.search);if(params.get('embed')==='1'){document.body.classList.add('embedded');const origins=['https://www.slu.edu','https://slu.edu'];const send=()=>origins.forEach(origin=>parent.postMessage({type:'oscp-dashboard-height',height:document.documentElement.scrollHeight},origin));new ResizeObserver(send).observe(document.body);send();}
+  const expanded=[];addEventListener('beforeprint',()=>document.querySelectorAll('details').forEach(d=>{if(!d.open){d.open=true;expanded.push(d);}}));addEventListener('afterprint',()=>expanded.splice(0).forEach(d=>d.open=false));
+  if(!$('presentationButton'))return;let current=0,slides=[],beforeMode=null;
+  function show(i){current=Math.max(0,Math.min(i,slides.length-1));slides.forEach((s,j)=>s.hidden=j!==current);$('slideCounter').textContent=`${current+1} / ${slides.length}`;}
+  function exit(){document.body.classList.remove('present');$('presentationHost')?.remove();$('slideControls').hidden=true;const url=new URL(location);url.searchParams.delete('present');history.replaceState(null,'',url);if(beforeMode){globalLevel=beforeMode.level;$('compositionSchool').value=beforeMode.school;document.querySelectorAll('#globalLevel button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.level===globalLevel)));renderComparisons();beforeMode=null;}}
+  function enter(){if($('presentationHost'))return;beforeMode={level:globalLevel,school:$('compositionSchool').value};globalLevel='School';$('compositionSchool').value='all';renderComparisons();const host=document.createElement('div');host.id='presentationHost';data.three_levels.slides.forEach(spec=>{const visual=$(spec.visual);if(!visual)return;const slide=document.createElement('section');slide.className='deck-slide';slide.innerHTML=`<p class="eyebrow">SLU OSCP CHARTER PARTNERSHIPS</p><h2>${esc(spec.headline)}</h2><p class="slide-question">${esc(spec.question)}</p><p class="slide-takeaway">${esc(spec.takeaway)}</p>`;const clone=visual.cloneNode(true);clone.querySelectorAll('button').forEach(b=>b.remove());if(spec.filter_name)clone.querySelectorAll('tbody tr').forEach(r=>{if(r.children[0].textContent!==spec.filter_name)r.remove();});clone.removeAttribute('id');slide.append(clone);host.append(slide);});document.body.append(host);slides=[...host.children];document.body.classList.add('present');$('slideControls').hidden=false;show(0);}
+  $('presentationButton').onclick=enter;$('previousSlide').onclick=()=>show(current-1);$('nextSlide').onclick=()=>show(current+1);$('exitPresentation').onclick=exit;
+  let printCreated=false;addEventListener('beforeprint',()=>{if(!document.body.classList.contains('present')){enter();printCreated=true;}slides.forEach(s=>s.hidden=false);});addEventListener('afterprint',()=>{if(printCreated){printCreated=false;exit();}else show(current);});
+  addEventListener('keydown',e=>{if(!document.body.classList.contains('present'))return;if(e.key==='Escape')exit();else if(e.key==='ArrowRight'){e.preventDefault();show(current+1);}else if(e.key==='ArrowLeft'){e.preventDefault();show(current-1);}});
+  let start=0;addEventListener('touchstart',e=>start=e.touches[0].clientX,{passive:true});addEventListener('touchend',e=>{if(document.body.classList.contains('present')&&Math.abs(e.changedTouches[0].clientX-start)>50)show(current+(e.changedTouches[0].clientX<start?1:-1));},{passive:true});if(params.get('present')==='1')enter();
+}
+async function boot(){
+ try{
+  if(document.body.dataset.page==='explorer'){
+   const summary=await fetch('./summary.json').then(r=>{if(!r.ok)throw Error('Summary missing');return r.json()});
+   const packets=await Promise.all(summary.explorer_files.map(f=>fetch('./'+f).then(r=>{if(!r.ok)throw Error(f+' unavailable');return r.json()})));
+   data=Object.assign({},...packets);data.three_levels=summary.three_levels;data.public_sources=summary.public_sources;data.requests=packets.find(p=>p.tracker)?.tracker;
+   initializeLegacy();
+  }else{data=await fetch('./summary.json').then(r=>{if(!r.ok)throw Error('Summary unavailable');return r.json()});renderMain();}
+  installModes();installLabels();
+ }catch(error){$('loadStatus').hidden=false;$('loadStatus').textContent='Dashboard could not load: '+error.message;}
+}
+boot();

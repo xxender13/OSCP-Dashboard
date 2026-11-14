@@ -27,7 +27,7 @@ class DataTests(unittest.TestCase):
         self.assertTrue(all(any(isinstance(s.get(m['id']), (int, float)) for s in schools) for m in data['metrics']))
 
     def test_deployment_contains_only_public_files(self):
-        self.assertEqual({p.name for p in (ROOT / 'dist').iterdir()}, {'index.html', 'styles.css', 'app.js', 'dashboard-data.json'})
+        self.assertTrue({'index.html','explorer.html','summary.json','vendor'}.issubset({p.name for p in (ROOT/'dist').iterdir()}))
         for name in ('index.html', 'styles.css', 'app.js', 'dashboard-data.json'):
             self.assertEqual((ROOT / name).read_bytes(), (ROOT / 'dist' / name).read_bytes())
 

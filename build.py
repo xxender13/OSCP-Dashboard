@@ -212,6 +212,8 @@ def build():
     independent_qa = apply_independent_findings(payload, tables)
     from demographics_explorer import extract_demographic_history
     payload['demographics_explorer'] = extract_demographic_history(payload, tables)
+    from three_levels import extend,package
+    extend(payload,tables,events,ROOT)
     (ROOT / 'dashboard-data.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
     qa_dir = ROOT / 'qa'
     qa_dir.mkdir(exist_ok=True)
@@ -245,6 +247,10 @@ def build():
     dist.mkdir(exist_ok=True)
     for name in ('index.html', 'styles.css', 'app.js', 'dashboard-data.json'):
         shutil.copy2(ROOT / name, dist / name)
+    package(payload,ROOT)
+    for path in [ROOT/'summary.json',ROOT/'explorer.html',*ROOT.glob('explorer-*.json')]:
+        shutil.copy2(path,dist/path.name)
+    shutil.copytree(ROOT/'vendor',dist/'vendor',dirs_exist_ok=True)
     print(f'Build passed: {len(schools)} schools, {sum(s[ENROLL] for s in schools):,} preliminary students; public files in dist/; audit in qa/.')
 
 
