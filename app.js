@@ -855,6 +855,20 @@ function redraw() {
     );
 }
 const oldRoutes = {
+  scholarships: "programs/scholarships",
+  events: "programs/events",
+  requestsLog: "programs",
+  demographicsWorkspace: "explore/groups",
+  demographicsPanel: "explore/groups",
+  frlPanel: "students/lunch",
+  assessmentPanel: "explore/map",
+  enrollmentPanel: "explore/history",
+  historyPanel: "explore/history",
+  timelinePanel: "schools/profiles",
+  directoryPanel: "schools/profiles",
+  schoolListPanel: "explore/directory",
+  growthPanel: "explore/growth",
+  coveragePanel: "about",
   "academic-performance": "learning/reading",
   "student-demographics": "students/groups",
   "students-schools": "schools/profiles",
@@ -906,7 +920,9 @@ async function route() {
           section.replace(/-/g, " "))
       : "");
   if (topic === "schools" && section?.startsWith("school-building-")) {
-    $("directoryFilters").reset();
+    const filters = $("directoryFilters");
+    filters.elements.query.value = "";
+    filters.elements.city.value = "all";
     $("directoryTable").innerHTML = table(
       ["School", "School building", "Grades", "Address"],
       directoryRows(),

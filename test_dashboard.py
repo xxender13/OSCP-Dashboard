@@ -141,6 +141,8 @@ def run():
             assert js('active')=='students'
             route_to('academic-performance');assert js('location.hash')=='#learning/reading'
             assert js("document.getElementById('reading').classList.contains('highlight')")
+            for legacy,new in [('scholarships','programs/scholarships'),('events','programs/events'),('requestsLog','programs'),('demographicsPanel','explore/groups')]:
+                route_to(legacy);assert js('location.hash')=='#'+new
             for i in range(6):
                 js(f"document.querySelectorAll('.kpi')[{i}].click()");time.sleep(.2)
                 assert js("document.querySelector(location.hash.split('/')[1]?'#'+location.hash.split('/')[1]:'#facts').classList.contains('highlight')")
@@ -151,6 +153,7 @@ def run():
                 cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'ArrowDown','code':'ArrowDown'})
                 cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'Enter','code':'Enter'});time.sleep(.2)
                 assert js('active')=='schools'
+                assert js("document.getElementById(location.hash.split('/')[1]).classList.contains('highlight')")
             # Export the exact visible source table and a PNG.
             route_to('learning/reading')
             js("window.testBlob=null;window.oldURL=URL.createObjectURL;window.oldClick=HTMLAnchorElement.prototype.click;URL.createObjectURL=b=>{window.testBlob=b;return 'blob:test'};HTMLAnchorElement.prototype.click=function(){};document.querySelector('[data-csv=reading]').click()")
