@@ -15,6 +15,8 @@ jobs:
           node-version: '22'
       - run: node --check dist/app.js
       - run: node --check dist/vendor/chart.umd.min.js
+      - name: Check public content and headline regressions
+        run: python -m unittest test_public_content test_ui
       - name: Validate confirmed-input rules without private workbooks
         run: >-
           python -m unittest

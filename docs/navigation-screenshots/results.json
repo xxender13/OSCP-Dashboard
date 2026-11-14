@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "widths": [
+    320,
+    375,
+    390,
+    768,
+    1024,
+    1440
+  ],
+  "presentation": [
+    1920,
+    1080
+  ],
+  "checks": [
+    "eight tabs",
+    "six reports",
+    "keyboard tabs",
+    "hash and back",
+    "legacy hashes",
+    "tile highlight",
+    "search",
+    "levels",
+    "CSV/PNG",
+    "print",
+    "embed",
+    "CDN fallback",
+    "direct Explorer"
+  ]
+}

@@ -17,7 +17,7 @@ class DataTests(unittest.TestCase):
         self.assertIsNone(numeric(True))
 
     def test_public_contract(self):
-        data = json.loads((ROOT / 'dist/dashboard-data.json').read_text(encoding='utf-8'))
+        data = json.loads((ROOT / 'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         schools = data['schools']
         self.assertEqual(len({s['DESE LEA'] for s in schools}), 6)
         self.assertEqual(sum(s['2025–26 K–12'] for s in schools), 3953)
@@ -28,7 +28,7 @@ class DataTests(unittest.TestCase):
 
     def test_deployment_contains_only_public_files(self):
         self.assertTrue({'index.html','explorer.html','summary.json','vendor'}.issubset({p.name for p in (ROOT/'dist').iterdir()}))
-        for name in ('index.html', 'styles.css', 'app.js', 'dashboard-data.json'):
+        for name in ('index.html', 'styles.css', 'app.js', 'summary.json'):
             self.assertEqual((ROOT / name).read_bytes(), (ROOT / 'dist' / name).read_bytes())
 
     def test_duplicate_lineage(self):
@@ -42,7 +42,7 @@ class DataTests(unittest.TestCase):
         self.assertTrue(any(s['sheet'] == 'FY24' and s['nonempty_rows'] == 0 for s in inventory))
 
     def test_expanded_sources_and_suppression(self):
-        data = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
+        data = json.loads((ROOT / 'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         self.assertEqual(len(data['history']), 96)
         self.assertEqual(len(data['buildings']), 14)
         self.assertEqual(len(data['assessments']), 516)
@@ -58,7 +58,7 @@ class DataTests(unittest.TestCase):
             self.assertIn(record['year'], [2025])
 
     def test_building_and_historical_keys(self):
-        data = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
+        data = json.loads((ROOT / 'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         self.assertEqual(len({(r['DESE LEA'], r['Year']) for r in data['history']}), len(data['history']))
         for school in data['schools']:
             buildings = [r for r in data['buildings'] if r['DESE LEA'] == school['DESE LEA']]
@@ -66,7 +66,7 @@ class DataTests(unittest.TestCase):
             self.assertEqual(len(buildings), school['DESE buildings'])
 
     def test_source_catalog_and_build_paths(self):
-        catalog = json.loads((ROOT / 'docs/source-files.json').read_text(encoding='utf-8'))
+        catalog = json.loads((ROOT / 'docs/internal/source-files.json').read_text(encoding='utf-8'))
         entries = catalog['workbooks']
         self.assertEqual(len(entries), 11)
         self.assertEqual({(ROOT / e['path']).resolve() for e in entries},
@@ -85,8 +85,8 @@ class DataTests(unittest.TestCase):
         if not baseline_path.exists():
             self.skipTest('Local pre-migration baseline is not distributed with public source')
         baseline = json.loads(baseline_path.read_text(encoding='utf-8'))
-        current = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
-        catalog = json.loads((ROOT / 'docs/source-files.json').read_text(encoding='utf-8'))['workbooks']
+        current = json.loads((ROOT / 'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
+        catalog = json.loads((ROOT / 'docs/internal/source-files.json').read_text(encoding='utf-8'))['workbooks']
         renamed = {Path(e['original_path']).name: Path(e['path']).name for e in catalog}
         for row in baseline['assessments']:
             row['source_file'] = renamed[row['source_file']]

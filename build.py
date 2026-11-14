@@ -212,9 +212,10 @@ def build():
     independent_qa = apply_independent_findings(payload, tables)
     from demographics_explorer import extract_demographic_history
     payload['demographics_explorer'] = extract_demographic_history(payload, tables)
-    from three_levels import extend,package
+    from three_levels import extend
+    from public_package import package
     extend(payload,tables,events,ROOT)
-    (ROOT / 'dashboard-data.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+    (ROOT / 'docs/internal/dashboard-data.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
     qa_dir = ROOT / 'qa'
     qa_dir.mkdir(exist_ok=True)
     (qa_dir / 'workbook-inventory.json').write_text(json.dumps(inventory, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -245,10 +246,10 @@ def build():
     (qa_dir / 'QA-report.md').write_text('\n'.join(report) + '\n', encoding='utf-8')
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
-    for name in ('index.html', 'styles.css', 'app.js', 'dashboard-data.json'):
+    for name in ('index.html', 'styles.css', 'app.js'):
         shutil.copy2(ROOT / name, dist / name)
     package(payload,ROOT)
-    for path in [ROOT/'summary.json',ROOT/'explorer.html',*ROOT.glob('explorer-*.json')]:
+    for path in [ROOT/'explorer.html']:
         shutil.copy2(path,dist/path.name)
     shutil.copytree(ROOT/'vendor',dist/'vendor',dirs_exist_ok=True)
     print(f'Build passed: {len(schools)} schools, {sum(s[ENROLL] for s in schools):,} preliminary students; public files in dist/; audit in qa/.')

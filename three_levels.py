@@ -99,7 +99,7 @@ def extend(payload,tables,events,root):
     payload['three_levels']['slides']=slides
     text=['# Slide outline','','Generated from the same slide specifications used by Presentation view. Counts below are source/audit counts; pending program totals stay nonnumeric.']
     for i,s in enumerate(slides,1):text += [f"\n## {i}. {s['headline']}",s['takeaway'],f"Level: {s['level']} · Year: {s['year']} · Source: {s['source']}",'Exact values: `'+json.dumps(s['numbers'],ensure_ascii=False,default=str)+'`']
-    (root/'docs/slide-outline.md').write_text('\n'.join(text)+'\n',encoding='utf-8')
+    (root/'docs/internal/slide-outline.md').write_text('\n'.join(text)+'\n',encoding='utf-8')
     annotate(payload);validate_nulls(payload)
     null_fields=[]
     def visit(v,path=''):

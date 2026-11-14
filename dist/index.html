@@ -1,13 +1,84 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore the students, schools and academic outcomes across Saint Louis University's six sponsored charter school networks. Verified data, explained simply."><title>SLU OSCP Charter Partnerships Dashboard</title><link rel="stylesheet" href="styles.css"><script defer src="vendor/chart.umd.min.js"></script><script defer src="app.js"></script></head>
-<body data-page="main"><a class="skip" href="#main">Skip to content</a><header class="masthead"><div class="wrap masthead-inner"><a class="university" href="#overview" aria-label="Saint Louis University dashboard home"><span class="brand-mark" aria-hidden="true">SLU</span><span>Saint Louis University<small>Office of School and Community Partnerships</small></span></a><span class="edition-tag">IMPACT DASHBOARD <b>2026&ndash;27</b></span></div></header>
-<nav class="site-nav" aria-label="Dashboard sections"><div class="wrap nav-inner"><a class="mobile-home" href="index.html">OSCP</a><button id="menuToggle" aria-expanded="false" aria-controls="navLinks">Menu</button><div class="nav-links" id="navLinks"><a href="#overview">Overview</a><a href="#students-schools">Schools</a><a href="#student-demographics">Students</a><a href="#academic-performance">Learning</a><a href="#community">OSCP in the community</a><a href="#data-quality">Data quality</a><a href="explorer.html">Data Explorer</a></div></div></nav><main id="main" class="wrap"><div id="loadStatus" role="status" aria-label="Loading dashboard"><span class="skeleton"></span><span class="skeleton"></span><span class="sr-only">Loading dashboard</span></div><noscript>JavaScript is needed for interactive results. Source definitions and the slide outline are in the repository documentation.</noscript><div id="dashboard" hidden>
-<section id="overview" class="story-section slide-panel"><p class="eyebrow">SLU / OFFICE OF SCHOOL AND COMMUNITY PARTNERSHIPS</p><h1>SLU OSCP Charter Partnerships Dashboard</h1><p>Dashboard edition 2026&ndash;27. Data: 2025&ndash;26 preliminary enrollment &middot; 2025 demographics, MAP and growth &middot; directory June 30, 2026.</p><div class="mode-controls"><button id="presentationButton">Presentation view</button><button id="printReport">Print / Save as PDF</button></div><h2>At a glance</h2><p>What are five things to know about these partnerships?</p><div id="fiveThings"></div><div id="objectiveKpis"></div><p class="caption" id="overviewCaption"></p></section>
-<section id="students-schools" class="story-section slide-panel"><span id="schools"></span><h2>Our schools</h2><p>Which six Schools does SLU sponsor, and which Buildings do they use?</p><p id="schoolsTakeaway" class="insight"></p><div id="schoolProfiles" class="school-cards"></div><div id="citySplit"></div><p>Physical campus count awaiting Candi.</p><details><summary>Building directory</summary><div id="buildingDirectory" class="scroll"></div></details><p class="caption" id="schoolsCaption"></p><a href="explorer.html#directoryWorkspace">Open detailed explorer</a></section>
-<section id="student-demographics" class="story-section slide-panel"><span id="reach"></span><h2>Our students</h2><p>How many students are enrolled, and which populations do the measures describe?</p><p id="studentsTakeaway" class="insight"></p><p>K&ndash;12 means kindergarten through grade 12; PK means preschool. DESE is the Missouri Department of Elementary and Secondary Education. English learners (EL) and Individualized Education Program (IEP) incidence follow their own source populations.</p><div id="enrollmentBridge"></div><div class="comparison-controls"><div id="globalLevel" role="group" aria-label="Global comparison level"><button data-level="Missouri">Missouri</button><button data-level="School" aria-pressed="true">School</button><button data-level="Building">Building</button></div><div><label for="compositionSchool">Choose a School</label><select id="compositionSchool"></select></div></div><div id="compositionView"></div><p class="caption" id="studentsCaption"></p><a href="explorer.html#demographicsExplorer">Explore Student Demographics</a><p>Withheld values have no bar. Categories are independent; do not assume an exhaustive distribution.</p></section>
-<section id="academic-performance" class="story-section slide-panel"><h2>How students are learning</h2><p>What do Missouri Assessment Program (MAP) results show at each School or Building?</p><p id="learningTakeaway" class="insight"></p><p>Proficient + Advanced (P+A) combines the two higher reported achievement levels. Missouri School Improvement Program (MSIP) aggregates cover all tested grades.</p><div id="mapMain"></div><p class="outcome-limit">These figures describe results at sponsored schools. They do not show that SLU sponsorship caused them. Schools joined SLU in different years.</p><p class="caption" id="mapCaption"></p><a href="explorer.html#matchedMapPanel">See grade-by-grade</a> &middot; <a href="#academic-growth">Academic growth</a> &middot; <a href="explorer.html#mapWorkspace">Open detailed explorer</a></section>
-<section id="academic-growth" class="story-section slide-panel"><h2>Academic growth</h2><p>How many eligible Buildings received Missouri's growth Target designation?</p><p id="growthTakeaway" class="insight"></p><div id="growthMain"></div><p>Annual Performance Report (APR) Target means the exact growth designation with full growth points. On-Track is not Target. This measures eligible Buildings, not the share of students whose scores improved.</p><p class="outcome-limit">These figures describe results at sponsored schools. They do not show that SLU sponsorship caused them. Schools joined SLU in different years.</p><p class="caption" id="growthCaption"></p><a href="explorer.html#growthWorkspace">Open detailed explorer</a></section>
-<section id="community" class="story-section slide-panel"><h2>OSCP in the community</h2><p>Which programs and activities have confirmed records?</p><p id="communityTakeaway" class="insight"></p><span id="scholarships"></span><span id="events"></span><p><a href="#scholarships">Scholarships</a> &middot; <a href="#events">Community events</a></p><div id="programPanels" class="two-up"></div><p class="caption">SCHOOL &middot; Reporting periods awaiting confirmation &middot; Source: data/inputs/*.csv &middot; Coverage shown per panel</p></section>
-<section id="data-quality" class="story-section slide-panel"><h2>Data quality and definitions</h2><p>What is reported, withheld, inapplicable, missing from supplied sources or awaiting confirmation?</p><p class="insight">The demographic audit reproduces five withheld School cells and ten withheld Building cells. Suppression causes are not provided in the extracts.</p><div id="qualityMatrix" class="scroll"></div><div id="requestLogSummary"></div><details><summary>Glossary</summary><div id="glossary"></div></details><details><summary>Source register and methodology</summary><div id="sourceRegister"></div><p>Ratios use compatible numerators and denominators from one reporting level and year. We never recover withheld values by subtraction. Preliminary enrollment currently traces to the master only; raw DESE preliminary files are missing (owner: Harshil).</p></details><details><summary>Confirmation questions and owners</summary><div id="ownerQuestions"></div></details><p class="caption">MISSOURI / SCHOOL / BUILDING &middot; 2025 / 2025&ndash;26 prelim / Directory Jun 2026 &middot; Raw DESE workbooks and confirmed inputs &middot; 11 workbooks / 21 worksheets</p><a href="explorer.html#requestsLog">Sponsorship requests log</a></section>
-</div></main><footer><div class="wrap"><strong>Saint Louis University</strong><p id="generatedAt"></p></div></footer><div id="slideControls" hidden><button id="previousSlide">Previous</button><span id="slideCounter"></span><button id="nextSlide">Next</button><button id="exitPresentation">Exit</button></div></body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Students, schools and reported results at Saint Louis University&#8217;s six sponsored charter schools."
+    />
+    <title>
+      Charter School Partnerships Dashboard | Saint Louis University
+    </title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/chart.umd.min.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <div class="header-inner">
+        <a class="brand" href="#overview"
+          ><span class="brand-mark">SLU</span
+          ><span
+            >Saint Louis University<small
+              >Office of School and Community Partnerships</small
+            ></span
+          ></a
+        >
+        <h1>Charter School Partnerships Dashboard</h1>
+        <div class="search-wrap">
+          <label class="sr-only" for="search">Find a school or building</label
+          ><input
+            id="search"
+            type="search"
+            placeholder="Find a school or building"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="matches"
+            autocomplete="off"
+          />
+          <ul id="matches" role="listbox" hidden></ul>
+        </div>
+        <button id="presentationButton">Presentation view</button>
+      </div>
+    </header>
+    <main id="main">
+      <section id="start" aria-label="At a glance">
+        <div id="objectiveKpis" class="kpi-grid" aria-busy="true">
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+        </div>
+        <p class="caption">
+          Figures describe sponsored schools and their reported results; they do
+          not show that SLU sponsorship caused them.
+        </p>
+        <p class="caption">
+          Enrollment: 2025&ndash;26 preliminary &middot; Student groups, MAP and
+          growth: 2025 &middot; School directory: June 2026
+        </p>
+      </section>
+      <nav class="tabs" aria-label="Dashboard topics">
+        <div id="tablist" role="tablist" aria-label="Dashboard topics"></div>
+      </nav>
+      <div id="loadStatus" role="status">Loading dashboard</div>
+      <div id="dashboard" hidden></div>
+    </main>
+    <footer>
+      Saint Louis University &middot; Office of School and Community
+      Partnerships <button id="printReport">Print / Save as PDF</button>
+    </footer>
+    <a class="back-top" href="#start">&uarr; Back to top / tabs</a>
+    <div id="slideControls" hidden>
+      <button id="previousSlide">Previous</button
+      ><span id="slideCounter" aria-live="polite"></span
+      ><button id="nextSlide">Next</button
+      ><button id="exitPresentation">Exit</button>
+    </div>
+  </body>
+</html>

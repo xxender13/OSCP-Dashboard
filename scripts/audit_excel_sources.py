@@ -132,7 +132,7 @@ def overlaps(subsets):
 def run(phase):
     OUTPUT.mkdir(parents=True, exist_ok=True)
     if phase == 'verify':
-        catalog = json.loads((ROOT / 'docs/source-files.json').read_text(encoding='utf-8'))['workbooks']
+        catalog = json.loads((ROOT / 'docs/internal/source-files.json').read_text(encoding='utf-8'))['workbooks']
         for item in catalog:
             path = ROOT / item['path']
             assert path.is_file() and digest(path) == item['sha256'], f"Original workbook bytes changed: {item['path']}"
@@ -141,7 +141,7 @@ def run(phase):
     if phase == 'before':
         if (OUTPUT / 'before.json').exists():
             raise RuntimeError('Baseline already exists; do not overwrite the original audit.')
-        shutil.copy2(ROOT / 'dashboard-data.json', OUTPUT / 'baseline-dashboard.json')
+        shutil.copy2(ROOT / 'docs/internal/dashboard-data.json', OUTPUT / 'baseline-dashboard.json')
         shutil.copy2(ROOT / 'qa' / 'browser-results.json', OUTPUT / 'baseline-browser-results.json')
     paths = sorted(p for folder in ('data', 'data2') if (ROOT / folder).exists()
                    for p in (ROOT / folder).rglob('*') if p.suffix.lower() in {'.xlsx', '.xlsm'})
@@ -169,16 +169,16 @@ def run(phase):
         result['byte_preservation_verified'] = True
         result['design_preservation_verified'] = True
         baseline = json.loads((OUTPUT / 'baseline-dashboard.json').read_text(encoding='utf-8'))
-        catalog = json.loads((ROOT / 'docs' / 'source-files.json').read_text(encoding='utf-8'))['workbooks']
+        catalog = json.loads((ROOT / 'docs' / 'internal' / 'source-files.json').read_text(encoding='utf-8'))['workbooks']
         renamed = {Path(w['original_path']).name: Path(w['path']).name for w in catalog}
         for row in baseline['assessments']:
             row['source_file'] = renamed[row['source_file']]
         for row in baseline['data_inventory']:
             row['file'] = renamed[row['file']]
-        current = json.loads((ROOT / 'dashboard-data.json').read_text(encoding='utf-8'))
+        current = json.loads((ROOT / 'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         baseline['generated_at'] = current['generated_at']
         assert baseline == current, 'Dashboard payload changed beyond source filenames and generation time'
-        assert (ROOT / 'dashboard-data.json').read_bytes() == (ROOT / 'dist' / 'dashboard-data.json').read_bytes()
+        assert (ROOT / 'docs/internal/dashboard-data.json').read_bytes() == (ROOT / 'dist' / 'dashboard-data.json').read_bytes()
         result['dashboard_schema_and_values_preserved'] = True
         result['allowed_metadata_changes'] = ['generated_at', 'assessments[].source_file', 'data_inventory[].file']
     (OUTPUT / f'{phase}.json').write_text(json.dumps(result, ensure_ascii=False, indent=2, default=str), encoding='utf-8')

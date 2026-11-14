@@ -11,7 +11,7 @@ ROOT=Path(__file__).resolve().parent
 class DemographicsExplorerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data=json.loads((ROOT/'dashboard-data.json').read_text(encoding='utf-8'))
+        cls.data=json.loads((ROOT/'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         cls.rows=cls.data['demographics_explorer']['records']
         cls.raw={}
         for name in ('dese_district_demographics_1991_2025.xlsx','dese_building_demographics_2006_2025.xlsx'):

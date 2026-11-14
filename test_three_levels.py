@@ -18,7 +18,7 @@ class ThreeLevelsTests(unittest.TestCase):
             rows=[r for r in cells if r['level']==level and r['metric'] in ['FRL %','EL %','IEP incidence %','Black %','Hispanic %','Multiracial %','White %']]
             self.assertEqual(sum(r['status']=='withheld' for r in rows),count)
             self.assertTrue(all(r['status'] in ('reported','withheld') for r in rows))
-        d=json.loads((ROOT/'dashboard-data.json').read_text(encoding='utf-8'))
+        d=json.loads((ROOT/'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         for r in d['assessments']:
             if r['level']=='Charter' and r['lea'] in ('048905','048925','115926') and r['category']=='MSIP Total' and r['subject'] in ('Eng. Language Arts','Mathematics','Science'):
                 self.assertIsNone(r['PA_PCT']);self.assertEqual(r['status'],'withheld')
@@ -49,8 +49,8 @@ class ThreeLevelsTests(unittest.TestCase):
             base['confirmed_by']='';self.write(folder,'partnership_reach',[base]);self.assertIsNone(load_inputs(folder)['total_reach']['value'])
             base['students_served']='invalid';self.write(folder,'partnership_reach',[base]);self.assertRaises(ValueError,load_inputs,folder)
     def test_gala_is_request_log_only(self):
-        d=json.loads((ROOT/'summary.json').read_text(encoding='utf-8'))['three_levels']
-        self.assertEqual(d['tracker_summary']['distinct_records'],26);self.assertEqual(d['tracker_summary']['raw_rows'],65)
+        d=json.loads((ROOT/'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))['three_levels']
+        self.assertEqual(d['tracker']['distinct_records'],26);self.assertEqual(d['tracker']['raw_rows'],65)
         confirmed_inputs=load_inputs(ROOT/'data/inputs')['events']['confirmed']
         self.assertEqual({r['event_id'] for r in d['inputs']['events']['confirmed']},{r['event_id'] for r in confirmed_inputs})
     def test_scholarship_confirmations_and_duplicates(self):

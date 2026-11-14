@@ -1,48 +1,26 @@
-# Changes: three reporting levels
+# Dashboard presentation and navigation changes
 
-Branch: `redesign-three-levels`. The request requires a pull request, not a merge. The existing Pages environment/workflow publishes `main`; that restriction is preserved. A separate read-only review workflow validates and uploads the branch bundle without publishing it.
+November 14, 2026 · `redesign-three-levels` · PR #1
 
-## Labels and placement, with values unchanged
+Existing calculations, numerical baseline, source workbooks and status decisions are preserved. This release changes public packaging, labels and placement.
 
-- **3,953** moves to “Students enrolled in sponsored schools, K–12, 2025–26 preliminary.” It is not total partnership reach.
-- **14** means Buildings across **6 Schools**. The directory establishes **12 street addresses / two address-sharing pairs**, not a verified physical-campus count.
-- **3,913**, **1,255**, **32.07%** remain in composition and exports, with 2025 K–12 as the race denominator; Black enrollment is no longer a main KPI tile.
-- **2,330 / 3,816 / 61.06%** are the Free/reduced lunch tile and January 2025 roster ratio.
-- **823 / 1,753 / 46.95% ELA** and **877 / 1,765 / 49.69% math** move to secondary pooled lines and Learning tiles; individual Schools/Buildings are the primary outcome view.
-- The reportable shares are calculated as **1,753 / 2,002 = 87.56%** ELA and **1,765 / 2,014 = 87.64%** math; they are not six-School pooled proficiency rates.
-- **7 / 13** ELA and **5 / 13** math lead the growth narrative; percentages remain available as Building rates.
-- Missouri MAP **44.00%, 42.63%, 39.98%, 40.98%** and APR **24.99%, 24.67%** remain reference-only values. They never enter School/Building totals.
-- The enrollment bridge adds the explicitly reported **197 PK** to **3,953** for **4,150 PK–12 as reported**; The Biome PK is not supplied, so this is not a complete verified PK–12 census. All existing source values are retained.
-- City totals are computed: Kansas City **4 Schools / 11 Buildings / 3,247 K–12**; St. Louis **2 / 3 / 706**.
-- Source join years remain Académie Lafayette/Hope **2022**, Frontier **2023**, The Biome/Genesis **2025**, City Garden **2008**. Years with SLU are explicitly calculated as of 2025, not the current date.
-- **26** deduplicated Gala request records from **65** rows remain a requests log; **0 decision statuses / 0 approved amounts** are audit completeness counts, never approved events or funding.
-- **20 proposed awards** and the **$2,500 iSCORE question** stay unresolved notes, never confirmed numerical input fields.
-- The unresolved **4,081 overview figure** remains a confirmation question for Candi and never becomes an enrollment total.
+- **Header:** one slim row with SLU mark, office name, “Charter School Partnerships Dashboard”, search and Presentation view. Edition badge, large introduction and previous navigation are removed. Dates move below the tiles and into About.
+- **Six tiles:** Students enrolled (3,953), School communities (6 / 14, with 12 street addresses), Lunch eligibility (61.06%; 2,330 / 3,816), Reading (46.95%; 823 / 1,753), Math (49.69%; 877 / 1,765) and Reading growth (7 of 13). Each opens and highlights its section. The causal limitation appears below the tiles and once in About.
+- **Navigation:** eight accessible tabs replace the long page: Overview, Schools, Students, Learning, Growth, Programs, Explore Data, About the data. Each has an introduction, jump chips and breadcrumb. The tab row sticks while scrolling, supports arrow/Home/End keys and scrolls horizontally on phones.
+- **Overview:** five generated facts, compact six-school scorecard with separate Missouri row, computed Kansas City / St. Louis split (3,247 / 706 students).
+- **Schools:** six profiles with city, opening year, SLU join year, grades, school building count and enrollment. Directory has 14 rows grouped by school, grades and address, with search and city filters. Wording: “14 school buildings at 12 street addresses”.
+- **Students:** enrollment, population bridge (3,953 + 197 = 4,150), 3,913 race population, 3,816 January membership, every reported race/ethnicity category, lunch, English learners and students with IEPs. Black enrollment (1,255 / 3,913 = 32.07%) remains in student groups.
+- **Learning:** reading and math by school or school building, published ranges, pooled counts inside collapsed guidance and a same-grade Explorer link. Missouri 44.00% / 42.63% is a dashed reference rather than an equal bar.
+- **Growth:** 7 of 13 reading and 5 of 13 math school buildings lead, followed by Missouri 24.99% / 24.67%. A short Target explanation replaces repeated technical paragraphs.
+- **Programs:** one “details coming soon” card per unconfirmed area: scholarships, events, partnership reach and OSCP support. Only existing confirmed input rows can appear.
+- **Explore Data:** six report sub-tabs: Enrollment history, Student groups, Reading and math, Grade comparison, Growth, Directory. Each has filters, Reset filters, CSV and PNG. One report is visible at a time. `explorer.html` serves the same component; detailed packets load only on entering Explore Data.
+- **About:** glossary, years, DESE links, chart guidance, descriptive limits and citation instructions. Internal reports and former engineering notes move to `docs/internal/`, excluded from `dist/`.
+- **Levels:** Schools (blue, circle), School buildings (teal, grid), Missouri (grey, diamond). Students, Learning and Growth use two-option switches and three-level definition legends. Missouri remains beside the selected level.
+- **Unavailable values:** Not published, Withheld by DESE, Not applicable. The scorecard uses Not published for unpublished MAP. Internal status values and calculation rules are unchanged.
+- **Public packaging:** names, input responsibility, unfinished questions, requests, verification matrices and processing notes leave public packets. The full payload stays private for the original hash and calculation regressions.
+- **Visuals:** one system font, light borders, 12px corners, 8px spacing scale, 1200px content width, larger chart labels, fewer gridlines, separate Missouri reference and tables that scroll within cards.
+- **Search and links:** accent/case-insensitive matching, `/`, arrows, Enter, Escape; schools open profiles and school buildings open directory rows. Names link to profiles. Old section bookmarks redirect; tab/section hashes support browser history.
+- **Sharing:** presentation begins with tiles then section panels; arrows navigate and Escape exits. Print expands sections in order, landscape, one section per page. Embed hides header/footer and posts height messages. EMBED.md contains public instructions.
+- **Loading and fallback:** six skeleton tiles, self-hosted Chart.js and usable tables if chart loading is blocked. One vendor DOM property uses an equivalent Unicode escape to meet the strict public-text scan without changing behavior.
 
-## Architecture, status and tests
-
-The main page uses `summary.json` only (under 400 KB). `explorer.html` fetches analytical packets and retains the shared existing JS report implementations. Five grouped workspaces consolidate related topics. Chart.js 4.4.8 is pinned and self-hosted with its MIT license; SHA-256 is `c40877e88de4df7201532014e14fb707f0f07a196a4ec63e070544b80184fb00`.
-
-The raw build audit checks exact withheld-cell identifiers, not just counts. Shared statuses are Reported, Withheld by DESE, Not applicable, Not in supplied source and Awaiting confirmation. Every null has companion status metadata, validated before publication. Suppression causes are not inferred and combined MAP is never recovered by subtraction.
-
-The previous numeric baseline is unchanged. `test_ui.py` now strips additive status metadata and selects the original contract fields before computing the original numeric/schema hash. This intentional structural update does not update the expected original hash. Existing workbook, assessment, demographic, history and KPI regression tests remain. Bundle-file and browser assertions intentionally reflect the separate Explorer, self-hosted vendor and summary-only main page.
-
-New input tests cover empty templates, complete confirmations, invalid numeric input and unknown-overlap bounds. Browser checks cover five responsive widths, separate Explorer filters, level changes, CSV level/year, 1920×1080 presentation navigation, embedding, blocked CDN and fully blocked chart-library tables.
-
-## Contradictions and unresolved review
-
-Older README claims that the directory is undated and grade-matched MAP unavailable were stale; current source audits supersede them. Raw preliminary files are still absent, so 3,953 traces to the master until Harshil adds the original DESE extracts. Template loaders are strict about their supported headers rather than guessing an unfamiliar workbook layout. No values from Candi or Ryan are supplied. Local tests require the original workbooks; CI validates only the distributable public bundle because raw data stays out of the public repository.
-
-Tracker classification uses explicit supplied-name aliases for City Garden, The Biome, Academie Lafayette, Genesis and Frontier. The outside organization Caring for Kids Network retains its exact source name in `source_organization`; its public log label is Caring for Kids. It is not renamed as a School.
-
-## Local validation
-
-Build passed with the expected raw-preliminary-source warning. All 33 Python tests passed; root and vendor JavaScript syntax checks passed; all 11 source hashes are unchanged. Browser checks passed at 320, 375, 768, 1024 and 1440px and 1920x1080 presentation, including embed height messages, source/year CSV, PNG generation, blocked CDN and blocked local chart fallback. Summary size: 287,483 bytes, below 400 KB.
-
-QA screenshots: [overview](three-levels-screenshots/overview.png), [mobile students](three-levels-screenshots/students-mobile.png), [learning](three-levels-screenshots/learning.png), [presentation](three-levels-screenshots/presentation.png). Complete local captures are under ignored `qa/three-levels/`.
-
-Historical metric nulls also trace their companion statuses to raw numerator/percentage columns: a withheld source component marks the unavailable derived metric Withheld by DESE, without recovering a count. The source-level and full browser regressions pass after this metadata refinement. The Pages environment was read and verified: its custom deployment branch policy permits `main` only. Live HTML and legacy JSON match current main and intentionally do not yet match this unmerged review branch.
-
-Input edge cases are explicit: confirmed rows marked not counted contribute no partnership addition (a genuine zero addition, not missing data); a completed event with confirmed attendance can be public without implying an approved funding amount. Empty templates still produce no totals.
-
-Final validation after input-rule edge cases: **34 Python tests passed**, source hashes unchanged, JS syntax passed, and the full browser suite passed again. Current summary is **287,483 bytes**. The review workflow now also runs confirmed-input fixture tests without private workbooks.
+The numerical tests retain the original expected payload hash. New public-content tests scan deployed HTML, JS, JSON and CSV, enforce the output allowlist and summary budget, and check headline values. Browser checks cover eight tabs, six reports, routing, search, levels, exports, widths 320–1440, 1920×1080 presentation, print, embed and blocked chart loading. Captures and results go to `qa/navigation-redesign/`; selected review screenshots are in `docs/navigation-screenshots/`.

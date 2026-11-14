@@ -9,8 +9,16 @@ ROOT=Path(__file__).resolve().parent
 
 
 class RedesignContractTests(unittest.TestCase):
+    def test_accessible_routes_and_level_controls(self):
+        script=(ROOT/'app.js').read_text(encoding='utf-8')
+        for contract in ('role="tabpanel"','aria-labelledby','aria-selected','ArrowLeft','ArrowRight','Home','End','hashchange','oldRoutes','aria-activedescendant','aria-expanded','data-switch','state-reference'):
+            self.assertIn(contract,script)
+        css=(ROOT/'styles.css').read_text(encoding='utf-8')
+        for contract in ('focus-visible','prefers-reduced-motion','position: sticky','@media print'):
+            self.assertIn(contract,css)
+
     def test_verified_payload_is_unchanged(self):
-        data=json.loads((ROOT/'dist/dashboard-data.json').read_text(encoding='utf-8'))
+        data=json.loads((ROOT/'docs/internal/dashboard-data.json').read_text(encoding='utf-8'))
         baseline_keys=['dashboard_year','buildings','history','assessments','data_inventory','schools','metrics','sources','definitions','confirmed_events','directory','demographic_counts','state_map','growth','benchmarks','kpi_metrics','missing_data_note','official_state_context','benchmark_subsets','state_enrollment_audit','directory_summary','matched_map','public_source_verification']
         def strip(v):
             if isinstance(v,list):return [strip(x) for x in v]
@@ -34,9 +42,8 @@ class RedesignContractTests(unittest.TestCase):
         self.assertEqual(len(page.ids),len(set(page.ids)))
         self.assertEqual(page.headings.count(1),1)
         self.assertTrue(all(b<=a+1 for a,b in zip(page.headings,page.headings[1:])))
-        for section in ('overview','students-schools','student-demographics','academic-performance','academic-growth','community','data-quality','scholarships','events'):
-            self.assertIn(section,page.ids)
-            self.assertIn(section,page.links)
-
+        for section in ('overview','schools','students','learning','growth','programs','explore','about'):
+            self.assertIn('"'+section+'"',(ROOT/'app.js').read_text(encoding='utf-8'))
+        self.assertEqual((ROOT/'index.html').read_text().count('class="skeleton"'),6)
 
 if __name__=='__main__':unittest.main()

@@ -85,74 +85,112 @@ def run():
                     time.sleep(.1)
                 raise AssertionError(js('document.body.innerText'))
 
-            cdp('Runtime.enable')
-            cdp('Page.enable')
-            cdp('Network.enable')
+            cdp('Runtime.enable');cdp('Page.enable');cdp('Network.enable')
             cdp('Emulation.setEmulatedMedia',{'features':[{'name':'prefers-reduced-motion','value':'reduce'}]})
-            cdp('Page.navigate', {'url': url})
-            wait_loaded()
-            assert js("document.querySelector('h1').textContent")=='SLU OSCP Charter Partnerships Dashboard'
-            assert not any('explorer-' in r and r.endswith('.json') for r in requested),requested
-            assert js("document.getElementById('fiveThings').textContent.includes('3,953')")
-            assert js("document.getElementById('enrollmentBridge').textContent.includes('4,150')")
-            assert js("document.querySelectorAll('#objectiveKpis .kpi').length")==8
-            assert js("document.getElementById('citySplit').textContent.includes('3,247')")
-            assert js("document.getElementById('compositionView').textContent.includes('Withheld by DESE')")
-            assert js("document.getElementById('programPanels').textContent.includes('Awaiting confirmation')")
-            assert js("document.querySelectorAll('#navLinks a').length")==7
-            for level in ['Missouri','School','Building']:
-                js(f"document.querySelector('#globalLevel [data-level={level}]').click()")
-                assert js('globalLevel')==level
-            js("document.querySelector('#globalLevel [data-level=School]').click()")
-            for width in [320,375,768,1024,1440]:
-                cdp('Emulation.setDeviceMetricsOverride',{'width':width,'height':1000,'deviceScaleFactor':1,'mobile':False})
-                time.sleep(.1)
-                assert js('document.documentElement.scrollWidth')<=width, width
-                for target in ['overview','student-demographics','academic-performance','community','data-quality']:
-                    js(f"document.getElementById('{target}').scrollIntoView()")
-                    shot=cdp('Page.captureScreenshot',{'captureBeyondViewport':False})
-                    folder=ROOT/'qa'/'three-levels';folder.mkdir(exist_ok=True)
-                    (folder/f'{target}-{width}.png').write_bytes(base64.b64decode(shot['data']))
-            cdp('Emulation.setDeviceMetricsOverride',{'width':1920,'height':1080,'deviceScaleFactor':1,'mobile':False})
-            js("document.getElementById('presentationButton').click()")
-            assert js("document.body.classList.contains('present')")
-            assert js("parseFloat(getComputedStyle(document.querySelector('.deck-slide p')).fontSize)")>=28
-            cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'ArrowRight','code':'ArrowRight','windowsVirtualKeyCode':39})
-            assert js("document.getElementById('slideCounter').textContent.startsWith('2 /')")
-            shot=cdp('Page.captureScreenshot',{'captureBeyondViewport':False});(ROOT/'qa/three-levels/presentation.png').write_bytes(base64.b64decode(shot['data']))
-            cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'Escape','code':'Escape','windowsVirtualKeyCode':27})
-            assert not js("document.body.classList.contains('present')")
-            cdp('Page.addScriptToEvaluateOnNewDocument',{'source':"window.sentHeights=[];window.postMessage=(message,origin)=>window.sentHeights.push({message,origin})"})
-            cdp('Page.navigate',{'url':url+'?embed=1'});wait_loaded()
-            assert js("window.sentHeights.some(x=>x.message.type==='oscp-dashboard-height'&&x.message.height>0&&x.origin==='https://www.slu.edu')")
-            assert js("getComputedStyle(document.querySelector('.masthead')).display")=='none'
-            assert js("getComputedStyle(document.querySelector('footer')).display")=='none'
-            cdp('Page.navigate',{'url':url+'explorer.html'});wait_loaded();time.sleep(.5)
-            assert js("document.getElementById('dxFilters')!==null")
-            assert js("document.querySelectorAll('.report').length")==11
-            assert js("document.getElementById('requestLog').textContent.includes('26')") or js("data.requests.distinct_records")==26
-            for level in ['Charter','Building']:
-                js(f"document.getElementById('demoLevel').value='{level}';document.getElementById('demoLevel').dispatchEvent(new Event('change'))")
-                assert js("document.querySelectorAll('#demographicsData tbody tr').length")>=6
-            js("document.getElementById('dxNetwork').value='115911';document.getElementById('dxNetwork').dispatchEvent(new Event('change'))")
-            assert js("[...document.getElementById('dxBuilding').options].every(o=>o.value==='all'||o.value.startsWith('115911/'))")
-            js("window.testBlob=null;window.oldURL=URL.createObjectURL;window.oldClick=HTMLAnchorElement.prototype.click;URL.createObjectURL=b=>{window.testBlob=b;return 'blob:test'};HTMLAnchorElement.prototype.click=function(){};document.querySelector('[data-export=assessment]').click()")
-            csv=js('window.testBlob.text()');assert 'Level' in csv and 'Year' in csv and 'Withheld' in js("document.body.textContent")
-            js("document.querySelector('[data-visual-png=assessmentPanel]').click()")
-            time.sleep(.2)
+            shots=ROOT/'qa'/'navigation-redesign';shots.mkdir(parents=True,exist_ok=True)
+            def viewport(w,h=1000):
+                cdp('Emulation.setDeviceMetricsOverride',{'width':w,'height':h,'deviceScaleFactor':1,'mobile':False})
+            def navigate(path=''):
+                cdp('Page.navigate',{'url':url+path});wait_loaded();time.sleep(.25)
+            def route_to(path):
+                js('location.hash='+json.dumps(path));time.sleep(.3)
+            def screenshot(name):
+                (shots/(name+'.png')).write_bytes(base64.b64decode(cdp('Page.captureScreenshot',{'format':'png'})['data']))
+            viewport(1440,900);navigate()
+            assert js("document.querySelectorAll('.kpi').length")==6
+            assert js("getComputedStyle(document.getElementById('objectiveKpis')).gridTemplateColumns.split(' ').length")==3
+            assert js("document.querySelector('.tabs').getBoundingClientRect().bottom")<900
+            assert js("document.querySelector('header').getBoundingClientRect().height")<=80
+            assert not any('explorer-' in r and r.endswith('.json') for r in requested)
+            screenshot('start')
+            assert js("document.getElementById('panel-students').textContent.includes('4,150')")
+            assert js("document.getElementById('cities').textContent.includes('3,247')")
+            for topic in ['overview','schools','students','learning','growth','programs','explore','about']:
+                route_to(topic)
+                for _ in range(80):
+                    if topic!='explore' or js("!!document.getElementById('reportFilters')"):break
+                    time.sleep(.1)
+                assert js("document.querySelectorAll('#dashboard>[role=tabpanel]:not([hidden])').length")==1
+                assert js(f"document.getElementById('tab-{topic}').getAttribute('aria-selected')")=='true'
+                if topic in ['students','learning','growth']:
+                    assert js(f"document.querySelectorAll('#panel-{topic} .level-legend .level').length")==3
+                    assert js(f"document.querySelectorAll('#panel-{topic} [data-switch]').length")==2
+                    js(f"document.querySelector('#panel-{topic} [data-level=Building]').click()")
+                    assert js(f"levels.{topic}")=='Building'
+                    js(f"document.querySelector('#panel-{topic} [data-level=School]').click()")
+                js('scrollTo(0,document.getElementById("panel-'+topic+'").offsetTop-80)');screenshot(topic)
+                visible=js("document.getElementById('panel-'+active).innerText")
+                import re
+                assert not re.search(r'\b(network|LEA|district|record)\b|campus count',visible,re.I),visible[:300]
+            for report in ['history','groups','map','grades','growth','directory']:
+                route_to('explore/'+report)
+                assert js("document.querySelectorAll('#reportHost [role=tabpanel]').length")==1
+                assert js("document.getElementById('reportFilters').innerText.includes('Reset filters')")
+                assert js("document.querySelector('#reportOutput table tbody tr')!==null"),report
+            # A reportable, exact same-grade comparison stays available.
+            route_to('explore/grades')
+            js("var f=document.getElementById('reportFilters');f.elements.level.value='Building';f.elements.grade.value='3';f.dispatchEvent(new Event('change'))")
+            assert js("document.getElementById('reportOutput').textContent.includes('Missouri, same grade')")
+            assert js("document.querySelectorAll('#reportOutput tbody tr').length")==7
+            # Real keyboard events exercise roving focus.
+            route_to('overview');js("document.getElementById('tab-overview').focus()")
+            cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'ArrowRight','code':'ArrowRight'});time.sleep(.2)
+            assert js('location.hash')=='#schools'
+            route_to('students');route_to('growth');js('history.back()');time.sleep(.3)
+            assert js('active')=='students'
+            route_to('academic-performance');assert js('location.hash')=='#learning/reading'
+            assert js("document.getElementById('reading').classList.contains('highlight')")
+            for i in range(6):
+                js(f"document.querySelectorAll('.kpi')[{i}].click()");time.sleep(.2)
+                assert js("document.querySelector(location.hash.split('/')[1]?'#'+location.hash.split('/')[1]:'#facts').classList.contains('highlight')")
+            for query in ['academie','Acad\u00e9mie','city garden','hope','frontier excellence']:
+                js("var s=document.getElementById('search');s.value="+json.dumps(query)+";s.dispatchEvent(new Event('input'))")
+                assert js("document.querySelectorAll('#matches li').length")>0,query
+                js("document.getElementById('search').focus()")
+                cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'ArrowDown','code':'ArrowDown'})
+                cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'Enter','code':'Enter'});time.sleep(.2)
+                assert js('active')=='schools'
+            # Export the exact visible source table and a PNG.
+            route_to('learning/reading')
+            js("window.testBlob=null;window.oldURL=URL.createObjectURL;window.oldClick=HTMLAnchorElement.prototype.click;URL.createObjectURL=b=>{window.testBlob=b;return 'blob:test'};HTMLAnchorElement.prototype.click=function(){};document.querySelector('[data-csv=reading]').click()")
+            assert 'School' in js('window.testBlob.text()')
+            js("document.querySelector('[data-png=reading]').click()");time.sleep(.2)
             assert js('window.testBlob.type')=='image/png'
-            assert js('window.testBlob.size')>1000
-            js("URL.createObjectURL=window.oldURL;HTMLAnchorElement.prototype.click=window.oldClick")
-            for width in [320,375,768,1024,1440]:
-                cdp('Emulation.setDeviceMetricsOverride',{'width':width,'height':1000,'deviceScaleFactor':1,'mobile':False});time.sleep(.1)
-                assert js('document.documentElement.scrollWidth')<=width,('explorer',width)
-            cdp('Network.setBlockedURLs',{'urls':['*cdn.jsdelivr.net*']});cdp('Page.reload',{'ignoreCache':True});wait_loaded();assert js('!!window.Chart')
-            cdp('Network.setBlockedURLs',{'urls':['*vendor/chart.umd.min.js*']});cdp('Network.setCacheDisabled',{'cacheDisabled':True});cdp('Page.reload',{'ignoreCache':True});wait_loaded();time.sleep(.2)
+            js('URL.createObjectURL=window.oldURL;HTMLAnchorElement.prototype.click=window.oldClick')
+            for width in [320,375,390,768,1024,1440]:
+                viewport(width);route_to('overview');js('scrollTo(0,0)');time.sleep(.1)
+                assert js('document.documentElement.scrollWidth')<=width,('page',width)
+                assert js("getComputedStyle(document.getElementById('objectiveKpis')).gridTemplateColumns.split(' ').length")==(1 if width<600 else 2 if width<1200 else 3)
+                for topic in ['schools','students','learning','growth','programs','explore','about']:
+                    route_to(topic);assert js('document.documentElement.scrollWidth')<=width,(topic,width)
+                if width==390:route_to('students');screenshot('mobile-students');route_to('overview');js('scrollTo(0,0)');screenshot('mobile-start')
+            viewport(1920,1080);navigate('?present=1')
+            assert js("document.querySelectorAll('.deck-active').length")==1
+            screenshot('presentation')
+            cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'ArrowRight','code':'ArrowRight'})
+            assert js('deckIndex')==1
+            cdp('Input.dispatchKeyEvent',{'type':'keyDown','key':'Escape','code':'Escape'})
+            assert not js('presenting')
+            viewport(1440,900);navigate('?embed=1')
+            assert js("getComputedStyle(document.querySelector('header')).display")=='none'
+            cdp('Emulation.setEmulatedMedia',{'media':'print'})
+            assert js("[...document.querySelectorAll('#dashboard>[role=tabpanel]')].every(n=>getComputedStyle(n).display!=='none')")
+            cdp('Emulation.setEmulatedMedia',{'media':'screen'})
+            cdp('Network.setBlockedURLs',{'urls':['*cdn.jsdelivr.net*']});navigate()
+            assert js('!!window.Chart')
+            cdp('Network.setBlockedURLs',{'urls':['*vendor/chart.umd.min.js*']});cdp('Network.setCacheDisabled',{'cacheDisabled':True});navigate('?charts=blocked#learning')
             assert not js('!!window.Chart')
-            assert js("document.getElementById('chartFallback').hidden")==False
-            assert js("document.querySelectorAll('#assessmentData tbody tr').length")>0
+            assert js("document.querySelector('#reading table tbody tr')!==null")
+            assert js("document.querySelector('#reading .plot').hidden")
+            navigate('explorer.html#explore/map')
+            for _ in range(80):
+                if js("!!document.getElementById('reportFilters')"):break
+                time.sleep(.1)
+            assert js('active')=='explore'
+            assert js("document.querySelector('#reportOutput tbody tr')!==null")
             assert not errors,errors
-            print(json.dumps({'passed':True,'widths':[320,375,768,1024,1440],'presentation':[1920,1080],'checks':['summary-only main','level switcher','fixtures','dependent explorer filters','CSV level/year','embed','presentation keyboard','self-hosted chart CDN block','no-chart tables','no browser exceptions']},indent=2))
+            result={'passed':True,'widths':[320,375,390,768,1024,1440],'presentation':[1920,1080],'checks':['eight tabs','six reports','keyboard tabs','hash and back','legacy hashes','tile highlight','search','levels','CSV/PNG','print','embed','CDN fallback','direct Explorer']}
+            (shots/'results.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
         finally:
             if connection:connection.close()
             process.terminate();process.wait(timeout=20);server.shutdown()

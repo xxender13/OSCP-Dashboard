@@ -1,5 +1,84 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore the students, schools and academic outcomes across Saint Louis University's six sponsored charter school networks. Verified data, explained simply."><title>SLU OSCP Charter Partnerships Dashboard</title><link rel="stylesheet" href="styles.css"><script defer src="vendor/chart.umd.min.js"></script><script defer src="app.js"></script></head>
-<body data-page="explorer"><a class="skip" href="#main">Skip to data</a><header class="masthead"><div class="wrap masthead-inner"><a class="university" href="#overview" aria-label="Saint Louis University dashboard home"><span class="brand-mark" aria-hidden="true">SLU</span><span>Saint Louis University<small>Office of School and Community Partnerships</small></span></a><span class="edition-tag">IMPACT DASHBOARD <b>2026&ndash;27</b></span></div></header>
-<nav class="site-nav" aria-label="Dashboard sections"><div class="wrap nav-inner"><a class="mobile-home" href="index.html">OSCP</a><button id="menuToggle" aria-expanded="false" aria-controls="navLinks">Menu</button><div class="nav-links" id="navLinks"><a href="index.html#overview">Overview</a><a href="index.html#students-schools">Schools</a><a href="index.html#student-demographics">Students</a><a href="index.html#academic-performance">Learning</a><a href="index.html#community">OSCP in the community</a><a href="index.html#data-quality">Data quality</a><a href="explorer.html">Data Explorer</a></div></div></nav><main id="main" class="wrap"><div id="loadStatus" role="status" aria-label="Loading dashboard"><span class="skeleton"></span><span class="skeleton"></span><span class="sr-only">Loading dashboard</span></div><noscript>Enable JavaScript to use the detailed filters. CSV source templates and documentation remain in the repository.</noscript><div id="dashboard" hidden><section class="story-section"><h1>Data Explorer</h1><p>School and Building are separate levels. Missouri is a reference only.</p><button id="resetAll">Reset all reports</button><button id="printReport">Print / Save as PDF</button><p id="chartFallback" class="notice" hidden>Chart library unavailable. Tables and exports remain usable.</p><p id="missingFootnote"></p></section><section id="demographicsWorkspace" class="story-section"><h2>Student demographics</h2><details id="demographicsExplorer" class="dx-shell" open tabindex="-1"><summary>Student Demographics Explorer</summary><div id="demographicsExplorerMount"></div></details><details><summary>Additional source tables and filters</summary><div id="demographicsMount"></div><div id="frlMount"></div><div id="coverageMount"></div></details></section><section id="mapWorkspace" class="story-section"><h2>MAP outcomes</h2><div id="assessmentMount"></div><div id="matchedMapMount"></div></section><section id="enrollmentWorkspace" class="story-section"><h2>Enrollment, history and SLU join years</h2><div id="enrollmentMount"></div><div id="historyMount"></div><div id="timelineMount"></div></section><section id="directoryWorkspace" class="story-section"><h2>School profiles and Building directory</h2><div id="directoryMount"></div><div id="schoolListMount"></div></section><section id="growthWorkspace" class="story-section"><h2>Growth</h2><div id="growthMount"></div></section><section id="requestsLog" class="story-section"><h2>Sponsorship requests log</h2><p>Requests are not events, approvals or funding.</p><div id="requestLog"></div></section><section class="methodology"><h2>Sources and definitions</h2><div id="sourceList"></div><div id="inventoryTable" class="scroll"></div><div id="definitions"></div></section></div></main><footer><div class="wrap"><a href="index.html">Dashboard overview</a><p id="generatedAt"></p></div></footer></body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Students, schools and reported results at Saint Louis University&#8217;s six sponsored charter schools."
+    />
+    <title>
+      Charter School Partnerships Dashboard | Saint Louis University
+    </title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="vendor/chart.umd.min.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body data-entry="explore">
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <div class="header-inner">
+        <a class="brand" href="#overview"
+          ><span class="brand-mark">SLU</span
+          ><span
+            >Saint Louis University<small
+              >Office of School and Community Partnerships</small
+            ></span
+          ></a
+        >
+        <h1>Charter School Partnerships Dashboard</h1>
+        <div class="search-wrap">
+          <label class="sr-only" for="search">Find a school or building</label
+          ><input
+            id="search"
+            type="search"
+            placeholder="Find a school or building"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="matches"
+            autocomplete="off"
+          />
+          <ul id="matches" role="listbox" hidden></ul>
+        </div>
+        <button id="presentationButton">Presentation view</button>
+      </div>
+    </header>
+    <main id="main">
+      <section id="start" aria-label="At a glance">
+        <div id="objectiveKpis" class="kpi-grid" aria-busy="true">
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+          <div class="skeleton" aria-hidden="true"></div>
+        </div>
+        <p class="caption">
+          Figures describe sponsored schools and their reported results; they do
+          not show that SLU sponsorship caused them.
+        </p>
+        <p class="caption">
+          Enrollment: 2025&ndash;26 preliminary &middot; Student groups, MAP and
+          growth: 2025 &middot; School directory: June 2026
+        </p>
+      </section>
+      <nav class="tabs" aria-label="Dashboard topics">
+        <div id="tablist" role="tablist" aria-label="Dashboard topics"></div>
+      </nav>
+      <div id="loadStatus" role="status">Loading dashboard</div>
+      <div id="dashboard" hidden></div>
+    </main>
+    <footer>
+      Saint Louis University &middot; Office of School and Community
+      Partnerships <button id="printReport">Print / Save as PDF</button>
+    </footer>
+    <a class="back-top" href="#start">&uarr; Back to top / tabs</a>
+    <div id="slideControls" hidden>
+      <button id="previousSlide">Previous</button
+      ><span id="slideCounter" aria-live="polite"></span
+      ><button id="nextSlide">Next</button
+      ><button id="exitPresentation">Exit</button>
+    </div>
+  </body>
+</html>
